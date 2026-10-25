@@ -20,7 +20,7 @@ services:
       - "127.0.0.1:6379:6379"
 
   migrate:
-    build: services/bot
+    build: services/backend
     env_file: .env
     command: ["alembic", "upgrade", "head"]
     depends_on:
@@ -28,7 +28,7 @@ services:
         condition: service_healthy
 
   bot:
-    build: services/bot
+    build: services/backend
     env_file: .env
     restart: unless-stopped
     depends_on:
@@ -36,6 +36,23 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_started
+
+  api:
+    build: services/backend
+    env_file: .env
+    command: ["python", "-m", "belok.api"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build: services/web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
 
 volumes:
   pgdata:
