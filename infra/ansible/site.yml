@@ -1,0 +1,7 @@
+- name: Provision the k3s node
+  hosts: all
+  become: true
+  roles:
+    - base
+    - ssh
+    - k3s

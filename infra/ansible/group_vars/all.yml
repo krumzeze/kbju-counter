@@ -1,0 +1,4 @@
+admin_user: deploy
+admin_ssh_public_key_path: ~/.ssh/id_ed25519.pub
+k3s_version: v1.31.4+k3s1
+kubeconfig_dest: "{{ playbook_dir }}/kubeconfig"

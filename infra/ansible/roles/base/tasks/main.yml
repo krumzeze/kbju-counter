@@ -1,0 +1,40 @@
+- name: Upgrade packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - fail2ban
+      - unattended-upgrades
+      - open-iscsi
+      - nfs-common
+    state: present
+
+- name: Read timezone
+  ansible.builtin.command: timedatectl show --property=Timezone --value
+  register: base_timezone
+  changed_when: false
+
+- name: Use UTC
+  ansible.builtin.command: timedatectl set-timezone Etc/UTC
+  when: base_timezone.stdout != "Etc/UTC"
+  changed_when: true
+
+- name: Enable automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"
+
+- name: Enable fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
