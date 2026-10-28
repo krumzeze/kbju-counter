@@ -1,5 +1,13 @@
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def async_database_url(url: str) -> str:
+    """Accept plain postgresql:// URLs, e.g. the one CloudNativePG puts into its app secret."""
+    for prefix in ("postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+asyncpg://" + url.removeprefix(prefix)
+    return url
 
 
 class Settings(BaseSettings):
@@ -21,3 +29,8 @@ class Settings(BaseSettings):
     daily_analysis_limit: int = 20
     default_timezone: str = "Europe/Moscow"
     log_level: str = "INFO"
+
+    @field_validator("database_url")
+    @classmethod
+    def use_asyncpg(cls, value: str) -> str:
+        return async_database_url(value)

@@ -6,14 +6,15 @@ from alembic import context
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from belok.config import async_database_url
 from belok.db.models import Base
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql+asyncpg://belok:belok@localhost:5432/belok"
+DATABASE_URL = async_database_url(
+    os.environ.get("DATABASE_URL", "postgresql+asyncpg://belok:belok@localhost:5432/belok")
 )
 
 

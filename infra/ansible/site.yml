@@ -5,3 +5,4 @@
     - base
     - ssh
     - k3s
+    - argocd

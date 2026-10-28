@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    {{- include "belok.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "belok.selector" "redis" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "belok.selector" "redis" | nindent 8 }}
+    spec:
+      securityContext:
+        {{- include "belok.podSecurity" . | nindent 8 }}
+        runAsUser: 999
+        runAsGroup: 999
+      containers:
+        - name: redis
+          image: {{ .Values.redis.image }}
+          args: ["--save", "", "--appendonly", "no"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 10
+          securityContext:
+            {{- include "belok.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    {{- include "belok.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "belok.selector" "redis" | nindent 4 }}
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis

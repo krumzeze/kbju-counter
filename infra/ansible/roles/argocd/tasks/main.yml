@@ -1,0 +1,28 @@
+- name: Create argocd namespace
+  ansible.builtin.command: k3s kubectl create namespace argocd
+  register: argocd_namespace
+  changed_when: argocd_namespace.rc == 0
+  failed_when: argocd_namespace.rc != 0 and 'AlreadyExists' not in argocd_namespace.stderr
+
+- name: Install ArgoCD
+  ansible.builtin.command: >-
+    k3s kubectl apply -n argocd --server-side --force-conflicts
+    -f https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml
+  register: argocd_install
+  changed_when: "'serverside-applied' in argocd_install.stdout"
+
+- name: Wait for ArgoCD to be available
+  ansible.builtin.command: >-
+    k3s kubectl -n argocd wait --for=condition=Available deployment --all --timeout=300s
+  changed_when: false
+
+- name: Copy root application
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../deploy/argocd/root.yaml"
+    dest: /etc/rancher/k3s/argocd-root.yaml
+    mode: "0600"
+
+- name: Apply root application
+  ansible.builtin.command: k3s kubectl apply -f /etc/rancher/k3s/argocd-root.yaml
+  register: argocd_root
+  changed_when: "'unchanged' not in argocd_root.stdout"

@@ -40,6 +40,8 @@ services/
     migrations/   Alembic
     tests/
   web/            React + Vite: Mini App and website
+infra/            Terraform and Ansible, see infra/README.md
+deploy/           Helm chart and ArgoCD apps, see deploy/README.md
 ```
 
 ## Настройка
@@ -92,8 +94,10 @@ Postgres из service container.
 - [x] Бот: фото и текст в КБЖУ, норма, тренировки, вес, шаги, триал
 - [x] API, Mini App и сайт с тем же функционалом
 - [ ] Eval моделей на взвешенных блюдах, выбор основной модели
-- [ ] Инфраструктура: Terraform, Ansible, k3s, ArgoCD, CI/CD с деплоем
+- [x] Инфраструктура как код: Terraform, Ansible, k3s
+- [x] GitOps: Helm-чарт, ArgoCD, сборка образов и выкатка из CI
 - [ ] Очередь и отдельный vision-worker с автоскейлом (KEDA)
+- [ ] Бэкапы Postgres в R2
 - [ ] Мониторинг: Prometheus, Grafana, Loki, бизнес-метрики
 - [ ] Подписка
 - [ ] Синхронизация шагов с Apple Health и Health Connect

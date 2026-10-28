@@ -1,0 +1,48 @@
+{{- if .Values.bot.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bot
+  labels:
+    {{- include "belok.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bot
+spec:
+  # Telegram allows a single long-polling consumer, so never run two bots at once.
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "belok.selector" "bot" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "belok.selector" "bot" | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "belok.podSecurity" . | nindent 8 }}
+      containers:
+        - name: bot
+          image: {{ include "belok.backendImage" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "-m", "belok"]
+          {{- include "belok.backendEnv" . | nindent 10 }}
+          securityContext:
+            {{- include "belok.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.bot.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}

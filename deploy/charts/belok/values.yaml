@@ -1,0 +1,52 @@
+host: belok.example.com
+
+image:
+  backend: ghcr.io/krumzeze/belok-backend
+  web: ghcr.io/krumzeze/belok-web
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Secret with BOT_TOKEN, LLM_API_KEY and API_SECRET.
+secretName: belok-secrets
+
+database:
+  secretName: belok-db-app
+  secretKey: uri
+
+config:
+  LLM_MODEL: openai/gpt-5-mini
+  BOT_USERNAME: ""
+  TRIAL_DAYS: "4"
+  DAILY_ANALYSIS_LIMIT: "20"
+  DEFAULT_TIMEZONE: Europe/Moscow
+  LOG_LEVEL: INFO
+
+api:
+  replicas: 2
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { memory: 512Mi }
+
+web:
+  replicas: 2
+  resources:
+    requests: { cpu: 20m, memory: 32Mi }
+    limits: { memory: 64Mi }
+
+bot:
+  enabled: true
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 256Mi }
+
+redis:
+  image: redis:7.4-alpine
+  resources:
+    requests: { cpu: 20m, memory: 32Mi }
+    limits: { memory: 128Mi }
+
+ingress:
+  className: traefik
+  clusterIssuer: letsencrypt

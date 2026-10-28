@@ -7,7 +7,7 @@
 Terraform ──▶ Hetzner: server, firewall, SSH key
           ──▶ Cloudflare: DNS (belok, grafana.belok, argocd.belok), R2 bucket for backups
           ──▶ ansible/inventory/hosts.yml
-Ansible   ──▶ admin user, SSH hardening, fail2ban, auto updates, k3s ──▶ ansible/kubeconfig
+Ansible   ──▶ admin user, SSH hardening, fail2ban, auto updates, k3s, ArgoCD ──▶ ansible/kubeconfig
 ```
 
 ## Что нужно заранее
@@ -42,7 +42,7 @@ cd infra/ansible
 export ANSIBLE_CONFIG=$PWD/ansible.cfg   # needed on /mnt/* in WSL, the directory is world-writable
 
 ansible-playbook bootstrap.yml   # once, as root: creates the deploy user
-ansible-playbook site.yml        # hardening and k3s, safe to rerun
+ansible-playbook site.yml        # hardening, k3s and ArgoCD, safe to rerun
 
 export KUBECONFIG=$PWD/kubeconfig
 kubectl get nodes
@@ -50,3 +50,5 @@ kubectl get nodes
 
 После `site.yml` вход под root и по паролю закрыт, SSH доступен только пользователю `deploy`
 и только с адресов из `admin_cidrs`.
+
+Дальше кластером управляет ArgoCD, см. `deploy/README.md`.
