@@ -11,6 +11,13 @@
   register: argocd_install
   changed_when: "'serverside-applied' in argocd_install.stdout"
 
+- name: Disable unused ArgoCD components
+  ansible.builtin.command: >-
+    k3s kubectl -n argocd scale deployment --replicas=0
+    argocd-dex-server argocd-notifications-controller argocd-applicationset-controller
+  register: argocd_scale
+  changed_when: "'scaled' in argocd_scale.stdout"
+
 - name: Wait for ArgoCD to be available
   ansible.builtin.command: >-
     k3s kubectl -n argocd wait --for=condition=Available deployment --all --timeout=300s

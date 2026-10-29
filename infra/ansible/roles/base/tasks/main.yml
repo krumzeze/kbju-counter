@@ -38,3 +38,24 @@
     name: fail2ban
     state: started
     enabled: true
+
+- name: Create swap file
+  ansible.builtin.shell: >-
+    fallocate -l {{ swap_size }} /swapfile &&
+    chmod 600 /swapfile &&
+    mkswap /swapfile &&
+    swapon /swapfile
+  args:
+    creates: /swapfile
+
+- name: Mount swap on boot
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: /swapfile none swap sw 0 0
+
+- name: Prefer RAM over swap
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/60-swappiness.conf
+    content: "vm.swappiness = 10\n"
+    mode: "0644"
+  notify: Reload sysctl

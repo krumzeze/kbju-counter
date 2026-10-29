@@ -14,7 +14,7 @@ variable "cloudflare_account_id" {
 
 variable "server_type" {
   type    = string
-  default = "cx33"
+  default = "cx23"
 }
 
 variable "location" {
