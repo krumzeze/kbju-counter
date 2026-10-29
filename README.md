@@ -1,104 +1,86 @@
 # Belok
 
-Сервис для подсчёта калорий и КБЖУ по фото, учёта тренировок, шагов и веса.
-Работает в трёх клиентах с общим аккаунтом: Telegram-бот, Telegram Mini App и веб-сайт.
+Учёт КБЖУ в Telegram: бот, Mini App и сайт с общим аккаунтом. Блюдо распознаётся по фото или
+описанию через Claude Haiku 5.5, дневная норма пересчитывается по шагам и тренировкам.
+Дневник тренировок с прогрессом по упражнениям, журнал веса, триал 4 дня и подписка.
 
-## Возможности
+## Стек
 
-- Фото или текстовое описание блюда: LLM оценивает состав и КБЖУ, порцию можно поправить
-- Норма по Миффлину-Сан Жеору с поправкой на шаги, силовые тренировки и цель
-- Дневник тренировок и прогресс по упражнениям (расчётный 1ПМ, графики)
-- Журнал веса с графиком
-- Пробный период 4 дня, дневной лимит распознаваний, учёт стоимости каждого LLM-запроса
+| | |
+|---|---|
+| Backend | Python 3.12, aiogram 3, FastAPI, SQLAlchemy 2 (asyncpg), Alembic, PostgreSQL 17, Redis |
+| Frontend | React 19, Vite, TanStack Query |
+| Infra | Hetzner Cloud, Cloudflare DNS и R2, Terraform, Ansible, k3s |
+| Delivery | GitHub Actions, GHCR, Helm, ArgoCD, cert-manager, Sealed Secrets, CloudNativePG |
 
 ## Архитектура
 
 ```
-Telegram ──▶ bot (aiogram) ─┐
-                            ├──▶ PostgreSQL
-Mini App / сайт ──▶ nginx ──▶ api (FastAPI) ─┘      Redis (FSM бота)
-                     │                 │
-                 статика React       Claude Haiku (Anthropic API)
+Telegram ─────────────▶ bot ──┐
+                              ├──▶ PostgreSQL
+Mini App, сайт ─▶ web ─▶ api ─┘    Redis (FSM бота)
+                              └──▶ Anthropic API
 ```
 
-Бот и API это два процесса одного Python-пакета `belok` с общими моделями, расчётами и логикой.
-Вход в Mini App идёт по `initData`, на сайте через Telegram Login Widget. Обе подписи проверяются
-на бэкенде, пользователь определяется по Telegram ID, поэтому данные везде одни.
+`bot` и `api` собираются из одного пакета `belok` и делят модели и бизнес-логику. Клиенты
+авторизуются по подписи Telegram (`initData` в Mini App, Login Widget на сайте), API выдаёт JWT.
+`web` это nginx со статикой и прокси `/api`.
 
-## Структура
+Бот работает через long polling, поэтому всегда одна реплика со стратегией `Recreate`. `api` и
+`web` обновляются rolling update без простоя.
+
+## Репозиторий
 
 ```
-services/
-  backend/
-    src/belok/
-      bot/        Telegram bot: handlers, middlewares, texts
-      api/        HTTP API: auth, routes, schemas
-      domain/     nutrition and workout math, no I/O
-      llm/        food analyzer
-      services/   DB queries, access rules, shared use cases
-      db/         SQLAlchemy models
-    migrations/   Alembic
-    tests/
-  web/            React + Vite: Mini App and website
-infra/            Terraform and Ansible, see infra/README.md
-deploy/           Helm chart and ArgoCD apps, see deploy/README.md
+services/backend   bot, API, миграции, тесты
+services/web       Mini App и сайт
+infra/             Terraform и Ansible: сервер, DNS, k3s
+deploy/            Helm-чарт и приложения ArgoCD
 ```
 
-## Настройка
-
-1. Создай бота у @BotFather, возьми токен.
-2. Получи API-ключ в platform.claude.com.
-3. `cp .env.example .env` и заполни:
-   - `BOT_TOKEN`, `LLM_API_KEY`
-   - `API_SECRET`: случайная строка от 32 символов (`openssl rand -hex 32`)
-   - `BOT_USERNAME`: имя бота без `@`, нужно для входа на сайте
-   - `WEBAPP_URL`: публичный HTTPS-адрес сайта, бот повесит на него кнопку меню
-4. В @BotFather для входа на сайте: `/setdomain` с доменом сайта.
-
-## Запуск
+## Локально
 
 ```bash
+cp .env.example .env    # BOT_TOKEN, LLM_API_KEY, API_SECRET (openssl rand -hex 32)
 docker compose up --build
 ```
 
-Сайт откроется на http://localhost:8080. Telegram открывает Mini App только по HTTPS, поэтому для
-проверки внутри Telegram пробрось порт туннелем (`cloudflared tunnel --url http://localhost:8080`)
-и укажи этот адрес в `WEBAPP_URL`.
+Сайт на http://localhost:8080. Mini App в Telegram открывается только по HTTPS:
+`cloudflared tunnel --url http://localhost:8080` и полученный адрес в `WEBAPP_URL`.
 
-### Разработка без Docker
+Без Docker:
 
 ```bash
 docker compose up -d postgres redis
-cd services/backend && uv sync
-uv run alembic upgrade head
+cd services/backend && uv sync && uv run alembic upgrade head
 uv run python -m belok        # bot
-uv run python -m belok.api    # API on :8000
-
-cd services/web && npm install
-npm run dev                   # http://localhost:5173, /api proxied to :8000
+uv run python -m belok.api    # API, :8000
+cd services/web && npm install && npm run dev
 ```
 
 ## Тесты
 
 ```bash
 cd services/backend
-uv run pytest                                             # unit tests
+uv run pytest
 TEST_DATABASE_URL=postgresql+asyncpg://belok:belok@localhost:5432/belok_test uv run pytest
 ```
 
-Интеграционные тесты API запускаются, когда задан `TEST_DATABASE_URL`. В CI они идут на
-Postgres из service container.
+Без `TEST_DATABASE_URL` интеграционные тесты API пропускаются.
 
-## Roadmap
+## Деплой
 
-- [x] Бот: фото и текст в КБЖУ, норма, тренировки, вес, шаги, триал
-- [x] API, Mini App и сайт с тем же функционалом
-- [ ] Eval моделей на взвешенных блюдах, выбор основной модели
-- [x] Инфраструктура как код: Terraform, Ansible, k3s
-- [x] GitOps: Helm-чарт, ArgoCD, сборка образов и выкатка из CI
-- [ ] Очередь и отдельный vision-worker с автоскейлом (KEDA)
-- [ ] Бэкапы Postgres в R2
-- [ ] Мониторинг: Prometheus, Grafana, Loki, бизнес-метрики
-- [ ] Подписка
-- [ ] Синхронизация шагов с Apple Health и Health Connect
-- [ ] Адаптивная норма по динамике веса
+Push в `main` → тесты → образы в GHCR → CI коммитит новый тег в
+`deploy/environments/prod/values.yaml` → ArgoCD выкатывает. Откат через `git revert` этого коммита.
+
+Первичный подъём сервера: [infra/README.md](infra/README.md), кластер и секреты:
+[deploy/README.md](deploy/README.md).
+
+## TODO
+
+- Бэкапы Postgres в R2
+- Мониторинг и алерты
+- Оплата подписки
+- Webhook вместо polling для бота
+- Eval распознавания на взвешенных блюдах
+- Terraform plan/apply из CI

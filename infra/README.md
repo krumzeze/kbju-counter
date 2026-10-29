@@ -1,54 +1,50 @@
-# Infrastructure
+# Infra
 
-Один сервер Hetzner Cloud с k3s, DNS и бакет для бэкапов в Cloudflare. Terraform создаёт ресурсы
-и генерирует inventory для Ansible, Ansible настраивает сервер и ставит k3s.
+Terraform создаёт сервер Hetzner, firewall, DNS-записи и R2-бакет для бэкапов, затем пишет
+inventory для Ansible. Ansible делает hardening и ставит k3s и ArgoCD. Дальше кластером управляет
+ArgoCD.
 
+## Требования
+
+- Hetzner Cloud API token (Read & Write)
+- Cloudflare API token: `Zone:Read` и `DNS:Edit` на зону, `Workers R2 Storage:Edit`
+- R2-бакет `belok-tfstate` и R2 API token к нему для state
+- `~/.ssh/id_ed25519`
+
+```bash
+export HCLOUD_TOKEN=... CLOUDFLARE_API_TOKEN=...
+export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=...    # R2 token, S3-compatible backend
 ```
-Terraform ──▶ Hetzner: server, firewall, SSH key
-          ──▶ Cloudflare: DNS (belok, grafana.belok, argocd.belok), R2 bucket for backups
-          ──▶ ansible/inventory/hosts.yml
-Ansible   ──▶ admin user, SSH hardening, fail2ban, auto updates, k3s, ArgoCD ──▶ ansible/kubeconfig
-```
 
-## Что нужно заранее
-
-- Hetzner Cloud: проект и API-токен с правами Read & Write.
-- Cloudflare API-токен с правами `Zone:DNS:Edit` на зону `hamdcreative.com` и `Account:Workers R2 Storage:Edit`.
-- Cloudflare R2: бакет `belok-tfstate` (создаётся вручную один раз) и R2 API-токен
-  (Access Key ID и Secret) для стейта Terraform.
-- SSH-ключ `~/.ssh/id_ed25519`.
-
-## 1. Terraform
+## Terraform
 
 ```bash
 cd infra/terraform
-cp terraform.tfvars.example terraform.tfvars   # account id and your IP in admin_cidrs
-cp backend.hcl.example backend.hcl             # account id in the endpoint
-
-export HCLOUD_TOKEN=...
-export CLOUDFLARE_API_TOKEN=...
-export AWS_ACCESS_KEY_ID=...        # R2 token for the state bucket
-export AWS_SECRET_ACCESS_KEY=...
-
+cp terraform.tfvars.example terraform.tfvars    # account id, admin_cidrs
+cp backend.hcl.example backend.hcl              # account id in endpoint
 terraform init -backend-config=backend.hcl
-terraform plan
 terraform apply
 ```
 
-## 2. Ansible
+SSH и Kubernetes API открыты только для `admin_cidrs`.
+
+## Ansible
 
 ```bash
 cd infra/ansible
-export ANSIBLE_CONFIG=$PWD/ansible.cfg   # needed on /mnt/* in WSL, the directory is world-writable
-
-ansible-playbook bootstrap.yml   # once, as root: creates the deploy user
-ansible-playbook site.yml        # hardening, k3s and ArgoCD, safe to rerun
-
+export ANSIBLE_CONFIG=$PWD/ansible.cfg    # WSL: /mnt/* is world-writable
+ansible-playbook bootstrap.yml            # once, as root
+ansible-playbook site.yml
 export KUBECONFIG=$PWD/kubeconfig
-kubectl get nodes
 ```
 
-После `site.yml` вход под root и по паролю закрыт, SSH доступен только пользователю `deploy`
-и только с адресов из `admin_cidrs`.
+`bootstrap.yml` создаёт пользователя `deploy`, после `site.yml` вход под root и по паролю закрыт.
+`site.yml` идемпотентен.
 
-Дальше кластером управляет ArgoCD, см. `deploy/README.md`.
+## Удаление
+
+```bash
+terraform destroy
+```
+
+Непустой бакет `belok-backups` нужно очистить заранее.
