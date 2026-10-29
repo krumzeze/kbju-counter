@@ -18,8 +18,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     llm_api_key: SecretStr
-    llm_base_url: str = "https://openrouter.ai/api/v1"
-    llm_model: str = "openai/gpt-5-mini"
+    llm_model: str = "claude-haiku-5-5"
 
     api_secret: SecretStr | None = None
     bot_username: str | None = None

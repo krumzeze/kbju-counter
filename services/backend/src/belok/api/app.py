@@ -15,9 +15,7 @@ async def lifespan(app: FastAPI):
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
-    app.state.analyzer = FoodAnalyzer(
-        settings.llm_api_key.get_secret_value(), settings.llm_base_url, settings.llm_model
-    )
+    app.state.analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
     yield
     await engine.dispose()
 

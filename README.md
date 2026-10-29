@@ -18,7 +18,7 @@ Telegram ──▶ bot (aiogram) ─┐
                             ├──▶ PostgreSQL
 Mini App / сайт ──▶ nginx ──▶ api (FastAPI) ─┘      Redis (FSM бота)
                      │                 │
-                 статика React       LLM через OpenRouter
+                 статика React       Claude Haiku (Anthropic API)
 ```
 
 Бот и API это два процесса одного Python-пакета `belok` с общими моделями, расчётами и логикой.
@@ -47,7 +47,7 @@ deploy/           Helm chart and ArgoCD apps, see deploy/README.md
 ## Настройка
 
 1. Создай бота у @BotFather, возьми токен.
-2. Получи ключ на openrouter.ai.
+2. Получи API-ключ в platform.claude.com.
 3. `cp .env.example .env` и заполни:
    - `BOT_TOKEN`, `LLM_API_KEY`
    - `API_SECRET`: случайная строка от 32 символов (`openssl rand -hex 32`)

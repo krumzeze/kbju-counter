@@ -2,17 +2,17 @@ import base64
 import time
 from dataclasses import dataclass
 
-from openai import AsyncOpenAI, OpenAIError
+from anthropic import AnthropicError, AsyncAnthropic
 from pydantic import BaseModel, Field, ValidationError
 
 SYSTEM_PROMPT = """You estimate the nutritional content of meals.
 Identify each distinct food item. Estimate its portion weight in grams from visual cues \
 (plate and utensil size, typical servings) or from the user's description, then estimate \
 calories, protein, fat and carbohydrates for that portion.
-Write the title and item names in Russian. If there is no food, return an empty items list.
-Respond with JSON only, in exactly this shape:
-{"title": "short meal name", "items": [{"name": "...", "grams": 0, "kcal": 0, \
-"protein": 0, "fat": 0, "carbs": 0}]}"""
+Write the title and item names in Russian. If there is no food, return an empty items list."""
+
+# USD per million input and output tokens.
+PRICES = {"claude-haiku-5-5": (0.10, 0.50)}
 
 
 class FoodItem(BaseModel):
@@ -47,14 +47,20 @@ class AnalysisError(Exception):
 
 
 class FoodAnalyzer:
-    def __init__(self, api_key: str, base_url: str, model: str) -> None:
-        self._client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=60, max_retries=2)
+    def __init__(self, api_key: str, model: str) -> None:
+        self._client = AsyncAnthropic(api_key=api_key, timeout=60, max_retries=2)
         self.model = model
 
     async def from_photo(self, image: bytes, caption: str | None = None) -> AnalysisResult:
-        encoded = base64.b64encode(image).decode()
         content: list[dict] = [
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded}"}}
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": base64.standard_b64encode(image).decode(),
+                },
+            }
         ]
         if caption:
             content.append({"type": "text", "text": f"User note: {caption}"})
@@ -66,29 +72,34 @@ class FoodAnalyzer:
     async def _complete(self, content: list[dict]) -> AnalysisResult:
         started = time.monotonic()
         try:
-            response = await self._client.chat.completions.create(
+            response = await self._client.messages.parse(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": content},
-                ],
-                response_format={"type": "json_object"},
-                extra_body={"usage": {"include": True}},
+                max_tokens=8000,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": content}],
+                output_format=FoodAnalysis,
             )
-            analysis = FoodAnalysis.model_validate_json(response.choices[0].message.content or "")
-        except (OpenAIError, ValidationError, IndexError) as exc:
+        except (AnthropicError, ValidationError) as exc:
             raise AnalysisError(self.model, _elapsed_ms(started)) from exc
+        if response.parsed_output is None:
+            raise AnalysisError(self.model, _elapsed_ms(started))
 
         usage = response.usage
         return AnalysisResult(
-            analysis=analysis,
-            model=response.model or self.model,
-            prompt_tokens=usage.prompt_tokens if usage else 0,
-            completion_tokens=usage.completion_tokens if usage else 0,
-            # OpenRouter reports the charged price as a non-standard "cost" field.
-            cost_usd=(usage.model_extra or {}).get("cost") if usage else None,
+            analysis=response.parsed_output,
+            model=response.model,
+            prompt_tokens=usage.input_tokens,
+            completion_tokens=usage.output_tokens,
+            cost_usd=_cost(response.model, usage.input_tokens, usage.output_tokens),
             latency_ms=_elapsed_ms(started),
         )
+
+
+def _cost(model: str, input_tokens: int, output_tokens: int) -> float | None:
+    prices = PRICES.get(model)
+    if prices is None:
+        return None
+    return (input_tokens * prices[0] + output_tokens * prices[1]) / 1_000_000
 
 
 def _elapsed_ms(started: float) -> int:

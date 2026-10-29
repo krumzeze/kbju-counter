@@ -22,9 +22,7 @@ async def main() -> None:
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     storage = RedisStorage.from_url(settings.redis_url)
-    analyzer = FoodAnalyzer(
-        settings.llm_api_key.get_secret_value(), settings.llm_base_url, settings.llm_model
-    )
+    analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
     bot = Bot(
         settings.bot_token.get_secret_value(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
