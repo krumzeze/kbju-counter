@@ -23,11 +23,19 @@ class Settings(BaseSettings):
     api_secret: SecretStr | None = None
     bot_username: str | None = None
     webapp_url: str | None = None
+    admin_id: int | None = None
 
     trial_days: int = 4
+    referral_trial_days: int = 7
+    referral_reward_days: int = 7
     daily_analysis_limit: int = 20
     default_timezone: str = "Europe/Moscow"
     log_level: str = "INFO"
+
+    @field_validator("admin_id", mode="before")
+    @classmethod
+    def empty_as_none(cls, value: object) -> object:
+        return None if value == "" else value
 
     @field_validator("database_url")
     @classmethod

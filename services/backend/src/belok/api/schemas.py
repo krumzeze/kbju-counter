@@ -84,7 +84,28 @@ class MeOut(BaseModel):
     trial_ends_at: datetime
     subscription_until: datetime | None
     has_access: bool
+    status: str
+    access_until: datetime
+    is_admin: bool
     base_target: MacrosOut | None
+
+
+class PromoRedeemIn(BaseModel):
+    code: str = Field(min_length=1, max_length=64)
+
+
+class PromoRedeemOut(BaseModel):
+    days: int
+    access_until: datetime
+
+
+class ReferralOut(BaseModel):
+    link: str | None
+    invited: int
+    paid: int
+    days: int
+    trial_days: int
+    reward_days: int
 
 
 class ProfileIn(BaseModel):

@@ -18,7 +18,8 @@ class DailyLimitReached(Exception):
     pass
 
 
-async def ensure_within_limit(session: AsyncSession, user: User, limit: int) -> None:
+async def ensure_within_limit(session: AsyncSession, user: User, default_limit: int) -> None:
+    limit = user.daily_limit if user.daily_limit is not None else default_limit
     if await analyses_on(session, user.id, local_today(user.timezone)) >= limit:
         raise DailyLimitReached
 
@@ -58,6 +59,7 @@ async def analyze_meal(
             cost_usd=result.cost_usd,
             latency_ms=result.latency_ms,
             ok=True,
+            no_food=not result.analysis.items,
         )
     )
     if not result.analysis.items:

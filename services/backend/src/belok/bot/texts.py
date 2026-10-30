@@ -1,5 +1,6 @@
 from html import escape
 
+from belok.config import Settings
 from belok.db.models import Meal
 from belok.domain.nutrition import Macros
 from belok.services.repo import DaySummary
@@ -14,13 +15,40 @@ HELP = """<b>Что я умею</b>
 /steps 8500: записать шаги
 /gym жим лежа 80x8 80x8 75x10: записать подходы (можно 100x5x3)
 /progress жим лежа: прогресс по упражнению
-/profile: изменить анкету"""
+/profile: изменить анкету
+/invite: пригласить друга
+/promo КОД: активировать промокод"""
 
 PROFILE_REQUIRED = "Сначала заполни короткую анкету: /start"
 ACCESS_EXPIRED = (
     "Бесплатный период закончился. Скоро здесь появится подписка, "
     "а пока напиши автору, чтобы продлить доступ."
 )
+
+BLOCKED = "Доступ к боту ограничен."
+
+PROMO_RESULTS = {
+    "not_found": "Такого промокода нет",
+    "expired": "Срок действия промокода истёк",
+    "exhausted": "Промокод уже использовали максимальное число раз",
+    "already_used": "Ты уже активировал этот промокод",
+    "new_users_only": "Этот промокод только для новых пользователей",
+    "too_many_attempts": "Слишком много попыток, попробуй через час",
+}
+
+
+def promo_ok(days: int) -> str:
+    return f"Промокод активирован: +{days} дн. доступа 🎉"
+
+
+def invite(link: str, settings: Settings, invited: int, paid: int, days: int) -> str:
+    return (
+        "<b>Приглашай друзей</b>\n\n"
+        f"Друг получит {settings.referral_trial_days} дней бесплатно вместо {settings.trial_days}, "
+        f"а ты +{settings.referral_reward_days} дней доступа за каждую его оплату подписки.\n\n"
+        f"Твоя ссылка:\n{link}\n\n"
+        f"Приглашено: {invited} · оплатили: {paid} · заработано дней: {days}"
+    )
 
 
 def macros_line(m: Macros) -> str:

@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
@@ -7,9 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.bot import texts
 from belok.bot.keyboards import GoalCb, SexCb, goal_kb, sex_kb
+from belok.config import Settings
 from belok.db.models import User
 from belok.domain.nutrition import daily_target
-from belok.services.users import update_profile
+from belok.services.promos import PROMO_PREFIX, PromoResult, redeem
+from belok.services.referrals import referral_stats
+from belok.services.users import REFERRAL_PREFIX, update_profile
 
 router = Router(name="start")
 
@@ -23,7 +26,15 @@ class Onboarding(StatesGroup):
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, state: FSMContext, user: User) -> None:
+async def cmd_start(
+    message: Message,
+    command: CommandObject,
+    state: FSMContext,
+    session: AsyncSession,
+    user: User,
+) -> None:
+    if command.args and command.args.startswith(PROMO_PREFIX):
+        await _apply_promo(message, session, user, command.args.removeprefix(PROMO_PREFIX))
     if user.profile_complete:
         await message.answer(texts.HELP)
         return
@@ -33,6 +44,36 @@ async def cmd_start(message: Message, state: FSMContext, user: User) -> None:
 @router.message(Command("profile"))
 async def cmd_profile(message: Message, state: FSMContext) -> None:
     await _begin(message, state)
+
+
+@router.message(Command("promo"))
+async def cmd_promo(
+    message: Message, command: CommandObject, session: AsyncSession, user: User
+) -> None:
+    if not command.args:
+        await message.answer("Напиши промокод после команды, например: /promo BELOK")
+        return
+    await _apply_promo(message, session, user, command.args)
+
+
+@router.message(Command("invite"))
+async def cmd_invite(
+    message: Message, session: AsyncSession, user: User, settings: Settings
+) -> None:
+    if not settings.bot_username:
+        await message.answer("Приглашения пока недоступны")
+        return
+    invited, paid, days = await referral_stats(session, user.id)
+    link = f"https://t.me/{settings.bot_username}?start={REFERRAL_PREFIX}{user.referral_code}"
+    await message.answer(texts.invite(link, settings, invited, paid, days))
+
+
+async def _apply_promo(message: Message, session: AsyncSession, user: User, code: str) -> None:
+    result, days = await redeem(session, user, code)
+    if result == PromoResult.OK:
+        await message.answer(texts.promo_ok(days))
+    else:
+        await message.answer(texts.PROMO_RESULTS[result])
 
 
 @router.message(Command("help"))

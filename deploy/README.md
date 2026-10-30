@@ -24,7 +24,8 @@ kubectl create secret generic belok-secrets -n belok --dry-run=client -o yaml \
   | kubeseal --controller-namespace kube-system -o yaml > deploy/belok-base/belok-secrets.yaml
 ```
 
-3. `BOT_USERNAME` в `environments/prod/values.yaml`, закоммитить вместе с секретом.
+3. `BOT_USERNAME` и `ADMIN_ID` (свой Telegram ID) в `environments/prod/values.yaml`, закоммитить
+   вместе с секретом. Без `ADMIN_ID` админом становится первый пользователь.
 4. В @BotFather `/setdomain` для Login Widget.
 
 ## Операции

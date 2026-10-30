@@ -1,10 +1,13 @@
 from contextlib import asynccontextmanager
 
+from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from belok.api.routes import auth, me, meals, tracking, workouts
+from belok.api.routes import admin, auth, me, meals, tracking, workouts
 from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
 
@@ -16,7 +19,12 @@ async def lifespan(app: FastAPI):
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     app.state.analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
+    app.state.bot = Bot(
+        settings.bot_token.get_secret_value(),
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
     yield
+    await app.state.bot.session.close()
     await engine.dispose()
 
 
@@ -33,7 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
     )
     app.state.settings = settings
-    for module in (auth, me, meals, tracking, workouts):
+    for module in (admin, auth, me, meals, tracking, workouts):
         app.include_router(module.router, prefix="/api")
 
     @app.get("/healthz", include_in_schema=False)

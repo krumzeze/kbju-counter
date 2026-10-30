@@ -7,12 +7,19 @@ from urllib.parse import urlencode
 BOT_TOKEN = "123456:test-token"
 
 
-def sign_init_data(user_id: int, username: str = "tester", auth_date: int | None = None) -> str:
+def sign_init_data(
+    user_id: int,
+    username: str = "tester",
+    auth_date: int | None = None,
+    start_param: str | None = None,
+) -> str:
     fields = {
         "auth_date": str(auth_date or int(time.time())),
         "query_id": "AAH",
         "user": json.dumps({"id": user_id, "first_name": "Test", "username": username}),
     }
+    if start_param:
+        fields["start_param"] = start_param
     check = "\n".join(f"{k}={v}" for k, v in sorted(fields.items()))
     secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
     fields["hash"] = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()

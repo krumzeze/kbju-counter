@@ -5,3 +5,4 @@ image:
 
 config:
   BOT_USERNAME: ""
+  ADMIN_ID: ""

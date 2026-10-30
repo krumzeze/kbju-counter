@@ -16,6 +16,8 @@ MAX_AUTH_AGE_SECONDS = 24 * 3600
 class TelegramIdentity:
     id: int
     username: str | None
+    first_name: str | None = None
+    start_param: str | None = None
 
 
 class InvalidAuth(Exception):
@@ -34,7 +36,9 @@ def verify_webapp_init_data(
     _verify(fields, secret, now)
     try:
         user = json.loads(fields["user"])
-        return TelegramIdentity(int(user["id"]), user.get("username"))
+        return TelegramIdentity(
+            int(user["id"]), user.get("username"), user.get("first_name"), fields.get("start_param")
+        )
     except (KeyError, ValueError, TypeError) as exc:
         raise InvalidAuth("init data has no user") from exc
 
@@ -47,7 +51,7 @@ def verify_login_widget(
     secret = hashlib.sha256(bot_token.encode()).digest()
     _verify(fields, secret, now)
     try:
-        return TelegramIdentity(int(fields["id"]), fields.get("username"))
+        return TelegramIdentity(int(fields["id"]), fields.get("username"), fields.get("first_name"))
     except (KeyError, ValueError) as exc:
         raise InvalidAuth("login data has no id") from exc
 

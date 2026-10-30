@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 
 from aiogram import Bot
@@ -11,6 +12,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from belok.bot.setup import COMMANDS, build_dispatcher
 from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
+from belok.services.broadcasts import run_worker
+from belok.services.monitor import run_monitor
 
 
 async def main() -> None:
@@ -28,6 +31,12 @@ async def main() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     dp = build_dispatcher(settings, storage, sessionmaker)
+    background = [
+        asyncio.create_task(run_worker(bot, sessionmaker)),
+        asyncio.create_task(
+            run_monitor(bot, sessionmaker, storage.redis, settings.default_timezone)
+        ),
+    ]
 
     try:
         await bot.set_my_commands(COMMANDS)
@@ -39,6 +48,11 @@ async def main() -> None:
             )
         await dp.start_polling(bot, settings=settings, analyzer=analyzer)
     finally:
+        for task in background:
+            task.cancel()
+        for task in background:
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
         await storage.close()
         await engine.dispose()
         await bot.session.close()

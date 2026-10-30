@@ -42,6 +42,17 @@ def schema():
     yield
 
 
+class FakeBot:
+    def __init__(self) -> None:
+        self.sent: list[tuple[int, str]] = []
+        self.fail_for: dict[int, Exception] = {}
+
+    async def send_message(self, chat_id: int, text: str, **kwargs) -> None:
+        if chat_id in self.fail_for:
+            raise self.fail_for[chat_id]
+        self.sent.append((chat_id, text))
+
+
 class FakeAnalyzer:
     model = "fake/model"
 
@@ -83,7 +94,14 @@ def analyzer() -> FakeAnalyzer:
 
 
 @pytest.fixture
-async def client(settings: Settings, analyzer: FakeAnalyzer) -> AsyncIterator[httpx.AsyncClient]:
+def bot() -> FakeBot:
+    return FakeBot()
+
+
+@pytest.fixture
+async def client(
+    settings: Settings, analyzer: FakeAnalyzer, bot: FakeBot
+) -> AsyncIterator[httpx.AsyncClient]:
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         tables = ", ".join(t.name for t in Base.metadata.sorted_tables)
@@ -93,6 +111,7 @@ async def client(settings: Settings, analyzer: FakeAnalyzer) -> AsyncIterator[ht
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     app.state.analyzer = analyzer
+    app.state.bot = bot
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         c.app = app
@@ -100,8 +119,11 @@ async def client(settings: Settings, analyzer: FakeAnalyzer) -> AsyncIterator[ht
     await engine.dispose()
 
 
-async def login(client: httpx.AsyncClient, user_id: int = 1001) -> dict[str, str]:
-    response = await client.post("/api/auth/webapp", json={"init_data": sign_init_data(user_id)})
+async def login(
+    client: httpx.AsyncClient, user_id: int = 1001, start_param: str | None = None
+) -> dict[str, str]:
+    init_data = sign_init_data(user_id, start_param=start_param)
+    response = await client.post("/api/auth/webapp", json={"init_data": init_data})
     assert response.status_code == 200, response.text
     return {"Authorization": f"Bearer {response.json()['token']}"}
 

@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 from typing import Annotated
 
+from aiogram import Bot
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from belok.config import Settings
 from belok.db.models import User
 from belok.llm.analyzer import FoodAnalyzer
 from belok.services.access import has_access
+from belok.services.users import SEEN_RESOLUTION
 from belok.timeutil import utcnow
 
 bearer = HTTPBearer(auto_error=False)
@@ -28,9 +30,14 @@ def get_analyzer(request: Request) -> FoodAnalyzer:
     return request.app.state.analyzer
 
 
+def get_bot(request: Request) -> Bot:
+    return request.app.state.bot
+
+
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 AnalyzerDep = Annotated[FoodAnalyzer, Depends(get_analyzer)]
+BotDep = Annotated[Bot, Depends(get_bot)]
 
 
 async def current_user(
@@ -47,6 +54,11 @@ async def current_user(
     user = await session.get(User, user_id)
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid_token")
+    if user.is_blocked:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "blocked")
+    if user.last_seen_at is None or utcnow() - user.last_seen_at > SEEN_RESOLUTION:
+        user.last_seen_at = utcnow()
+        await session.commit()
     return user
 
 
@@ -62,3 +74,12 @@ async def active_user(user: CurrentUser) -> User:
 
 
 ActiveUser = Annotated[User, Depends(active_user)]
+
+
+async def admin_user(user: CurrentUser) -> User:
+    if not user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "admin_only")
+    return user
+
+
+AdminUser = Annotated[User, Depends(admin_user)]

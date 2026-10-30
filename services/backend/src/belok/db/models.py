@@ -1,7 +1,9 @@
 from datetime import date, datetime
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
+    Boolean,
     Date,
     DateTime,
     Float,
@@ -9,8 +11,10 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -30,6 +34,23 @@ class User(Base):
     trial_ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     subscription_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     timezone: Mapped[str] = mapped_column(String(64))
+    first_name: Mapped[str | None] = mapped_column(String(128))
+    source: Mapped[str | None] = mapped_column(String(64))
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    bot_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    lifetime_access: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
+    daily_limit: Mapped[int | None] = mapped_column(Integer)
+    admin_prefs: Mapped[dict | None] = mapped_column(JSON)
+
+    referral_code: Mapped[str | None] = mapped_column(String(16), unique=True)
+    referred_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
 
     sex: Mapped[Sex | None] = mapped_column(String(1))
     birth_year: Mapped[int | None] = mapped_column(Integer)
@@ -146,5 +167,90 @@ class LlmUsage(Base):
     cost_usd: Mapped[float | None] = mapped_column(Float)
     latency_ms: Mapped[int] = mapped_column(Integer)
     ok: Mapped[bool]
+    no_food: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
-    __table_args__ = (Index("ix_llm_usage_user_id_day", "user_id", "day"),)
+    __table_args__ = (
+        Index("ix_llm_usage_user_id_day", "user_id", "day"),
+        Index("ix_llm_usage_created_at", "created_at"),
+    )
+
+
+class PromoCode(Base):
+    __tablename__ = "promo_codes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(32), unique=True)
+    days: Mapped[int] = mapped_column(Integer)
+    max_activations: Mapped[int | None] = mapped_column(Integer)
+    activations: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    new_users_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    note: Mapped[str | None] = mapped_column(String(255))
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PromoRedemption(Base):
+    __tablename__ = "promo_redemptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    promo_id: Mapped[int] = mapped_column(ForeignKey("promo_codes.id", ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("promo_id", "user_id"),)
+
+
+class PromoAttempt(Base):
+    """Failed promo code attempts, used to rate limit guessing."""
+
+    __tablename__ = "promo_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (Index("ix_promo_attempts_user_id_created_at", "user_id", "created_at"),)
+
+
+class ReferralReward(Base):
+    __tablename__ = "referral_rewards"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    referred_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    payment_ref: Mapped[str] = mapped_column(String(128), unique=True)
+    days: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Broadcast(Base):
+    __tablename__ = "broadcasts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    text: Mapped[str] = mapped_column(Text)
+    segment: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(16), default="draft")
+    cursor: Mapped[int] = mapped_column(BigInteger, default=0)
+    total: Mapped[int] = mapped_column(Integer, default=0)
+    sent: Mapped[int] = mapped_column(Integer, default=0)
+    failed: Mapped[int] = mapped_column(Integer, default=0)
+    blocked: Mapped[int] = mapped_column(Integer, default=0)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AdminAction(Base):
+    __tablename__ = "admin_actions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    action: Mapped[str] = mapped_column(String(32))
+    target_user_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    details: Mapped[dict | None] = mapped_column(JSON)
