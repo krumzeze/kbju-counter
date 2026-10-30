@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { shortDate } from "../lib/format";
+import { niceCeil, shortDate } from "../lib/format";
+import { useWidth } from "../lib/useWidth";
 
 interface Point {
   day: string;
@@ -10,21 +11,23 @@ interface Props {
   points: Point[];
   unit: string;
   height?: number;
+  zeroBased?: boolean;
+  className?: string;
 }
 
-const WIDTH = 640;
 const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
 
-export function LineChart({ points, unit, height = 220 }: Props) {
+export function LineChart({ points, unit, height = 220, zeroBased = false, className }: Props) {
   const [active, setActive] = useState<number | null>(null);
+  const [ref, WIDTH] = useWidth<HTMLDivElement>(640);
   if (points.length === 0) return null;
 
   const values = points.map((p) => p.value);
   const min = Math.min(...values);
   const max = Math.max(...values);
   const spread = max - min || 1;
-  const lo = min - spread * 0.15;
-  const hi = max + spread * 0.15;
+  const lo = zeroBased ? 0 : min - spread * 0.15;
+  const hi = zeroBased ? niceCeil(max) : max + spread * 0.15;
 
   const innerW = WIDTH - PAD.left - PAD.right;
   const innerH = height - PAD.top - PAD.bottom;
@@ -34,12 +37,12 @@ export function LineChart({ points, unit, height = 220 }: Props) {
 
   const path = points.map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p.value)}`).join(" ");
   const area = `${path} L${x(points.length - 1)},${PAD.top + innerH} L${x(0)},${PAD.top + innerH} Z`;
-  const ticks = [lo + (hi - lo) * 0.2, (lo + hi) / 2, lo + (hi - lo) * 0.8];
-  const labelEvery = Math.max(1, Math.ceil(points.length / 6));
+  const ticks = zeroBased ? [hi / 2, hi] : [lo + (hi - lo) * 0.2, (lo + hi) / 2, lo + (hi - lo) * 0.8];
+  const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(3, Math.floor(WIDTH / 90))));
   const shown = active ?? points.length - 1;
 
   return (
-    <div className="chart">
+    <div ref={ref} className={className ? `chart ${className}` : "chart"}>
       <div className="chart-readout">
         <strong>
           {points[shown].value.toLocaleString("ru-RU", { maximumFractionDigits: 1 })} {unit}

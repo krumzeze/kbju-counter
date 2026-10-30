@@ -195,11 +195,18 @@ async def dashboard(session: AsyncSession, now: datetime, tz: str, days: int = 3
         .select_from(PromoRedemption)
         .where(PromoRedemption.created_at >= day_start - timedelta(days=29))
     )
-    source = func.coalesce(User.source, "direct")
-    source_rows = await session.execute(
-        select(source, func.count())
+    source = case(
+        (User.referred_by_id.is_not(None), literal("referral")),
+        else_=func.coalesce(User.source, literal("direct")),
+    )
+    recent = (
+        select(source.label("source"))
         .where(User.created_at >= day_start - timedelta(days=29))
-        .group_by(source)
+        .subquery()
+    )
+    source_rows = await session.execute(
+        select(recent.c.source, func.count())
+        .group_by(recent.c.source)
         .order_by(func.count().desc())
         .limit(10)
     )

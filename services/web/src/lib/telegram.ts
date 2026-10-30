@@ -11,7 +11,20 @@ export function haptic(type: "success" | "error" | "warning") {
   webApp?.HapticFeedback?.notificationOccurred(type);
 }
 
-const ROOT_PATHS = new Set(["/", "/workouts", "/weight", "/profile"]);
+export function confirmAction(message: string): Promise<boolean> {
+  if (webApp?.showConfirm) {
+    return new Promise((resolve) => webApp.showConfirm!(message, resolve));
+  }
+  return Promise.resolve(window.confirm(message));
+}
+
+export function shareLink(url: string, text: string) {
+  const share = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+  if (webApp?.openTelegramLink) webApp.openTelegramLink(share);
+  else window.open(share, "_blank", "noopener");
+}
+
+const ROOT_PATHS = new Set(["/", "/workouts", "/weight", "/profile", "/admin"]);
 
 export function useTelegramBackButton() {
   const location = useLocation();

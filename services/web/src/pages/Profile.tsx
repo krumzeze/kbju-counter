@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { errorMessage, setToken } from "../api/client";
 import type { Goal, Me, Sex } from "../api/types";
 import { daysLeft, plural, round } from "../lib/format";
+import { PromoCard, ReferralCard } from "../components/Growth";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
 
@@ -111,6 +112,13 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
         </button>
       </form>
 
+      {!onboarding && (
+        <>
+          <ReferralCard />
+          <PromoCard />
+        </>
+      )}
+
       {!onboarding && !isMiniApp && (
         <button
           className="btn-ghost"
@@ -150,10 +158,13 @@ function NumberField(props: {
 }
 
 function AccessCard({ me }: { me: Me }) {
-  if (me.subscription_until && new Date(me.subscription_until) > new Date()) {
+  if (me.status === "lifetime") {
+    return <div className="card access">Бесплатный доступ навсегда</div>;
+  }
+  if (me.status === "active") {
     return (
       <div className="card access">
-        Подписка активна до {new Date(me.subscription_until).toLocaleDateString("ru-RU")}
+        Доступ активен до {new Date(me.access_until).toLocaleDateString("ru-RU")}
       </div>
     );
   }

@@ -96,6 +96,7 @@ async def test_dashboard(client):
         "first_meal": 1,
         "active_3_days": 0,
     }
+    assert d["sources"] == [{"key": "direct", "count": 2}]
     assert len(d["series"]) == 30
     assert d["series"][-1]["new_users"] == 2
     assert d["series"][-1]["active_users"] == 2
@@ -333,6 +334,12 @@ async def test_referral_attribution_and_rewards(client, settings):
 
     stats = (await client.get("/api/me/referral", headers=admin)).json()
     assert (stats["invited"], stats["paid"], stats["days"]) == (1, 1, 7)
+    sources = (await client.get("/api/admin/dashboard", headers=admin)).json()["sources"]
+    assert {s["key"]: s["count"] for s in sources} == {
+        "direct": 1,
+        "referral": 1,
+        "r_NOSUCHCODE": 1,
+    }
     top = (await client.get("/api/admin/referrals", headers=admin)).json()
     assert top[0]["id"] == ADMIN and top[0]["invited"] == 1
 

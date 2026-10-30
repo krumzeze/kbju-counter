@@ -1,9 +1,24 @@
 import type {
+  AdminAction,
+  Broadcast,
+  Count,
+  Dashboard,
   Day,
   Meal,
   Me,
+  Prefs,
   ProfileInput,
   Progress,
+  Promo,
+  PromoInput,
+  Referral,
+  Referrer,
+  Segment,
+  UserDetail,
+  UserFilter,
+  UserPage,
+  UserPatch,
+  UserSort,
   WeightPoint,
   WorkoutSet,
 } from "./types";
@@ -106,6 +121,59 @@ export const api = {
   deleteSet: (id: number) => request<void>("DELETE", `/sets/${id}`),
   progress: (exercise: string) =>
     request<Progress>("GET", `/progress?exercise=${encodeURIComponent(exercise)}`),
+
+  redeemPromo: (code: string) =>
+    request<{ days: number; access_until: string }>("POST", "/me/promo", { code }),
+  referral: () => request<Referral>("GET", "/me/referral"),
+};
+
+export interface UserQuery {
+  q: string;
+  filter: UserFilter;
+  sort: UserSort;
+  desc: boolean;
+  offset: number;
+  limit: number;
+}
+
+export const adminApi = {
+  dashboard: () => request<Dashboard>("GET", "/admin/dashboard"),
+  users: (query: UserQuery) => {
+    const params = new URLSearchParams({
+      filter: query.filter,
+      sort: query.sort,
+      desc: String(query.desc),
+      offset: String(query.offset),
+      limit: String(query.limit),
+    });
+    if (query.q.trim()) params.set("q", query.q.trim());
+    return request<UserPage>("GET", `/admin/users?${params}`);
+  },
+  user: (id: number) => request<UserDetail>("GET", `/admin/users/${id}`),
+  patchUser: (id: number, body: UserPatch) => request<UserDetail>("PATCH", `/admin/users/${id}`, body),
+  grant: (id: number, days: number) =>
+    request<UserDetail>("POST", `/admin/users/${id}/grant`, { days }),
+  revoke: (id: number) => request<UserDetail>("POST", `/admin/users/${id}/revoke`),
+  message: (id: number, text: string) =>
+    request<void>("POST", `/admin/users/${id}/message`, { text }),
+  deleteUser: (id: number) => request<void>("DELETE", `/admin/users/${id}`),
+
+  promos: () => request<Promo[]>("GET", "/admin/promos"),
+  createPromo: (body: PromoInput) => request<Promo>("POST", "/admin/promos", body),
+  patchPromo: (id: number, body: { active?: boolean }) =>
+    request<Promo>("PATCH", `/admin/promos/${id}`, body),
+
+  segments: () => request<Count[]>("GET", "/admin/segments"),
+  broadcasts: () => request<Broadcast[]>("GET", "/admin/broadcasts"),
+  createBroadcast: (text: string, segment: Segment) =>
+    request<Broadcast>("POST", "/admin/broadcasts", { text, segment }),
+  sendBroadcast: (id: number) => request<Broadcast>("POST", `/admin/broadcasts/${id}/send`),
+  cancelBroadcast: (id: number) => request<Broadcast>("POST", `/admin/broadcasts/${id}/cancel`),
+
+  referrals: () => request<Referrer[]>("GET", "/admin/referrals"),
+  actions: (offset: number) => request<AdminAction[]>("GET", `/admin/actions?offset=${offset}`),
+  prefs: () => request<Prefs>("GET", "/admin/prefs"),
+  savePrefs: (body: Partial<Prefs>) => request<Prefs>("PUT", "/admin/prefs", body),
 };
 
 const MESSAGES: Record<string, string> = {
@@ -114,6 +182,20 @@ const MESSAGES: Record<string, string> = {
   no_food: "Не вижу здесь еды. Попробуй другое фото или опиши текстом",
   image_too_large: "Фото слишком большое",
   unsupported_image: "Поддерживаются JPEG, PNG и WebP",
+  not_found: "Не найдено",
+  expired: "Срок действия промокода истёк",
+  exhausted: "Промокод уже использовали максимальное число раз",
+  already_used: "Ты уже активировал этот промокод",
+  new_users_only: "Этот промокод только для новых пользователей",
+  too_many_attempts: "Слишком много попыток, попробуй через час",
+  admin_only: "Только для админов",
+  blocked: "Доступ ограничен",
+  cannot_change_self: "Нельзя заблокировать, удалить или разжаловать себя",
+  cannot_block_admin: "Сначала сними с пользователя права админа",
+  code_taken: "Такой промокод уже есть",
+  invalid_message: "Telegram не принял сообщение, проверь HTML-разметку",
+  telegram_unavailable: "Telegram недоступен, попробуй позже",
+  invalid_state: "Рассылка уже запущена или завершена",
 };
 
 export function errorMessage(error: unknown): string {

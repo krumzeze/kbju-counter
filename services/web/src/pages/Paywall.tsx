@@ -1,6 +1,8 @@
+import { PromoCard, ReferralCard } from "../components/Growth";
+
 export function Paywall() {
   return (
-    <div className="page center">
+    <div className="page">
       <div className="card paywall">
         <span className="feature-icon">⏳</span>
         <h1>Пробный период закончился</h1>
@@ -9,6 +11,8 @@ export function Paywall() {
           продления.
         </p>
       </div>
+      <PromoCard />
+      <ReferralCard />
     </div>
   );
 }

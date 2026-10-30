@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { isMiniApp, useTelegramBackButton } from "../lib/telegram";
 
 const TABS = [
@@ -8,10 +8,15 @@ const TABS = [
   { to: "/profile", label: "Профиль", icon: "○" },
 ];
 
-export function Layout() {
+const ADMIN_TAB = { to: "/admin", label: "Админка", icon: "⚙" };
+
+export function Layout({ admin = false }: { admin?: boolean }) {
   useTelegramBackButton();
+  const inAdmin = useLocation().pathname.startsWith("/admin");
+  const tabs = admin ? [...TABS, ADMIN_TAB] : TABS;
+  const classes = ["app", isMiniApp && "mini", inAdmin && "admin"].filter(Boolean).join(" ");
   return (
-    <div className={isMiniApp ? "app mini" : "app"}>
+    <div className={classes}>
       {!isMiniApp && (
         <header className="topbar">
           <NavLink to="/" className="brand">
@@ -23,8 +28,8 @@ export function Layout() {
       <main className="content">
         <Outlet />
       </main>
-      <nav className="tabbar" aria-label="Разделы">
-        {TABS.map((tab) => (
+      <nav className={admin ? "tabbar five" : "tabbar"} aria-label="Разделы">
+        {tabs.map((tab) => (
           <NavLink key={tab.to} to={tab.to} end={tab.to === "/"} className="tab">
             <span className="tab-icon" aria-hidden>
               {tab.icon}

@@ -14,6 +14,15 @@ import { Profile } from "./pages/Profile";
 import { Today } from "./pages/Today";
 import { Weight } from "./pages/Weight";
 import { Workouts } from "./pages/Workouts";
+import { AdminLayout } from "./pages/admin/AdminLayout";
+import { Broadcasts } from "./pages/admin/Broadcasts";
+import { Dashboard } from "./pages/admin/Dashboard";
+import { Log } from "./pages/admin/Log";
+import { Promos } from "./pages/admin/Promos";
+import { Referrals } from "./pages/admin/Referrals";
+import { Settings } from "./pages/admin/Settings";
+import { UserDetail } from "./pages/admin/UserDetail";
+import { Users } from "./pages/admin/Users";
 
 type AuthState = "checking" | "anonymous" | "authenticated" | "failed";
 
@@ -59,7 +68,7 @@ function AuthenticatedApp() {
   if (isPending) return <Spinner />;
   if (error) return <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />;
 
-  if (!me.profile_complete) {
+  if (!me.profile_complete && !me.is_admin) {
     return (
       <Routes>
         <Route path="*" element={<Profile me={me} onboarding />} />
@@ -67,16 +76,31 @@ function AuthenticatedApp() {
     );
   }
 
-  const paid = (page: ReactNode) => (me.has_access ? page : <Paywall />);
+  const paid = (page: ReactNode) => {
+    if (!me.profile_complete) return <Profile me={me} onboarding />;
+    return me.has_access ? page : <Paywall />;
+  };
   return (
     <Routes>
-      <Route element={<Layout />}>
+      <Route element={<Layout admin={me.is_admin} />}>
         <Route index element={paid(<Today />)} />
         <Route path="add" element={paid(<AddMeal />)} />
         <Route path="workouts" element={paid(<Workouts />)} />
         <Route path="workouts/:name" element={paid(<ExerciseProgress />)} />
         <Route path="weight" element={paid(<Weight />)} />
         <Route path="profile" element={<Profile me={me} />} />
+        {me.is_admin && (
+          <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="users" element={<Users />} />
+            <Route path="users/:id" element={<UserDetail />} />
+            <Route path="broadcasts" element={<Broadcasts />} />
+            <Route path="promos" element={<Promos />} />
+            <Route path="referrals" element={<Referrals />} />
+            <Route path="log" element={<Log />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+        )}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
