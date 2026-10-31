@@ -29,10 +29,13 @@ export interface Meal {
 
 export interface WorkoutSet {
   id: number;
+  workout_id: number;
+  exercise_id: number;
   exercise: string;
   day: string;
   weight_kg: number;
-  reps: number;
+  reps: number | null;
+  duration_s: number | null;
 }
 
 export interface Day {
@@ -91,17 +94,124 @@ export interface WeightPoint {
   weight_kg: number;
 }
 
+export type MuscleGroup =
+  | "delts"
+  | "chest"
+  | "arms"
+  | "abs"
+  | "back"
+  | "legs"
+  | "glutes"
+  | "calves"
+  | "cardio";
+
+export interface CatalogItem {
+  id: string;
+  name: string;
+  group: MuscleGroup;
+  primary: string[];
+  equipment: string;
+  cardio: boolean;
+  images: number;
+}
+
+export interface CatalogDetail extends CatalogItem {
+  name_en: string;
+  secondary: string[];
+  instructions: string[];
+  level: string;
+  mechanic: string | null;
+  force: string | null;
+  exercise_id: number | null;
+}
+
+export interface Exercise {
+  id: number;
+  name: string;
+  catalog_id: string | null;
+  group: MuscleGroup | null;
+  cardio: boolean;
+  sets: number;
+  last_day: string | null;
+}
+
+export type ExerciseRef = { exercise_id: number } | { catalog_id: string };
+
+export interface SetValues {
+  weight_kg: number;
+  reps: number | null;
+  duration_s: number | null;
+}
+
+export interface WorkoutExercise {
+  exercise: Exercise;
+  planned_sets: number;
+  sets: WorkoutSet[];
+  previous: SetValues[];
+  previous_day: string | null;
+}
+
+export interface Workout {
+  id: number;
+  day: string;
+  started_at: string;
+  finished_at: string | null;
+  title: string | null;
+  exercises: WorkoutExercise[];
+  sets: number;
+  volume_kg: number;
+}
+
+export interface WorkoutSummary {
+  id: number;
+  day: string;
+  started_at: string;
+  finished_at: string | null;
+  title: string | null;
+  exercises: number;
+  sets: number;
+  volume_kg: number;
+  names: string[];
+}
+
+export interface Template {
+  id: number;
+  name: string;
+  items: { exercise: Exercise; sets: number }[];
+}
+
+export interface TemplateInput {
+  name: string;
+  items?: (ExerciseRef & { sets: number })[];
+  workout_id?: number;
+}
+
 export interface ProgressPoint {
   day: string;
   top_weight_kg: number;
-  top_reps: number;
+  top_reps: number | null;
   e1rm: number;
   sets: number;
+  reps: number;
+  volume_kg: number;
+  duration_s: number;
+  items: SetValues[];
 }
 
 export interface Progress {
-  exercise: string;
+  exercise: Exercise;
   points: ProgressPoint[];
+  records: { e1rm: number; weight_kg: number; reps: number; volume_kg: number; duration_s: number };
+}
+
+export interface Analytics {
+  weeks: { start: string; workouts: number; sets: number; volume_kg: number; cardio_min: number }[];
+  streak_weeks: number;
+  total_workouts: number;
+  muscles_week: Record<string, number>;
+  muscles_month: Record<string, number>;
+  groups_month: Record<string, number>;
+  top: { exercise: Exercise; sets: number; best_e1rm: number }[];
 }
 
 export interface Count {

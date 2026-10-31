@@ -38,6 +38,9 @@ export function plural(n: number, one: string, few: string, many: string): strin
   return many;
 }
 
+export const count = (n: number, ru: [string, string, string], en: [string, string]) =>
+  tr(plural(n, ...ru), n === 1 ? en[0] : en[1]);
+
 export const daysWord = (n: number) => tr(plural(n, "день", "дня", "дней"), n === 1 ? "day" : "days");
 
 export const usd = (n: number) =>

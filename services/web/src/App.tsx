@@ -8,13 +8,18 @@ import { detectedLang, setLang, tr } from "./lib/i18n";
 import { useMe } from "./lib/queries";
 import { webApp } from "./lib/telegram";
 import { AddMeal } from "./pages/AddMeal";
+import { Analytics } from "./pages/Analytics";
+import { Catalog } from "./pages/Catalog";
+import { ExerciseInfo } from "./pages/ExerciseInfo";
 import { ExerciseProgress } from "./pages/ExerciseProgress";
 import { LanguagePicker } from "./pages/LanguagePicker";
 import { Login } from "./pages/Login";
 import { Paywall } from "./pages/Paywall";
 import { Profile } from "./pages/Profile";
+import { TemplateEdit } from "./pages/TemplateEdit";
 import { Today } from "./pages/Today";
 import { Weight } from "./pages/Weight";
+import { WorkoutSession } from "./pages/WorkoutSession";
 import { Workouts } from "./pages/Workouts";
 import { AdminLayout } from "./pages/admin/AdminLayout";
 import { Broadcasts } from "./pages/admin/Broadcasts";
@@ -100,7 +105,13 @@ function AuthenticatedApp() {
         <Route index element={paid(<Today />)} />
         <Route path="add" element={paid(<AddMeal />)} />
         <Route path="workouts" element={paid(<Workouts />)} />
-        <Route path="workouts/:name" element={paid(<ExerciseProgress />)} />
+        <Route path="workouts/:id" element={paid(<WorkoutSession />)} />
+        <Route path="catalog" element={paid(<Catalog />)} />
+        <Route path="catalog/:id" element={paid(<ExerciseInfo />)} />
+        <Route path="exercises/:id" element={paid(<ExerciseProgress />)} />
+        <Route path="analytics" element={paid(<Analytics />)} />
+        <Route path="templates/new" element={paid(<TemplateEdit />)} />
+        <Route path="templates/:id" element={paid(<TemplateEdit />)} />
         <Route path="weight" element={paid(<Weight />)} />
         <Route path="profile" element={<Profile me={me} />} />
         {me.is_admin && (

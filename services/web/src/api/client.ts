@@ -1,5 +1,16 @@
 import type {
   AdminAction,
+  Analytics,
+  CatalogDetail,
+  CatalogItem,
+  Exercise,
+  ExerciseRef,
+  MuscleGroup,
+  SetValues,
+  Template,
+  TemplateInput,
+  Workout,
+  WorkoutSummary,
   Broadcast,
   Count,
   Dashboard,
@@ -117,12 +128,40 @@ export const api = {
   saveWeight: (weight_kg: number) => request<void>("PUT", "/weights/today", { weight_kg }),
   saveSteps: (steps: number) => request<void>("PUT", "/steps/today", { steps }),
 
-  exercises: () => request<string[]>("GET", "/exercises"),
-  addSets: (exercise: string, sets: { weight_kg: number; reps: number }[]) =>
-    request<WorkoutSet[]>("POST", "/workouts", { exercise, sets }),
+  catalog: () => request<CatalogItem[]>("GET", "/catalog"),
+  catalogItem: (id: string) => request<CatalogDetail>("GET", `/catalog/${encodeURIComponent(id)}`),
+  exercises: () => request<Exercise[]>("GET", "/exercises"),
+  createExercise: (name: string, group: MuscleGroup | null, cardio: boolean) =>
+    request<Exercise>("POST", "/exercises", { name, group, cardio }),
+  resolveExercise: (ref: ExerciseRef) => request<Exercise>("POST", "/exercises/resolve", ref),
+  progress: (exerciseId: number) => request<Progress>("GET", `/exercises/${exerciseId}/progress`),
+  analytics: () => request<Analytics>("GET", "/analytics"),
+
+  workouts: () => request<WorkoutSummary[]>("GET", "/workouts"),
+  activeWorkout: () => request<Workout | null>("GET", "/workouts/active"),
+  workout: (id: number) => request<Workout>("GET", `/workouts/${id}`),
+  startWorkout: (templateId?: number) =>
+    request<Workout>("POST", "/workouts", { template_id: templateId ?? null }),
+  patchWorkout: (id: number, body: { title?: string | null; finished?: boolean }) =>
+    request<Workout>("PATCH", `/workouts/${id}`, body),
+  deleteWorkout: (id: number) => request<void>("DELETE", `/workouts/${id}`),
+  addWorkoutExercise: (id: number, ref: ExerciseRef, sets = 3) =>
+    request<Workout>("POST", `/workouts/${id}/exercises`, { ...ref, sets }),
+  removeWorkoutExercise: (id: number, exerciseId: number) =>
+    request<Workout>("DELETE", `/workouts/${id}/exercises/${exerciseId}`),
+  addSet: (workoutId: number, exerciseId: number, values: SetValues) =>
+    request<WorkoutSet & { record: boolean }>("POST", `/workouts/${workoutId}/sets`, {
+      exercise_id: exerciseId,
+      ...values,
+    }),
+  patchSet: (id: number, values: SetValues) => request<WorkoutSet>("PATCH", `/sets/${id}`, values),
   deleteSet: (id: number) => request<void>("DELETE", `/sets/${id}`),
-  progress: (exercise: string) =>
-    request<Progress>("GET", `/progress?exercise=${encodeURIComponent(exercise)}`),
+
+  templates: () => request<Template[]>("GET", "/templates"),
+  createTemplate: (body: TemplateInput) => request<Template>("POST", "/templates", body),
+  updateTemplate: (id: number, body: TemplateInput) =>
+    request<Template>("PUT", `/templates/${id}`, body),
+  deleteTemplate: (id: number) => request<void>("DELETE", `/templates/${id}`),
 
   redeemPromo: (code: string) =>
     request<{ days: number; access_until: string }>("POST", "/me/promo", { code }),

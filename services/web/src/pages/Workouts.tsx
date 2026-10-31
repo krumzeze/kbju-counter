@@ -1,214 +1,202 @@
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
-import type { WorkoutSet } from "../api/types";
+import type { Workout, WorkoutSummary } from "../api/types";
 import { Spinner } from "../components/States";
-import { todayIso } from "../lib/format";
+import { compact, duration, kg } from "../lib/catalog";
+import { count, dayLabel } from "../lib/format";
 import { tr } from "../lib/i18n";
-import { useDay, useExercises, useInvalidate } from "../lib/queries";
-import { haptic } from "../lib/telegram";
-
-interface Row {
-  weight: string;
-  reps: string;
-}
-
-const emptyRow = (prev?: Row): Row => (prev ? { ...prev } : { weight: "", reps: "" });
+import {
+  useActiveWorkout,
+  useAnalytics,
+  useInvalidate,
+  useTemplates,
+  useWorkouts,
+} from "../lib/queries";
 
 export function Workouts() {
-  const day = useDay(todayIso());
-  const exercises = useExercises();
-
-  return (
-    <div className="page">
-      <h1>{tr("Тренировка", "Workout")}</h1>
-      <SetForm suggestions={exercises.data ?? []} />
-
-      <section>
-        <h2>{tr("Сегодня", "Today")}</h2>
-        {day.isPending ? <Spinner /> : <TodaySets sets={day.data?.sets ?? []} />}
-      </section>
-
-      {exercises.data && exercises.data.length > 0 && (
-        <section>
-          <h2>{tr("Прогресс", "Progress")}</h2>
-          <div className="chips">
-            {exercises.data.map((name) => (
-              <Link key={name} className="chip" to={`/workouts/${encodeURIComponent(name)}`}>
-                {name}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
-  );
-}
-
-function SetForm({ suggestions }: { suggestions: string[] }) {
-  const [exercise, setExercise] = useState("");
-  const [rows, setRows] = useState<Row[]>([emptyRow()]);
+  const active = useActiveWorkout();
+  const navigate = useNavigate();
   const invalidate = useInvalidate();
 
-  const sets = rows
-    .map((r) => ({ weight_kg: Number(r.weight.replace(",", ".")), reps: Number(r.reps) }))
-    .filter((s) => isValidSet(s.weight_kg, s.reps));
-
-  const save = useMutation({
-    mutationFn: () => api.addSets(exercise, sets),
-    onSuccess: async () => {
-      haptic("success");
-      setRows([emptyRow()]);
-      await invalidate("day", "exercises", "progress");
+  const start = useMutation({
+    mutationFn: (templateId?: number) => api.startWorkout(templateId),
+    onSuccess: async (w) => {
+      await invalidate("workout", "workouts");
+      navigate(`/workouts/${w.id}`);
     },
   });
 
-  const update = (i: number, patch: Partial<Row>) =>
-    setRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-
   return (
-    <form
-      className="card form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (exercise.trim() && sets.length) save.mutate();
-      }}
-    >
-      <label className="field">
-        <span>{tr("Упражнение", "Exercise")}</span>
-        <input
-          className="input"
-          list="exercise-list"
-          placeholder={tr("Жим лёжа", "Bench press")}
-          value={exercise}
-          onChange={(e) => setExercise(e.target.value)}
-          maxLength={128}
-        />
-        <datalist id="exercise-list">
-          {suggestions.map((s) => (
-            <option key={s} value={s} />
-          ))}
-        </datalist>
-      </label>
+    <div className="page">
+      <h1>{tr("Зал", "Gym")}</h1>
 
-      <div className="sets-grid">
-        <span className="muted small">#</span>
-        <span className="muted small">{tr("Вес, кг", "Weight, kg")}</span>
-        <span className="muted small">{tr("Повторы", "Reps")}</span>
-        <span />
-        {rows.map((row, i) => (
-          <SetRow
-            key={i}
-            index={i}
-            row={row}
-            onChange={(patch) => update(i, patch)}
-            onRemove={rows.length > 1 ? () => setRows(rows.filter((_, j) => j !== i)) : undefined}
-          />
-        ))}
+      {active.isPending ? (
+        <Spinner />
+      ) : active.data ? (
+        <ActiveCard workout={active.data} />
+      ) : (
+        <button
+          className="btn btn-primary btn-block"
+          disabled={start.isPending}
+          onClick={() => start.mutate(undefined)}
+        >
+          ▶ {tr("Начать тренировку", "Start workout")}
+        </button>
+      )}
+      {start.isError && <p className="error">{errorMessage(start.error)}</p>}
+
+      <WeekCard />
+
+      <div className="nav-cards">
+        <Link to="/catalog" className="card nav-card">
+          <span className="nav-card-icon" aria-hidden>
+            ☰
+          </span>
+          <strong>{tr("Упражнения", "Exercises")}</strong>
+          <span className="muted small">{tr("Техника и мышцы", "Technique and muscles")}</span>
+        </Link>
+        <Link to="/analytics" className="card nav-card">
+          <span className="nav-card-icon" aria-hidden>
+            ↗
+          </span>
+          <strong>{tr("Аналитика", "Analytics")}</strong>
+          <span className="muted small">{tr("Прогресс и рекорды", "Progress and records")}</span>
+        </Link>
       </div>
 
-      <button
-        type="button"
-        className="btn-ghost"
-        onClick={() => rows.length < 20 && setRows([...rows, emptyRow(rows[rows.length - 1])])}
-      >
-        ＋ {tr("Подход", "Set")}
-      </button>
-
-      {save.isError && <p className="error">{errorMessage(save.error)}</p>}
-      <button
-        className="btn btn-primary btn-block"
-        disabled={!exercise.trim() || !sets.length || save.isPending}
-      >
-        {tr("Записать", "Log")} {sets.length > 0 ? `(${sets.length})` : ""}
-      </button>
-    </form>
-  );
-}
-
-function isValidSet(weight: number, reps: number) {
-  return Number.isFinite(weight) && weight >= 0 && weight <= 1000 && Number.isInteger(reps) && reps >= 1;
-}
-
-function SetRow({
-  index,
-  row,
-  onChange,
-  onRemove,
-}: {
-  index: number;
-  row: Row;
-  onChange: (patch: Partial<Row>) => void;
-  onRemove?: () => void;
-}) {
-  return (
-    <>
-      <span className="set-index">{index + 1}</span>
-      <input
-        className="input"
-        inputMode="decimal"
-        placeholder="80"
-        value={row.weight}
-        onChange={(e) => onChange({ weight: e.target.value.replace(/[^\d.,]/g, "") })}
-        aria-label={tr(`Вес, подход ${index + 1}`, `Weight, set ${index + 1}`)}
+      <Templates
+        disabled={!!active.data || start.isPending}
+        onStart={(id) => start.mutate(id)}
       />
-      <input
-        className="input"
-        inputMode="numeric"
-        placeholder="8"
-        value={row.reps}
-        onChange={(e) => onChange({ reps: e.target.value.replace(/\D/g, "") })}
-        aria-label={tr(`Повторы, подход ${index + 1}`, `Reps, set ${index + 1}`)}
-      />
-      {onRemove ? (
-        <button type="button" className="icon-btn" onClick={onRemove} aria-label={tr("Убрать подход", "Remove set")}>
-          ×
-        </button>
-      ) : (
-        <span />
-      )}
-    </>
-  );
-}
 
-function TodaySets({ sets }: { sets: WorkoutSet[] }) {
-  const invalidate = useInvalidate();
-  const remove = useMutation({
-    mutationFn: (id: number) => api.deleteSet(id),
-    onSuccess: () => invalidate("day", "progress"),
-  });
-
-  if (sets.length === 0) return <p className="empty">{tr("Сегодня подходов ещё не было.", "No sets logged today yet.")}</p>;
-
-  const grouped = new Map<string, WorkoutSet[]>();
-  for (const s of sets) grouped.set(s.exercise, [...(grouped.get(s.exercise) ?? []), s]);
-  return (
-    <div className="stack">
-      {[...grouped].map(([name, items]) => (
-        <div key={name} className="card">
-          <Link to={`/workouts/${encodeURIComponent(name)}`} className="set-title">
-            {name}
-          </Link>
-          <ul className="set-list">
-            {items.map((s) => (
-              <li key={s.id}>
-                <span>
-                  {s.weight_kg} {tr("кг", "kg")} × {s.reps}
-                </span>
-                <button
-                  className="icon-btn"
-                  disabled={remove.isPending}
-                  onClick={() => remove.mutate(s.id)}
-                  aria-label={tr("Удалить подход", "Delete set")}
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <History />
     </div>
+  );
+}
+
+function ActiveCard({ workout }: { workout: Workout }) {
+  return (
+    <Link to={`/workouts/${workout.id}`} className="card active-workout">
+      <span className="pulse" aria-hidden />
+      <div>
+        <strong>{workout.title || tr("Тренировка идёт", "Workout in progress")}</strong>
+        <span className="muted small">
+          {duration(workout.started_at)} · {workout.sets}{" "}
+          {count(workout.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}
+        </span>
+      </div>
+      <span className="btn btn-primary small">{tr("Продолжить", "Continue")}</span>
+    </Link>
+  );
+}
+
+function WeekCard() {
+  const { data } = useAnalytics();
+  if (!data) return null;
+  const week = data.weeks[data.weeks.length - 1];
+  return (
+    <section className="stats-row three">
+      <div className="card stat">
+        <span className="muted small">{tr("На этой неделе", "This week")}</span>
+        <strong>{week.workouts}</strong>
+        <span className="muted small">
+          {count(week.workouts, ["тренировка", "тренировки", "тренировок"], ["workout", "workouts"])}
+        </span>
+      </div>
+      <div className="card stat">
+        <span className="muted small">{tr("Тоннаж", "Volume")}</span>
+        <strong>{compact(week.volume_kg)}</strong>
+        <span className="muted small">{tr("кг за неделю", "kg this week")}</span>
+      </div>
+      <div className="card stat">
+        <span className="muted small">{tr("Серия", "Streak")}</span>
+        <strong>{data.streak_weeks}</strong>
+        <span className="muted small">
+          {count(data.streak_weeks, ["неделя", "недели", "недель"], ["week", "weeks"])}
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function Templates({ disabled, onStart }: { disabled: boolean; onStart: (id: number) => void }) {
+  const { data } = useTemplates();
+  return (
+    <section>
+      <div className="card-head">
+        <h2>{tr("Мои программы", "My routines")}</h2>
+        <Link to="/templates/new" className="btn-ghost">
+          ＋ {tr("Создать", "New")}
+        </Link>
+      </div>
+      {!data?.length ? (
+        <p className="empty small">
+          {tr(
+            "Собери программу, например «Грудь и трицепс», и запускай тренировку в одно касание.",
+            'Build a routine such as "Chest and triceps" and start a workout in one tap.',
+          )}
+        </p>
+      ) : (
+        <div className="template-list">
+          {data.map((t) => (
+            <div key={t.id} className="card template">
+              <Link to={`/templates/${t.id}`} className="template-body">
+                <strong>{t.name}</strong>
+                <span className="muted small">
+                  {t.items.map((i) => i.exercise.name).join(", ") || tr("Пусто", "Empty")}
+                </span>
+              </Link>
+              <button
+                className="btn btn-primary small"
+                disabled={disabled}
+                onClick={() => onStart(t.id)}
+                aria-label={tr(`Начать: ${t.name}`, `Start: ${t.name}`)}
+              >
+                ▶
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function History() {
+  const { data, isPending } = useWorkouts();
+  if (isPending) return null;
+  const done = (data ?? []).filter((w) => w.finished_at && w.sets > 0);
+  if (!done.length) return null;
+  return (
+    <section>
+      <h2>{tr("История", "History")}</h2>
+      <div className="stack">
+        {done.map((w) => (
+          <HistoryItem key={w.id} workout={w} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HistoryItem({ workout: w }: { workout: WorkoutSummary }) {
+  return (
+    <Link to={`/workouts/${w.id}`} className="card history-item">
+      <div className="history-head">
+        <strong className="capitalize">{w.title || dayLabel(w.day)}</strong>
+        <span className="muted small">{w.title ? dayLabel(w.day) : duration(w.started_at, w.finished_at)}</span>
+      </div>
+      <span className="muted small clamp">{w.names.join(" · ")}</span>
+      <span className="history-stats small">
+        <span>
+          {w.exercises} {count(w.exercises, ["упражнение", "упражнения", "упражнений"], ["exercise", "exercises"])}
+        </span>
+        <span>
+          {w.sets} {count(w.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}
+        </span>
+        {w.volume_kg > 0 && <span>{kg(w.volume_kg)}</span>}
+      </span>
+    </Link>
   );
 }

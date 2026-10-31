@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { niceCeil, shortDate } from "../lib/format";
-import { tr } from "../lib/i18n";
+import { locale, tr } from "../lib/i18n";
 import { useWidth } from "../lib/useWidth";
 
 interface Point {
@@ -46,7 +46,7 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
     <div ref={ref} className={className ? `chart ${className}` : "chart"}>
       <div className="chart-readout">
         <strong>
-          {points[shown].value.toLocaleString("ru-RU", { maximumFractionDigits: 1 })} {unit}
+          {points[shown].value.toLocaleString(locale(), { maximumFractionDigits: 1 })} {unit}
         </strong>
         <span className="muted">{shortDate(points[shown].day)}</span>
       </div>

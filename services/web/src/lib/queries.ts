@@ -11,8 +11,29 @@ export const useWeights = () => useQuery({ queryKey: ["weights"], queryFn: api.w
 
 export const useExercises = () => useQuery({ queryKey: ["exercises"], queryFn: api.exercises });
 
-export const useProgress = (exercise: string) =>
-  useQuery({ queryKey: ["progress", exercise], queryFn: () => api.progress(exercise) });
+export const useProgress = (exerciseId: number) =>
+  useQuery({ queryKey: ["progress", exerciseId], queryFn: () => api.progress(exerciseId) });
+
+export const useCatalog = () =>
+  useQuery({ queryKey: ["catalog"], queryFn: api.catalog, staleTime: Infinity });
+
+export const useCatalogItem = (id: string) =>
+  useQuery({ queryKey: ["catalog", id], queryFn: () => api.catalogItem(id), staleTime: Infinity });
+
+export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: api.analytics });
+
+export const useWorkouts = () => useQuery({ queryKey: ["workouts"], queryFn: api.workouts });
+
+export const useActiveWorkout = () =>
+  useQuery({ queryKey: ["workout", "active"], queryFn: api.activeWorkout });
+
+export const useWorkout = (id: number) =>
+  useQuery({ queryKey: ["workout", id], queryFn: () => api.workout(id) });
+
+export const useTemplates = () => useQuery({ queryKey: ["templates"], queryFn: api.templates });
+
+/** Everything derived from logged sets. */
+export const WORKOUT_KEYS = ["workout", "workouts", "exercises", "progress", "analytics", "day"];
 
 export function useInvalidate() {
   const client = useQueryClient();
