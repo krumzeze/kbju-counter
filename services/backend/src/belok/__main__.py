@@ -14,6 +14,7 @@ from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
 from belok.services.broadcasts import run_worker
 from belok.services.monitor import run_monitor
+from belok.services.tribute import TributeCatalog
 
 
 async def main() -> None:
@@ -30,6 +31,7 @@ async def main() -> None:
         settings.bot_token.get_secret_value(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+    tribute = TributeCatalog.from_settings(settings)
     dp = build_dispatcher(settings, storage, sessionmaker)
     background = [
         asyncio.create_task(run_worker(bot, sessionmaker)),
@@ -40,7 +42,7 @@ async def main() -> None:
 
     try:
         await setup_defaults(bot, settings)
-        await dp.start_polling(bot, settings=settings, analyzer=analyzer)
+        await dp.start_polling(bot, settings=settings, analyzer=analyzer, tribute=tribute)
     finally:
         for task in background:
             task.cancel()

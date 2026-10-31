@@ -89,6 +89,15 @@ class LanguageIn(BaseModel):
     language: Language
 
 
+class PlanOut(BaseModel):
+    code: str
+    days: int
+    link: str
+    web_link: str
+    amount: int | None
+    currency: str | None
+
+
 class PromoRedeemIn(BaseModel):
     code: str = Field(min_length=1, max_length=64)
 

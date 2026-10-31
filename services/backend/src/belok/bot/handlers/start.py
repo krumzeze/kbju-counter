@@ -2,7 +2,7 @@ from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.bot import texts
@@ -13,9 +13,12 @@ from belok.config import Settings
 from belok.db.models import User
 from belok.domain.nutrition import daily_target
 from belok.i18n import Language
+from belok.services.access import access_until, has_access
 from belok.services.promos import PROMO_PREFIX, PromoResult, redeem
 from belok.services.referrals import referral_stats
+from belok.services.tribute import TributeCatalog
 from belok.services.users import REFERRAL_PREFIX, update_profile
+from belok.timeutil import utcnow
 
 router = Router(name="start")
 
@@ -85,6 +88,33 @@ async def cmd_promo(
         await message.answer(t(lang, "promo_usage"))
         return
     await _apply_promo(message, session, user, lang, command.args)
+
+
+@router.message(Command("subscribe"))
+async def cmd_subscribe(
+    message: Message, user: User, tribute: TributeCatalog, lang: Language
+) -> None:
+    if not tribute.enabled:
+        await message.answer(t(lang, "payments_unavailable"))
+        return
+    now = utcnow()
+    access = (
+        t(lang, "access_until", date=texts.long_date(lang, access_until(user)))
+        if has_access(user, now)
+        else t(lang, "access_none")
+    )
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text=texts.plan_button(lang, p.days, p.amount, p.currency), url=p.link
+            )
+        ]
+        for p in await tribute.plans()
+    ]
+    await message.answer(
+        t(lang, "subscribe", access=access),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+    )
 
 
 @router.message(Command("invite"))

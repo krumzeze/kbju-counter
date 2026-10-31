@@ -21,12 +21,15 @@ kubectl create secret generic belok-secrets -n belok --dry-run=client -o yaml \
   --from-literal=BOT_TOKEN=... \
   --from-literal=LLM_API_KEY=... \
   --from-literal=API_SECRET=$(openssl rand -hex 32) \
+  --from-literal=TRIBUTE_API_KEY=... \
   | kubeseal --controller-namespace kube-system -o yaml > deploy/belok-base/belok-secrets.yaml
 ```
 
 3. `BOT_USERNAME` и `ADMIN_ID` (свой Telegram ID) в `environments/prod/values.yaml`, закоммитить
    вместе с секретом. Без `ADMIN_ID` админом становится первый пользователь.
 4. В @BotFather `/setdomain` для Login Widget.
+5. В Tribute: «Настройки» → «API-ключи» → «URL вебхука» = `https://<host>/api/payments/tribute`.
+   Коды товаров из ссылок `web.tribute.tg/p/<код>` и сроки в днях задаёт `TRIBUTE_PLANS`.
 
 ## Операции
 

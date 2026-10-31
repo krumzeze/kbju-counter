@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     webapp_url: str | None = None
     admin_id: int | None = None
 
+    tribute_api_key: SecretStr | None = None
+    # Comma-separated "<product code from the web.tribute.tg/p/ link>:<days>".
+    tribute_plans: str = "IMK:30,IMM:90,IMO:365"
+
     trial_days: int = 4
     referral_trial_days: int = 7
     referral_reward_days: int = 7
@@ -32,7 +36,7 @@ class Settings(BaseSettings):
     default_timezone: str = "Europe/Moscow"
     log_level: str = "INFO"
 
-    @field_validator("admin_id", mode="before")
+    @field_validator("admin_id", "tribute_api_key", mode="before")
     @classmethod
     def empty_as_none(cls, value: object) -> object:
         return None if value == "" else value

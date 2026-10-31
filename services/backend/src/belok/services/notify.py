@@ -9,7 +9,7 @@ from belok.db.models import User
 
 log = logging.getLogger(__name__)
 
-DEFAULT_PREFS = {"new_users": True, "errors": True, "daily": True}
+DEFAULT_PREFS = {"new_users": True, "payments": True, "errors": True, "daily": True}
 
 
 def admin_prefs(user: User) -> dict[str, bool]:

@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, datetime
 from html import escape
 
 from belok.config import Settings
-from belok.db.models import Meal
+from belok.db.models import Meal, Payment, User
 from belok.domain.nutrition import Macros
 from belok.i18n import Language
+from belok.services.access import access_until
 from belok.services.repo import DaySummary
 
 RU, EN = Language.RU, Language.EN
@@ -50,10 +51,10 @@ STRINGS: dict[str, dict[Language, str]] = {
         EN: "First, fill in a quick profile: /start",
     },
     "access_expired": {
-        RU: "Бесплатный период закончился. Скоро здесь появится подписка, "
-        "а пока напиши автору, чтобы продлить доступ.",
-        EN: "Your free trial has ended. Subscriptions are coming soon, "
-        "for now message the author to extend your access.",
+        RU: "Бесплатный период закончился. Все записи сохранены: "
+        "оформи подписку, и всё снова заработает. /subscribe",
+        EN: "Your free trial has ended. All your entries are saved: "
+        "subscribe and everything works again. /subscribe",
     },
     "blocked": {RU: "Доступ к боту ограничен.", EN: "Your access to this bot has been restricted."},
     "promo_usage": {
@@ -216,7 +217,33 @@ STRINGS: dict[str, dict[Language, str]] = {
         EN: "Estimated 1RM change: {delta:+.1f} kg",
     },
     "open_app": {RU: "Открыть", EN: "Open"},
+    "subscribe": {
+        RU: "<b>Подписка «Белок»</b>\n\n"
+        "Полный доступ: КБЖУ по фото, трекинг тренировок и аналитика. "
+        "Оплата через СБП или звёздами Telegram.\n\n{access}",
+        EN: "<b>Belok subscription</b>\n\n"
+        "Full access: macros from photos, workout tracking and analytics. "
+        "Pay via SBP or Telegram Stars.\n\n{access}",
+    },
+    "access_until": {RU: "Доступ сейчас до {date}.", EN: "Current access until {date}."},
+    "access_none": {RU: "Сейчас доступа нет.", EN: "You don't have access right now."},
+    "payments_unavailable": {
+        RU: "Оплата пока не подключена, напиши автору.",
+        EN: "Payments aren't set up yet, please message the author.",
+    },
+    "payment_ok": {
+        RU: "✅ Оплата получена, спасибо! Доступ продлён до {date}.",
+        EN: "✅ Payment received, thank you! Access extended until {date}.",
+    },
+    "payment_refunded": {
+        RU: "Возврат оформлен, доступ сокращён на {days} дн.",
+        EN: "Refund processed, access shortened by {days} days.",
+    },
+    "months": {RU: "{n} мес.", EN: "{n} mo."},
+    "year": {RU: "1 год", EN: "1 year"},
+    "days": {RU: "{n} дн.", EN: "{n} days"},
 }
+
 
 COMMANDS: dict[str, dict[Language, str]] = {
     "today": {RU: "Итоги дня", EN: "Today's totals"},
@@ -225,6 +252,7 @@ COMMANDS: dict[str, dict[Language, str]] = {
     "gym": {RU: "Записать подходы", EN: "Log sets"},
     "progress": {RU: "Прогресс по упражнению", EN: "Exercise progress"},
     "profile": {RU: "Изменить анкету", EN: "Update profile"},
+    "subscribe": {RU: "Подписка", EN: "Subscription"},
     "invite": {RU: "Пригласить друга", EN: "Invite a friend"},
     "promo": {RU: "Активировать промокод", EN: "Redeem a promo code"},
     "language": {RU: "Сменить язык", EN: "Change language"},
@@ -238,6 +266,34 @@ def t(lang: Language, key: str, **kwargs: object) -> str:
 
 def short_date(lang: Language, day: date) -> str:
     return f"{day:%d.%m}" if lang == RU else f"{day:%b %d}"
+
+
+CURRENCY_SIGNS = {"RUB": "₽", "EUR": "€", "USD": "$"}
+
+
+def long_date(lang: Language, moment: datetime) -> str:
+    return f"{moment:%d.%m.%Y}" if lang == RU else f"{moment:%b %d, %Y}"
+
+
+def plan_title(lang: Language, days: int) -> str:
+    if days == 365:
+        return t(lang, "year")
+    if days % 30 == 0:
+        return t(lang, "months", n=days // 30)
+    return t(lang, "days", n=days)
+
+
+def plan_button(lang: Language, days: int, amount: int | None, currency: str | None) -> str:
+    title = plan_title(lang, days)
+    if amount is None or not currency:
+        return title
+    return f"{title} · {amount / 100:g} {CURRENCY_SIGNS.get(currency, currency)}"
+
+
+def payment_text(lang: Language, user: User, payment: Payment, refunded: bool) -> str:
+    if refunded:
+        return t(lang, "payment_refunded", days=payment.days)
+    return t(lang, "payment_ok", date=long_date(lang, access_until(user)))
 
 
 def promo_ok(lang: Language, days: int) -> str:

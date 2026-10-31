@@ -7,9 +7,10 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from belok.api.routes import admin, auth, me, meals, tracking, workouts
+from belok.api.routes import admin, auth, me, meals, payments, tracking, workouts
 from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
+from belok.services.tribute import TributeCatalog
 
 
 @asynccontextmanager
@@ -41,7 +42,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
     )
     app.state.settings = settings
-    for module in (admin, auth, me, meals, tracking, workouts):
+    app.state.tribute = TributeCatalog.from_settings(settings)
+    for module in (admin, auth, me, meals, payments, tracking, workouts):
         app.include_router(module.router, prefix="/api")
 
     @app.get("/healthz", include_in_schema=False)

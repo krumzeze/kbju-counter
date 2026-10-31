@@ -221,11 +221,13 @@ class ReferrerOut(UserBriefOut):
 
 class PrefsOut(BaseModel):
     new_users: bool
+    payments: bool
     errors: bool
     daily: bool
 
 
 class PrefsIn(BaseModel):
     new_users: bool | None = None
+    payments: bool | None = None
     errors: bool | None = None
     daily: bool | None = None

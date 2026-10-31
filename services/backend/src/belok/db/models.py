@@ -273,6 +273,23 @@ class ReferralReward(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    provider: Mapped[str] = mapped_column(String(16))
+    external_ref: Mapped[str] = mapped_column(String(255), unique=True)
+    product: Mapped[str] = mapped_column(String(64))
+    amount: Mapped[int] = mapped_column(Integer)
+    currency: Mapped[str] = mapped_column(String(8))
+    days: Mapped[int] = mapped_column(Integer)
+    refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Broadcast(Base):
     __tablename__ = "broadcasts"
 
