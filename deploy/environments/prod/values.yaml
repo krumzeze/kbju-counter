@@ -4,5 +4,5 @@ image:
   tag: "471c945d58df777bf3c395322d4ff6c30ccb04ec"
 
 config:
-  BOT_USERNAME: ""
-  ADMIN_ID: ""
+  BOT_USERNAME: "kbjubelokbot"
+  ADMIN_ID: "524698780"
