@@ -85,6 +85,7 @@ async def _me(session: AsyncSession, user: User) -> MeOut:
     return MeOut(
         id=user.id,
         username=user.username,
+        first_name=user.first_name,
         profile_complete=user.profile_complete,
         sex=user.sex,
         age=age,

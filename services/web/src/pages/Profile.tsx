@@ -1,11 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage, setToken } from "../api/client";
 import type { Goal, Me, Sex } from "../api/types";
 import { daysLeft, daysWord, round } from "../lib/format";
 import { type Lang, locale, tr } from "../lib/i18n";
+import { Art } from "../components/Art";
+import { Avatar } from "../components/Avatar";
 import { PromoCard, ReferralCard } from "../components/Growth";
+import { Icon } from "../components/Icon";
 import { Plans } from "../components/Plans";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
@@ -39,6 +42,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
     <div className="page">
       {onboarding ? (
         <>
+          <Art name="onboarding" className="art onboarding-art" />
           <h1>{tr("Давай знакомиться", "Let's get to know you")}</h1>
           <p className="muted">
             {tr(
@@ -49,13 +53,18 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
         </>
       ) : (
         <>
-          <h1>{tr("Профиль", "Profile")}</h1>
-          <AccessCard me={me} />
+          <section className="card sage profile-head">
+            <Avatar name={me.first_name ?? me.username} />
+            <div>
+              <strong>{me.first_name ?? (me.username ? `@${me.username}` : tr("Профиль", "Profile"))}</strong>
+              <span className="muted small">{accessText(me)}</span>
+            </div>
+          </section>
           {me.status !== "lifetime" && <Plans />}
           <LanguageCard me={me} />
           {me.base_target && (
-            <div className="card">
-              <span className="muted">{tr("Базовая норма без активности", "Base target before activity")}</span>
+            <div className="card peach">
+              <span className="small">{tr("Базовая норма без активности", "Base target before activity")}</span>
               <p className="target-line">
                 <strong>
                   {round(me.base_target.kcal)} {tr("ккал", "kcal")}
@@ -144,16 +153,27 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
         </>
       )}
 
-      {!onboarding && !isMiniApp && (
-        <button
-          className="btn-ghost"
-          onClick={() => {
-            setToken(null);
-            window.location.assign("/");
-          }}
-        >
-          {tr("Выйти", "Sign out")}
-        </button>
+      {!onboarding && (me.is_admin || !isMiniApp) && (
+        <nav className="card menu">
+          {me.is_admin && (
+            <Link to="/admin">
+              <Icon name="settings" />
+              <span className="grow">{tr("Админка", "Admin")}</span>
+              <Icon name="chevron" size={18} />
+            </Link>
+          )}
+          {!isMiniApp && (
+            <button
+              onClick={() => {
+                setToken(null);
+                window.location.assign("/");
+              }}
+            >
+              <Icon name="logout" />
+              <span className="grow">{tr("Выйти", "Sign out")}</span>
+            </button>
+          )}
+        </nav>
       )}
     </div>
   );
@@ -182,26 +202,16 @@ function NumberField(props: {
   );
 }
 
-function AccessCard({ me }: { me: Me }) {
-  if (me.status === "lifetime") {
-    return <div className="card access">{tr("Бесплатный доступ навсегда", "Free access forever")}</div>;
-  }
+function accessText(me: Me): string {
+  if (me.status === "lifetime") return tr("Бесплатный доступ навсегда", "Free access forever");
   if (me.status === "active") {
-    return (
-      <div className="card access">
-        {tr("Доступ активен до", "Access active until")}{" "}
-        {new Date(me.access_until).toLocaleDateString(locale())}
-      </div>
-    );
+    const until = new Date(me.access_until).toLocaleDateString(locale());
+    return tr(`Доступ активен до ${until}`, `Access active until ${until}`);
   }
   const left = daysLeft(me.trial_ends_at);
-  return (
-    <div className="card access">
-      {left > 0
-        ? tr(`Пробный период: осталось ${left} ${daysWord(left)}`, `Free trial: ${left} ${daysWord(left)} left`)
-        : tr("Пробный период закончился", "Your free trial has ended")}
-    </div>
-  );
+  return left > 0
+    ? tr(`Пробный период: осталось ${left} ${daysWord(left)}`, `Free trial: ${left} ${daysWord(left)} left`)
+    : tr("Пробный период закончился", "Your free trial has ended");
 }
 
 function LanguageCard({ me }: { me: Me }) {

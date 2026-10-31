@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Meal } from "../api/types";
+import { Art } from "../components/Art";
+import { Icon } from "../components/Icon";
 import { MealCard } from "../components/MealCard";
 import { tr } from "../lib/i18n";
 import { prepareImage } from "../lib/image";
@@ -53,13 +55,18 @@ export function AddMeal() {
   if (meal) {
     return (
       <div className="page">
-        <h1>{tr("Готово", "Done")}</h1>
-        <p className="muted">
-          {tr(
-            "Если порция на фото больше или меньше, поправь её кнопками.",
-            "If the portion is bigger or smaller than it looks, adjust it with the buttons.",
-          )}
-        </p>
+        <div className="done-head">
+          <Art name="meal-done" />
+          <div className="done-text">
+            <h1>{tr("Готово", "Done")}</h1>
+            <p className="muted">
+              {tr(
+                "Если порция больше или меньше, поправь её кнопками.",
+                "If the portion is bigger or smaller, adjust it with the buttons.",
+              )}
+            </p>
+          </div>
+        </div>
         <MealCard meal={meal} defaultOpen />
         <div className="row">
           <button className="btn" onClick={reset}>
@@ -80,10 +87,12 @@ export function AddMeal() {
       <h1>{tr("Что съел?", "What did you eat?")}</h1>
       <div className="segmented" role="tablist">
         <button role="tab" aria-selected={mode === "photo"} onClick={() => setMode("photo")}>
-          📸 {tr("Фото", "Photo")}
+          <Icon name="camera" size={18} />
+          {tr("Фото", "Photo")}
         </button>
         <button role="tab" aria-selected={mode === "text"} onClick={() => setMode("text")}>
-          ✍️ {tr("Текстом", "Text")}
+          <Icon name="pen" size={18} />
+          {tr("Текстом", "Text")}
         </button>
       </div>
 
@@ -94,6 +103,14 @@ export function AddMeal() {
               <img src={preview} alt={tr("Фото блюда", "Meal photo")} />
             ) : (
               <span>
+                <Art
+                  name="add-photo"
+                  fallback={
+                    <span className="dropzone-icon">
+                      <Icon name="camera" size={32} />
+                    </span>
+                  }
+                />
                 <strong>{tr("Сфотографируй тарелку", "Take a photo of your plate")}</strong>
                 <span className="muted">{tr("или выбери фото из галереи", "or pick one from your gallery")}</span>
               </span>

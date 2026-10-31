@@ -1,3 +1,4 @@
+import { Art } from "../components/Art";
 import { PromoCard, ReferralCard } from "../components/Growth";
 import { Plans } from "../components/Plans";
 import { tr } from "../lib/i18n";
@@ -5,8 +6,8 @@ import { tr } from "../lib/i18n";
 export function Paywall() {
   return (
     <div className="page">
-      <div className="card paywall">
-        <span className="feature-icon">⏳</span>
+      <div className="card peach paywall">
+        <Art name="paywall" fallback={<span className="feature-icon">⏳</span>} />
         <h1>{tr("Пробный период закончился", "Your free trial has ended")}</h1>
         <p className="muted">
           {tr(

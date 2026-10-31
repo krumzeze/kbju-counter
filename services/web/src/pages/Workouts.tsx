@@ -2,6 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Workout, WorkoutSummary } from "../api/types";
+import { Art } from "../components/Art";
+import { Icon } from "../components/Icon";
 import { Spinner } from "../components/States";
 import { compact, duration, kg } from "../lib/catalog";
 import { count, dayLabel } from "../lib/format";
@@ -41,7 +43,8 @@ export function Workouts() {
           disabled={start.isPending}
           onClick={() => start.mutate(undefined)}
         >
-          ▶ {tr("Начать тренировку", "Start workout")}
+          <Icon name="play" size={18} />
+          {tr("Начать тренировку", "Start workout")}
         </button>
       )}
       {start.isError && <p className="error">{errorMessage(start.error)}</p>}
@@ -49,16 +52,16 @@ export function Workouts() {
       <WeekCard />
 
       <div className="nav-cards">
-        <Link to="/catalog" className="card nav-card">
+        <Link to="/catalog" className="card sage nav-card">
           <span className="nav-card-icon" aria-hidden>
-            ☰
+            <Icon name="list" />
           </span>
           <strong>{tr("Упражнения", "Exercises")}</strong>
           <span className="muted small">{tr("Техника и мышцы", "Technique and muscles")}</span>
         </Link>
-        <Link to="/analytics" className="card nav-card">
+        <Link to="/analytics" className="card sand nav-card">
           <span className="nav-card-icon" aria-hidden>
-            ↗
+            <Icon name="chart" />
           </span>
           <strong>{tr("Аналитика", "Analytics")}</strong>
           <span className="muted small">{tr("Прогресс и рекорды", "Progress and records")}</span>
@@ -97,20 +100,20 @@ function WeekCard() {
   const week = data.weeks[data.weeks.length - 1];
   return (
     <section className="stats-row three">
-      <div className="card stat">
-        <span className="muted small">{tr("На этой неделе", "This week")}</span>
+      <div className="card peach stat">
+        <span className="small">{tr("Неделя", "This week")}</span>
         <strong>{week.workouts}</strong>
         <span className="muted small">
           {count(week.workouts, ["тренировка", "тренировки", "тренировок"], ["workout", "workouts"])}
         </span>
       </div>
-      <div className="card stat">
-        <span className="muted small">{tr("Тоннаж", "Volume")}</span>
+      <div className="card sage stat">
+        <span className="small">{tr("Тоннаж", "Volume")}</span>
         <strong>{compact(week.volume_kg)}</strong>
         <span className="muted small">{tr("кг за неделю", "kg this week")}</span>
       </div>
-      <div className="card stat">
-        <span className="muted small">{tr("Серия", "Streak")}</span>
+      <div className="card blush stat">
+        <span className="small">{tr("Серия", "Streak")}</span>
         <strong>{data.streak_weeks}</strong>
         <span className="muted small">
           {count(data.streak_weeks, ["неделя", "недели", "недель"], ["week", "weeks"])}
@@ -127,16 +130,20 @@ function Templates({ disabled, onStart }: { disabled: boolean; onStart: (id: num
       <div className="card-head">
         <h2>{tr("Мои программы", "My routines")}</h2>
         <Link to="/templates/new" className="btn-ghost">
-          ＋ {tr("Создать", "New")}
+          <Icon name="plus" size={18} />
+          {tr("Создать", "New")}
         </Link>
       </div>
       {!data?.length ? (
-        <p className="empty small">
-          {tr(
-            "Собери программу, например «Грудь и трицепс», и запускай тренировку в одно касание.",
-            'Build a routine such as "Chest and triceps" and start a workout in one tap.',
-          )}
-        </p>
+        <div className="empty small">
+          <Art name="empty-routines" />
+          <p>
+            {tr(
+              "Собери программу, например «Грудь и трицепс», и запускай тренировку в одно касание.",
+              'Build a routine such as "Chest and triceps" and start a workout in one tap.',
+            )}
+          </p>
+        </div>
       ) : (
         <div className="template-list">
           {data.map((t) => (
@@ -153,7 +160,7 @@ function Templates({ disabled, onStart }: { disabled: boolean; onStart: (id: num
                 onClick={() => onStart(t.id)}
                 aria-label={tr(`Начать: ${t.name}`, `Start: ${t.name}`)}
               >
-                ▶
+                <Icon name="play" size={16} />
               </button>
             </div>
           ))}

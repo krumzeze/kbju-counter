@@ -7,8 +7,9 @@ interface TelegramBackButton {
 
 interface TelegramWebApp {
   initData: string;
-  initDataUnsafe?: { user?: { language_code?: string } };
-  colorScheme: "light" | "dark";
+  initDataUnsafe?: { user?: { language_code?: string; photo_url?: string } };
+  setHeaderColor?(color: string): void;
+  setBackgroundColor?(color: string): void;
   ready(): void;
   expand(): void;
   BackButton: TelegramBackButton;

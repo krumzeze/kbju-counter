@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { errorMessage } from "../api/client";
 import type { MuscleGroup } from "../api/types";
 import { BACK_FIRST, BodyMap, GROUP_VIEW } from "../components/BodyMap";
+import { Art } from "../components/Art";
 import { ExerciseThumb, groupValues } from "../components/ExerciseThumb";
 import { ErrorState, Spinner } from "../components/States";
 import {
@@ -76,10 +77,15 @@ export function Catalog() {
               {GROUPS.map((g) => (
                 <Link key={g} to={`?group=${g}`} className="tile">
                   <div className="tile-art">
-                    <BodyMap
-                      values={groupValues(g)}
-                      side={BACK_FIRST.has(g) ? "back" : "front"}
-                      view={GROUP_VIEW[g]}
+                    <Art
+                      name={`muscle-${g}`}
+                      fallback={
+                        <BodyMap
+                          values={groupValues(g)}
+                          side={BACK_FIRST.has(g) ? "back" : "front"}
+                          view={GROUP_VIEW[g]}
+                        />
+                      }
                     />
                   </div>
                   <span>{groupLabel(g)}</span>
@@ -90,8 +96,11 @@ export function Catalog() {
             <div className="tile-grid two">
               {EQUIPMENT.filter((e) => data.some((x) => x.equipment === e)).map((e) => (
                 <Link key={e} to={`?equipment=${encodeURIComponent(e)}`} className="tile">
-                  <div className="tile-art photo">
-                    <img src={imageUrl(EQUIPMENT_COVER[e])} alt="" loading="lazy" />
+                  <div className="tile-art">
+                    <Art
+                      name={`equipment-${e.replace(/[^a-z]+/g, "-")}`}
+                      fallback={<img className="cover" src={imageUrl(EQUIPMENT_COVER[e])} alt="" loading="lazy" />}
+                    />
                   </div>
                   <span>
                     {equipmentLabel(e)}{" "}
@@ -107,7 +116,10 @@ export function Catalog() {
       {(filtered || query) && (
         <>
           {results.length === 0 ? (
-            <p className="empty">{tr("Ничего не нашлось.", "Nothing found.")}</p>
+            <div className="empty">
+              <Art name="empty-search" />
+              <p>{tr("Ничего не нашлось.", "Nothing found.")}</p>
+            </div>
           ) : (
             <ul className="pick-list">
               {results.slice(0, LIMIT).map((x) => (

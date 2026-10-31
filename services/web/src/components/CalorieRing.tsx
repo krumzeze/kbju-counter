@@ -1,28 +1,19 @@
-import { round } from "../lib/format";
 import { tr } from "../lib/i18n";
 
-interface Props {
-  eaten: number;
-  target: number | null;
-}
-
-const SIZE = 184;
-const STROKE = 14;
+const SIZE = 96;
+const STROKE = 9;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function CalorieRing({ eaten, target }: Props) {
-  const ratio = target ? eaten / target : 0;
-  const over = ratio > 1;
+export function CalorieRing({ eaten, target }: { eaten: number; target: number }) {
+  const ratio = target > 0 ? eaten / target : 0;
   const dash = CIRCUMFERENCE * Math.min(ratio, 1);
-  const left = target ? target - eaten : null;
-
   return (
     <div className="ring">
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden>
         <circle className="ring-track" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} strokeWidth={STROKE} />
         <circle
-          className={over ? "ring-value ring-over" : "ring-value"}
+          className={ratio > 1 ? "ring-value ring-over" : "ring-value"}
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
@@ -32,20 +23,8 @@ export function CalorieRing({ eaten, target }: Props) {
         />
       </svg>
       <div className="ring-label">
-        {left === null ? (
-          <>
-            <strong>{round(eaten)}</strong>
-            <span>{tr("ккал съедено", "kcal eaten")}</span>
-          </>
-        ) : (
-          <>
-            <strong>{round(Math.abs(left))}</strong>
-            <span>{left >= 0 ? tr("ккал осталось", "kcal left") : tr("ккал сверх нормы", "kcal over")}</span>
-            <small>
-              {round(eaten)} {tr("из", "of")} {round(target!)}
-            </small>
-          </>
-        )}
+        <strong>{Math.round(ratio * 100)}%</strong>
+        <span>{tr("ккал", "kcal")}</span>
       </div>
     </div>
   );

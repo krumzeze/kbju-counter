@@ -68,6 +68,7 @@ class DayOut(BaseModel):
 class MeOut(BaseModel):
     id: int
     username: str | None
+    first_name: str | None
     profile_complete: bool
     sex: Sex | None
     age: int | None

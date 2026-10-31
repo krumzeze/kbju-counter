@@ -52,6 +52,7 @@ export interface Day {
 export interface Me {
   id: number;
   username: string | null;
+  first_name: string | null;
   profile_complete: boolean;
   sex: Sex | null;
   age: number | null;

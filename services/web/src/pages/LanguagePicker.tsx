@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorMessage } from "../api/client";
+import { Logo } from "../components/Logo";
 import type { Lang } from "../lib/i18n";
 
 export function LanguagePicker() {
@@ -10,9 +11,9 @@ export function LanguagePicker() {
   });
 
   return (
-    <div className="page">
+    <div className="page center">
       <div className="card paywall">
-        <img src="/favicon.svg" alt="" width={56} height={56} />
+        <Logo size={88} />
         <h1>Выбери язык · Choose your language</h1>
         <div className="stack">
           <button className="btn btn-block" disabled={choose.isPending} onClick={() => choose.mutate("ru")}>

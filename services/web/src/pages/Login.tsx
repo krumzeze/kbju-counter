@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../api/client";
+import { Art } from "../components/Art";
+import { Logo } from "../components/Logo";
 import { tr } from "../lib/i18n";
 
 export function Login({ onToken }: { onToken: (token: string) => void }) {
@@ -34,8 +36,13 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
   return (
     <div className="landing">
       <section className="hero">
-        <img src="/favicon.svg" alt="" width={72} height={72} />
-        <h1>{tr("Белок", "Belok")}</h1>
+        <div className="hero-mark">
+          <div>
+            <Logo size={120} />
+            <span>belok</span>
+          </div>
+        </div>
+        <h1>{tr("Калории по фото, тренировки и вес в одном месте", "Calories from a photo, workouts and weight in one place")}</h1>
         <p className="lead">
           {tr(
             "Сфотографируй тарелку, и я посчитаю калории и БЖУ. Записывай подходы в зале, шаги и вес, а норма на день подстроится под твою активность.",
@@ -50,40 +57,46 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
         )}
         {error && <p className="error">{error}</p>}
         <p className="muted small">
-          {tr("Первые 4 дня бесплатно. Данные синхронизируются с ботом.", "First 4 days free. Your data syncs with the bot.")}
+          {tr("Первые 4 дня бесплатно. Данные общие с мини-приложением в Telegram.", "First 4 days free. Your data is shared with the Telegram mini app.")}
         </p>
       </section>
 
       <section className="features">
-        <div className="card">
-          <span className="feature-icon">📸</span>
-          <h3>{tr("КБЖУ по фото", "Macros from a photo")}</h3>
-          <p className="muted">
-            {tr(
-              "Нейросеть узнаёт блюда и оценивает порцию. Порцию легко поправить.",
-              "AI recognizes dishes and estimates the portion. Adjusting it takes a tap.",
-            )}
-          </p>
+        <div className="card peach feature">
+          <div>
+            <h3>{tr("КБЖУ по фото", "Macros from a photo")}</h3>
+            <p>
+              {tr(
+                "Нейросеть узнаёт блюда и оценивает порцию. Порцию легко поправить.",
+                "AI recognizes dishes and estimates the portion. Adjusting it takes a tap.",
+              )}
+            </p>
+          </div>
+          <Art name="feature-photo" fallback={<span className="feature-icon">📸</span>} />
         </div>
-        <div className="card">
-          <span className="feature-icon">🏋️</span>
-          <h3>{tr("Дневник тренировок", "Workout log")}</h3>
-          <p className="muted">
-            {tr(
-              "Подходы, рабочие веса и график расчётного максимума по каждому упражнению.",
-              "Sets, working weights and an estimated 1RM chart for every exercise.",
-            )}
-          </p>
+        <div className="card sage feature">
+          <div>
+            <h3>{tr("Дневник тренировок", "Workout log")}</h3>
+            <p>
+              {tr(
+                "Подходы, рабочие веса и график расчётного максимума по каждому упражнению.",
+                "Sets, working weights and an estimated 1RM chart for every exercise.",
+              )}
+            </p>
+          </div>
+          <Art name="feature-gym" fallback={<span className="feature-icon">🏋️</span>} />
         </div>
-        <div className="card">
-          <span className="feature-icon">📈</span>
-          <h3>{tr("Живая норма", "Adaptive target")}</h3>
-          <p className="muted">
-            {tr(
-              "Шаги и тренировки добавляют калории к норме, цель задаёт дефицит или профицит.",
-              "Steps and workouts add calories to your target, your goal sets a deficit or surplus.",
-            )}
-          </p>
+        <div className="card sand feature">
+          <div>
+            <h3>{tr("Живая норма", "Adaptive target")}</h3>
+            <p>
+              {tr(
+                "Шаги и тренировки добавляют калории к норме, цель задаёт дефицит или профицит.",
+                "Steps and workouts add calories to your target, your goal sets a deficit or surplus.",
+              )}
+            </p>
+          </div>
+          <Art name="feature-target" fallback={<span className="feature-icon">📈</span>} />
         </div>
       </section>
     </div>

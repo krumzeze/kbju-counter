@@ -4,6 +4,8 @@ import type { Meal } from "../api/types";
 import { round } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
 import { useInvalidate } from "../lib/queries";
+import { Art } from "./Art";
+import { Icon } from "./Icon";
 
 const STEP = 0.25;
 
@@ -26,21 +28,27 @@ export function MealCard({ meal, defaultOpen = false }: { meal: Meal; defaultOpe
   return (
     <details className="card meal" open={defaultOpen}>
       <summary>
-        <div className="meal-title">
-          <span className="meal-icon" aria-hidden>
-            {meal.source === "photo" ? "📸" : "✍️"}
-          </span>
-          <div>
-            <strong>{meal.title}</strong>
+        <span className="meal-icon" aria-hidden>
+          <Art
+            name={meal.source === "photo" ? "meal-photo" : "meal-text"}
+            fallback={meal.source === "photo" ? "🥗" : "🍳"}
+          />
+        </span>
+        <span className="meal-title">
+          <strong>{meal.title}</strong>
+          <span>
+            <span className="meal-kcal">
+              {round(meal.totals.kcal)} {tr("ккал", "kcal")}
+            </span>
             <span className="muted">
-              {time} · {tr("Б", "P")} {round(meal.totals.protein)} · {tr("Ж", "F")}{" "}
+              {" "}
+              · {time} · {tr("Б", "P")} {round(meal.totals.protein)} · {tr("Ж", "F")}{" "}
               {round(meal.totals.fat)} · {tr("У", "C")} {round(meal.totals.carbs)}
             </span>
-          </div>
-        </div>
-        <span className="meal-kcal">
-          {round(meal.totals.kcal)}
-          <small> {tr("ккал", "kcal")}</small>
+          </span>
+        </span>
+        <span className="meal-chevron">
+          <Icon name="chevron" />
         </span>
       </summary>
 

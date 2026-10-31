@@ -7,10 +7,8 @@ import { App } from "./App";
 import { webApp } from "./lib/telegram";
 import "./styles.css";
 
-if (webApp) {
-  document.documentElement.classList.add("tg");
-  document.documentElement.dataset.theme = webApp.colorScheme;
-}
+webApp?.setHeaderColor?.("#f6f4ef");
+webApp?.setBackgroundColor?.("#f6f4ef");
 
 const queryClient = new QueryClient({
   defaultOptions: {

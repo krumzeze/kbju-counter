@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, errorMessage } from "../api/client";
+import { Art } from "../components/Art";
 import { LineChart } from "../components/LineChart";
 import { ErrorState, Spinner } from "../components/States";
 import { useInvalidate, useWeights } from "../lib/queries";
@@ -56,7 +57,10 @@ export function Weight() {
       ) : error ? (
         <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
       ) : data.length === 0 ? (
-        <p className="empty">{tr("Записей пока нет.", "No entries yet.")}</p>
+        <div className="empty">
+          <Art name="empty-weight" />
+          <p>{tr("Записей пока нет. Запиши первый вес, и здесь появится график.", "No entries yet. Log your first weight and a chart will appear here.")}</p>
+        </div>
       ) : (
         <WeightStats points={data} />
       )}
@@ -70,19 +74,23 @@ function WeightStats({ points }: { points: { day: string; weight_kg: number }[] 
   const delta = last - first;
   return (
     <>
-      <section className="stats-row">
-        <div className="card stat">
-          <span className="muted">{tr("Сейчас", "Now")}</span>
-          <strong>{last.toFixed(1)}</strong>
-          <span className="muted small">{tr("кг", "kg")}</span>
+      <section className="tiles">
+        <div className="tile-card tone-sage short">
+          <h3>{tr("Сейчас", "Now")}</h3>
+          <div>
+            <strong>{last.toFixed(1)}</strong>
+            <span className="unit">{tr("кг", "kg")}</span>
+          </div>
         </div>
-        <div className="card stat">
-          <span className="muted">{tr("Изменение", "Change")}</span>
-          <strong>
-            {delta > 0 ? "+" : ""}
-            {delta.toFixed(1)}
-          </strong>
-          <span className="muted small">{tr("кг с первой записи", "kg since first entry")}</span>
+        <div className="tile-card tone-blush short">
+          <h3>{tr("Изменение", "Change")}</h3>
+          <div>
+            <strong>
+              {delta > 0 ? "+" : ""}
+              {delta.toFixed(1)}
+            </strong>
+            <span className="unit">{tr("кг с первой записи", "kg since first entry")}</span>
+          </div>
         </div>
       </section>
       {points.length > 1 && (

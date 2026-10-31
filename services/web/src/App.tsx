@@ -101,7 +101,7 @@ function AuthenticatedApp() {
   };
   return (
     <Routes key={lang}>
-      <Route element={<Layout admin={me.is_admin} />}>
+      <Route element={<Layout />}>
         <Route index element={paid(<Today />)} />
         <Route path="add" element={paid(<AddMeal />)} />
         <Route path="workouts" element={paid(<Workouts />)} />
