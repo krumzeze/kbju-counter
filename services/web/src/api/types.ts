@@ -43,7 +43,7 @@ export interface Day {
   eaten: Macros;
   target: Macros | null;
   steps: number;
-  steps_kcal: number;
+  activity_kcal: number;
   weight_kg: number | null;
   meals: Meal[];
   sets: WorkoutSet[];

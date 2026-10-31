@@ -131,7 +131,7 @@ async def test_users_cannot_touch_each_others_meals(client):
     assert (await client.get("/api/day", headers=bob)).json()["meals"] == []
 
 
-async def test_steps_raise_daily_target(client):
+async def test_steps_raise_daily_target_by_weekly_average(client):
     headers = await onboarded(client)
     before = (await client.get("/api/day", headers=headers)).json()["target"]["kcal"]
     assert (
@@ -139,7 +139,8 @@ async def test_steps_raise_daily_target(client):
     ).status_code == 204
     day = (await client.get("/api/day", headers=headers)).json()
     assert day["steps"] == 13000
-    assert day["target"]["kcal"] == pytest.approx(before + 400)
+    assert day["activity_kcal"] == pytest.approx(400 / 7)
+    assert day["target"]["kcal"] == pytest.approx(before + 400 / 7)
 
 
 async def test_weights(client):

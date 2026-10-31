@@ -59,7 +59,7 @@ class DayOut(BaseModel):
     eaten: MacrosOut
     target: MacrosOut | None
     steps: int
-    steps_kcal: float
+    activity_kcal: float
     weight_kg: float | None
     meals: list[MealOut]
     sets: list[SetOut]

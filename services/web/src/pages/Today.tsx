@@ -42,6 +42,14 @@ export function Today() {
             <CalorieRing eaten={data.eaten.kcal} target={data.target?.kcal ?? null} />
             <MacroBars eaten={data.eaten} target={data.target} />
           </section>
+          {data.target && data.activity_kcal >= 1 && (
+            <p className="muted small center">
+              {tr(
+                `Норма включает +${round(data.activity_kcal)} ккал: средняя активность за 7 дней`,
+                `Target includes +${round(data.activity_kcal)} kcal: your average activity over 7 days`,
+              )}
+            </p>
+          )}
 
           {isToday && (
             <Link to="/add" className="btn btn-primary btn-block">
@@ -50,7 +58,7 @@ export function Today() {
           )}
 
           <section className="stats-row">
-            <StepsCard steps={data.steps} kcal={data.steps_kcal} editable={isToday} />
+            <StepsCard steps={data.steps} editable={isToday} />
             <Link to="/workouts" className="card stat">
               <span className="muted">{tr("Подходов", "Sets")}</span>
               <strong>{data.sets.length}</strong>
@@ -85,7 +93,7 @@ export function Today() {
   );
 }
 
-function StepsCard({ steps, kcal, editable }: { steps: number; kcal: number; editable: boolean }) {
+function StepsCard({ steps, editable }: { steps: number; editable: boolean }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(steps || ""));
   const invalidate = useInvalidate();
@@ -126,9 +134,9 @@ function StepsCard({ steps, kcal, editable }: { steps: number; kcal: number; edi
     <button className="card stat" onClick={() => editable && setEditing(true)} disabled={!editable}>
       <span className="muted">{tr("Шаги", "Steps")}</span>
       <strong>{round(steps)}</strong>
-      <span className="muted small">{kcal > 0
-          ? tr(`+${round(kcal)} ккал к норме`, `+${round(kcal)} kcal to target`)
-          : tr("нажми, чтобы ввести", "tap to enter")}</span>
+      <span className="muted small">
+        {steps > 0 ? tr("за день", "today") : tr("нажми, чтобы ввести", "tap to enter")}
+      </span>
     </button>
   );
 }

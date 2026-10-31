@@ -23,6 +23,9 @@ BASELINE_STEPS = 3000
 KCAL_PER_STEP_PER_KG = 0.0005
 STRENGTH_NET_MET = 4.0
 MINUTES_PER_SET = 2.5
+CARDIO_NET_MET = 6.0
+# Activity is averaged over this many days so the target stays steady between gym and rest days.
+ACTIVITY_WINDOW_DAYS = 7
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,20 +64,19 @@ def strength_kcal(sets: int, weight_kg: float) -> float:
     return STRENGTH_NET_MET * weight_kg * hours
 
 
+def cardio_kcal(minutes: float, weight_kg: float) -> float:
+    return CARDIO_NET_MET * weight_kg * minutes / 60
+
+
 def daily_target(
     sex: Sex,
     weight_kg: float,
     height_cm: float,
     age: int,
     goal: Goal,
-    steps: int = 0,
-    sets: int = 0,
+    activity_kcal: float = 0.0,
 ) -> Macros:
-    tdee = (
-        bmr(sex, weight_kg, height_cm, age) * SEDENTARY_FACTOR
-        + steps_kcal(steps, weight_kg)
-        + strength_kcal(sets, weight_kg)
-    )
+    tdee = bmr(sex, weight_kg, height_cm, age) * SEDENTARY_FACTOR + activity_kcal
     kcal = tdee * GOAL_KCAL_FACTOR[goal]
     protein = PROTEIN_G_PER_KG[goal] * weight_kg
     fat = FAT_G_PER_KG * weight_kg

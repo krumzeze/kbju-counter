@@ -179,8 +179,10 @@ STRINGS: dict[str, dict[Language, str]] = {
     "weight_saved": {RU: "Записал вес: {kg:.1f} кг", EN: "Weight logged: {kg:.1f} kg"},
     "steps_usage": {RU: "Пример: /steps 8500", EN: "Example: /steps 8500"},
     "steps_saved": {
-        RU: "Записал {steps} шагов, это примерно +{kcal:.0f} ккал к норме",
-        EN: "Logged {steps} steps, that's about +{kcal:.0f} kcal to your target",
+        RU: "Записал {steps} шагов, это примерно {kcal:.0f} ккал. "
+        "Норма учитывает среднюю активность за 7 дней.",
+        EN: "Logged {steps} steps, that's about {kcal:.0f} kcal. "
+        "Your target uses average activity over the last 7 days.",
     },
     "gym_usage": {
         RU: "Формат: /gym упражнение вес x повторы\n"

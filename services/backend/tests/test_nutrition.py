@@ -1,6 +1,15 @@
 import pytest
 
-from belok.domain.nutrition import Goal, Macros, Sex, bmr, daily_target, steps_kcal, strength_kcal
+from belok.domain.nutrition import (
+    Goal,
+    Macros,
+    Sex,
+    bmr,
+    cardio_kcal,
+    daily_target,
+    steps_kcal,
+    strength_kcal,
+)
 
 
 def test_bmr_mifflin_st_jeor():
@@ -18,6 +27,10 @@ def test_strength_kcal_scales_with_sets():
     assert strength_kcal(24, 80) == pytest.approx(320)
 
 
+def test_cardio_kcal():
+    assert cardio_kcal(30, 80) == pytest.approx(240)
+
+
 def test_daily_target_macros_add_up():
     target = daily_target(Sex.MALE, 80, 180, 30, Goal.MAINTAIN)
     assert target.kcal == pytest.approx(1780 * 1.2)
@@ -28,7 +41,7 @@ def test_daily_target_macros_add_up():
 
 def test_activity_and_goal_change_target():
     base = daily_target(Sex.MALE, 80, 180, 30, Goal.MAINTAIN)
-    active = daily_target(Sex.MALE, 80, 180, 30, Goal.MAINTAIN, steps=10000, sets=20)
+    active = daily_target(Sex.MALE, 80, 180, 30, Goal.MAINTAIN, activity_kcal=300)
     cutting = daily_target(Sex.MALE, 80, 180, 30, Goal.LOSE)
     assert active.kcal > base.kcal > cutting.kcal
 

@@ -7,7 +7,13 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.catalog import MUSCLE_GROUP, CatalogExercise, Group, catalog, find_by_name
-from belok.db.models import Exercise, User, Workout, WorkoutSet, WorkoutTemplate
+from belok.db.models import DailyActivity, Exercise, User, Workout, WorkoutSet, WorkoutTemplate
+from belok.domain.nutrition import (
+    ACTIVITY_WINDOW_DAYS,
+    cardio_kcal,
+    steps_kcal,
+    strength_kcal,
+)
 from belok.domain.workouts import ParsedSet, estimated_1rm, normalize_exercise
 from belok.i18n import Language
 from belok.timeutil import local_today, utcnow
@@ -414,6 +420,27 @@ async def exercise_history(
     for s in sets:
         by_day[s.day].append(s)
     return sorted(by_day.items())
+
+
+async def activity_kcal(session: AsyncSession, user_id: int, day: date, weight_kg: float) -> float:
+    """Average daily kcal burned by steps and training over the window ending on `day`."""
+    start = day - timedelta(days=ACTIVITY_WINDOW_DAYS - 1)
+    steps = await session.scalars(
+        select(DailyActivity.steps).where(
+            DailyActivity.user_id == user_id, DailyActivity.day.between(start, day)
+        )
+    )
+    total = sum(steps_kcal(s, weight_kg) for s in steps)
+    strength_sets, cardio_seconds = (
+        await session.execute(
+            select(
+                func.count().filter(WorkoutSet.duration_s.is_(None)),
+                func.coalesce(func.sum(WorkoutSet.duration_s), 0),
+            ).where(WorkoutSet.user_id == user_id, WorkoutSet.day.between(start, day))
+        )
+    ).one()
+    total += strength_kcal(strength_sets, weight_kg) + cardio_kcal(cardio_seconds / 60, weight_kg)
+    return total / ACTIVITY_WINDOW_DAYS
 
 
 @dataclass(slots=True)

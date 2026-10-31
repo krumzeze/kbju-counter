@@ -81,6 +81,7 @@ async def test_workout_session_flow(client):
 
     day = (await client.get("/api/day", headers=headers)).json()
     assert len(day["sets"]) == 3
+    assert day["activity_kcal"] > 0
 
 
 async def test_cardio_sets_and_set_editing(client):

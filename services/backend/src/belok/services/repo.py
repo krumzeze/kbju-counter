@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.db.models import BodyWeight, DailyActivity, LlmUsage, Meal, User, WorkoutSet
 from belok.domain.nutrition import Macros, daily_target
+from belok.services.workouts import activity_kcal
 
 
 async def upsert_weight(session: AsyncSession, user_id: int, day: date, weight_kg: float) -> None:
@@ -73,6 +74,7 @@ class DaySummary:
     steps: int
     sets: int
     weight_kg: float | None
+    activity_kcal: float
 
 
 async def day_summary(session: AsyncSession, user: User, day: date) -> DaySummary:
@@ -100,8 +102,10 @@ async def day_summary(session: AsyncSession, user: User, day: date) -> DaySummar
     weight = await latest_weight(session, user.id)
 
     target = None
+    activity = 0.0
     if user.profile_complete and weight is not None:
+        activity = await activity_kcal(session, user.id, day, weight)
         target = daily_target(
-            user.sex, weight, user.height_cm, day.year - user.birth_year, user.goal, steps, sets
+            user.sex, weight, user.height_cm, day.year - user.birth_year, user.goal, activity
         )
-    return DaySummary(eaten, target, len(meals), steps, sets, weight)
+    return DaySummary(eaten, target, len(meals), steps, sets, weight, activity)

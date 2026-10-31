@@ -10,7 +10,6 @@ from belok.api.routes.workouts import set_out
 from belok.api.schemas import DayOut, MealOut, MealPatchIn, TextMealIn, macros_out
 from belok.config import Settings
 from belok.db.models import User
-from belok.domain.nutrition import steps_kcal
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, AnalysisResult
 from belok.services.meals import DailyLimitReached, analyze_meal, clamp_scale, ensure_within_limit
@@ -36,7 +35,7 @@ async def get_day(
         eaten=macros_out(summary.eaten),
         target=macros_out(summary.target),
         steps=summary.steps,
-        steps_kcal=steps_kcal(summary.steps, summary.weight_kg or 70),
+        activity_kcal=summary.activity_kcal,
         weight_kg=summary.weight_kg,
         meals=[MealOut.of(m) for m in meals],
         sets=[set_out(s, e, _language(user)) for s, e in sets],
