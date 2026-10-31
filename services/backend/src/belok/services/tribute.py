@@ -72,7 +72,7 @@ class TributeCatalog:
         self._api_key = api_key
         self._base = parse_plans(spec)
         self._plans = self._base
-        self._loaded_at = 0.0
+        self._loaded_at: float | None = None
 
     @property
     def enabled(self) -> bool:
@@ -83,7 +83,8 @@ class TributeCatalog:
         return self._api_key
 
     async def plans(self, force: bool = False) -> list[Plan]:
-        if self._api_key and (force or time.monotonic() - self._loaded_at > CACHE_SECONDS):
+        stale = self._loaded_at is None or time.monotonic() - self._loaded_at > CACHE_SECONDS
+        if self._api_key and (force or stale):
             try:
                 self._plans = self._merge(await self._fetch())
                 self._loaded_at = time.monotonic()
