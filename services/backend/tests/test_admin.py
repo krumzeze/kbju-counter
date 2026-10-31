@@ -412,8 +412,14 @@ async def test_prefs(client):
     admin, _ = await admin_and_user(client)
     assert (await client.get("/api/admin/prefs", headers=admin)).json() == {
         "new_users": True,
+        "payments": True,
         "errors": True,
         "daily": True,
     }
     updated = await client.put("/api/admin/prefs", json={"daily": False}, headers=admin)
-    assert updated.json() == {"new_users": True, "errors": True, "daily": False}
+    assert updated.json() == {
+        "new_users": True,
+        "payments": True,
+        "errors": True,
+        "daily": False,
+    }
