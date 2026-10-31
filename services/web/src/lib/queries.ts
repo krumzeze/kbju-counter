@@ -20,6 +20,9 @@ export const useCatalog = () =>
 export const useCatalogItem = (id: string) =>
   useQuery({ queryKey: ["catalog", id], queryFn: () => api.catalogItem(id), staleTime: Infinity });
 
+export const usePlans = () =>
+  useQuery({ queryKey: ["plans"], queryFn: api.plans, staleTime: 10 * 60 * 1000 });
+
 export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: api.analytics });
 
 export const useWorkouts = () => useQuery({ queryKey: ["workouts"], queryFn: api.workouts });

@@ -6,6 +6,7 @@ import type { Goal, Me, Sex } from "../api/types";
 import { daysLeft, daysWord, round } from "../lib/format";
 import { type Lang, locale, tr } from "../lib/i18n";
 import { PromoCard, ReferralCard } from "../components/Growth";
+import { Plans } from "../components/Plans";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
 
@@ -50,6 +51,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
         <>
           <h1>{tr("Профиль", "Profile")}</h1>
           <AccessCard me={me} />
+          {me.status !== "lifetime" && <Plans />}
           <LanguageCard me={me} />
           {me.base_target && (
             <div className="card">

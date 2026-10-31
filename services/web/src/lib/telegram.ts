@@ -18,6 +18,12 @@ export function confirmAction(message: string): Promise<boolean> {
   return Promise.resolve(window.confirm(message));
 }
 
+export function openExternal(url: string) {
+  if (url.startsWith("https://t.me/") && webApp?.openTelegramLink) webApp.openTelegramLink(url);
+  else if (webApp?.openLink) webApp.openLink(url);
+  else window.open(url, "_blank", "noopener");
+}
+
 export function shareLink(url: string, text: string) {
   const share = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
   if (webApp?.openTelegramLink) webApp.openTelegramLink(share);

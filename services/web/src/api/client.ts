@@ -6,6 +6,7 @@ import type {
   Exercise,
   ExerciseRef,
   MuscleGroup,
+  Plan,
   SetValues,
   Template,
   TemplateInput,
@@ -163,6 +164,7 @@ export const api = {
     request<Template>("PUT", `/templates/${id}`, body),
   deleteTemplate: (id: number) => request<void>("DELETE", `/templates/${id}`),
 
+  plans: () => request<Plan[]>("GET", "/payments/plans"),
   redeemPromo: (code: string) =>
     request<{ days: number; access_until: string }>("POST", "/me/promo", { code }),
   referral: () => request<Referral>("GET", "/me/referral"),

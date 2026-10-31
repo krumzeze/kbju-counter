@@ -2115,3 +2115,44 @@ span.set-check {
     animation: none;
   }
 }
+
+/* Plans */
+
+.plans {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  font: inherit;
+}
+
+.plan.featured {
+  border-color: var(--accent);
+}
+
+.plan-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.plan-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plan-price {
+  font-size: 18px;
+  font-weight: 800;
+  white-space: nowrap;
+}

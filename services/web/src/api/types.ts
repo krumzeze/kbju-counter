@@ -388,8 +388,18 @@ export interface Referrer extends UserBrief {
   days: number;
 }
 
+export interface Plan {
+  code: string;
+  days: number;
+  link: string;
+  web_link: string;
+  amount: number | null;
+  currency: string | null;
+}
+
 export interface Prefs {
   new_users: boolean;
+  payments: boolean;
   errors: boolean;
   daily: boolean;
 }

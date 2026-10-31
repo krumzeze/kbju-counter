@@ -5,6 +5,7 @@ import { useAdminMutation, usePrefs } from "../../lib/adminQueries";
 
 const ITEMS: { key: keyof Prefs; label: string; hint: string }[] = [
   { key: "new_users", label: "Новые пользователи", hint: "сообщение о каждой регистрации" },
+  { key: "payments", label: "Оплаты", hint: "каждая оплата и возврат через Tribute" },
   { key: "errors", label: "Ошибки распознавания", hint: "если за час больше 20% запросов с ошибкой" },
   { key: "daily", label: "Сводка за день", hint: "каждый вечер в 21:00" },
 ];

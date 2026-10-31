@@ -1,4 +1,5 @@
 import { PromoCard, ReferralCard } from "../components/Growth";
+import { Plans } from "../components/Plans";
 import { tr } from "../lib/i18n";
 
 export function Paywall() {
@@ -9,11 +10,12 @@ export function Paywall() {
         <h1>{tr("Пробный период закончился", "Your free trial has ended")}</h1>
         <p className="muted">
           {tr(
-            "Скоро здесь появится подписка. Все твои записи сохранены и будут доступны сразу после продления.",
-            "Subscriptions are coming soon. All your entries are saved and will be available as soon as you renew.",
+            "Все твои записи сохранены и будут доступны сразу после оплаты.",
+            "All your entries are saved and will be available right after you subscribe.",
           )}
         </p>
       </div>
+      <Plans />
       <PromoCard />
       <ReferralCard />
     </div>

@@ -15,6 +15,7 @@ interface TelegramWebApp {
   HapticFeedback?: { notificationOccurred(type: "success" | "error" | "warning"): void };
   showConfirm?(message: string, callback: (confirmed: boolean) => void): void;
   openTelegramLink?(url: string): void;
+  openLink?(url: string): void;
 }
 
 interface Window {
