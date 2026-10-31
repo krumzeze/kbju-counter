@@ -25,13 +25,13 @@ config:
   LOG_LEVEL: INFO
 
 api:
-  replicas: 2
+  replicas: 1
   resources:
     requests: { cpu: 100m, memory: 192Mi }
     limits: { memory: 512Mi }
 
 web:
-  replicas: 2
+  replicas: 1
   resources:
     requests: { cpu: 20m, memory: 32Mi }
     limits: { memory: 64Mi }
