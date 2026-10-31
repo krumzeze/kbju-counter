@@ -67,6 +67,22 @@ async def test_invalid_timezone_is_rejected(client):
     assert response.status_code == 422
 
 
+async def test_analysis_does_not_hold_a_db_connection(client, analyzer):
+    headers = await onboarded(client)
+    pool = client.app.state.engine.pool
+    seen = []
+    original = analyzer.from_text
+
+    async def from_text(text, language):
+        seen.append(pool.checkedout())
+        return await original(text, language)
+
+    analyzer.from_text = from_text
+    response = await client.post("/api/meals/text", json={"text": "гречка"}, headers=headers)
+    assert response.status_code == 201
+    assert seen == [0]
+
+
 async def test_meal_lifecycle(client):
     headers = await onboarded(client)
 

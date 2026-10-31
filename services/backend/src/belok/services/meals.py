@@ -32,6 +32,8 @@ async def analyze_meal(
 ) -> Meal | None:
     """Run the analyzer, log usage and store the meal. Returns None when no food was found."""
     today = local_today(user.timezone)
+    # Return the DB connection to the pool while waiting on the LLM, which takes seconds.
+    await session.commit()
     try:
         result = await call()
     except AnalysisError as exc:
