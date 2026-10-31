@@ -3,17 +3,15 @@ from html import escape
 from typing import Any
 
 from aiogram import BaseMiddleware, Bot
-from aiogram.types import CallbackQuery, Message, TelegramObject, Update
+from aiogram.types import TelegramObject, Update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from belok.bot import texts
 from belok.config import Settings
 from belok.db.models import User
 from belok.i18n import guess_language
-from belok.services.access import has_access
 from belok.services.notify import notify_admins
 from belok.services.users import get_or_create_user
-from belok.timeutil import utcnow
 
 Handler = Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]]
 
@@ -75,24 +73,3 @@ async def _announce(bot: Bot, session: AsyncSession, user: User) -> None:
     await notify_admins(
         bot, session, "new_users", f"👤 Новый пользователь: {name}{source}", exclude=user.id
     )
-
-
-class RequireActiveUser(BaseMiddleware):
-    """Blocks handlers until the profile is filled in and the trial or subscription is active."""
-
-    async def __call__(self, handler: Handler, event: TelegramObject, data: dict[str, Any]) -> Any:
-        user: User | None = data.get("user")
-        if user is None:
-            return None
-        if not user.profile_complete:
-            return await _reply(event, texts.t(data["lang"], "profile_required"))
-        if not has_access(user, utcnow()):
-            return await _reply(event, texts.t(data["lang"], "access_expired"))
-        return await handler(event, data)
-
-
-async def _reply(event: TelegramObject, text: str) -> None:
-    if isinstance(event, Message):
-        await event.answer(text)
-    elif isinstance(event, CallbackQuery):
-        await event.answer(text, show_alert=True)

@@ -1,12 +1,11 @@
 import pytest
 
-from belok.bot.texts import COMMANDS, STRINGS
+from belok.bot.texts import STRINGS
 from belok.i18n import Language, guess_language
 
 
-@pytest.mark.parametrize("table", [STRINGS, COMMANDS])
-def test_every_string_has_all_languages(table):
-    for key, variants in table.items():
+def test_every_string_has_all_languages():
+    for key, variants in STRINGS.items():
         assert set(variants) == set(Language), key
 
 

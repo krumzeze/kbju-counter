@@ -11,10 +11,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from belok.bot.menu import setup_defaults
 from belok.bot.setup import build_dispatcher
 from belok.config import Settings
-from belok.llm.analyzer import FoodAnalyzer
 from belok.services.broadcasts import run_worker
 from belok.services.monitor import run_monitor
-from belok.services.tribute import TributeCatalog
 
 
 async def main() -> None:
@@ -26,12 +24,10 @@ async def main() -> None:
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     storage = RedisStorage.from_url(settings.redis_url)
-    analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
     bot = Bot(
         settings.bot_token.get_secret_value(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-    tribute = TributeCatalog.from_settings(settings)
     dp = build_dispatcher(settings, storage, sessionmaker)
     background = [
         asyncio.create_task(run_worker(bot, sessionmaker)),
@@ -42,7 +38,7 @@ async def main() -> None:
 
     try:
         await setup_defaults(bot, settings)
-        await dp.start_polling(bot, settings=settings, analyzer=analyzer, tribute=tribute)
+        await dp.start_polling(bot, settings=settings)
     finally:
         for task in background:
             task.cancel()
