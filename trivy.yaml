@@ -1,0 +1,4 @@
+misconfiguration:
+  helm:
+    values:
+      - deploy/environments/prod/values.yaml
