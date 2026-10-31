@@ -22,6 +22,7 @@ import type {
   WeightPoint,
   WorkoutSet,
 } from "./types";
+import { type Lang, tr } from "../lib/i18n";
 
 const TOKEN_KEY = "belok.token";
 
@@ -99,6 +100,7 @@ export const api = {
 
   me: () => request<Me>("GET", "/me"),
   saveProfile: (body: ProfileInput) => request<Me>("PUT", "/me/profile", body),
+  setLanguage: (language: Lang) => request<Me>("PUT", "/me/language", { language }),
 
   day: (day?: string) => request<Day>("GET", day ? `/day?day=${day}` : "/day"),
   mealFromText: (text: string) => request<Meal>("POST", "/meals/text", { text }),
@@ -176,29 +178,46 @@ export const adminApi = {
   savePrefs: (body: Partial<Prefs>) => request<Prefs>("PUT", "/admin/prefs", body),
 };
 
-const MESSAGES: Record<string, string> = {
-  daily_limit: "На сегодня лимит распознаваний исчерпан",
-  analysis_failed: "Не получилось посчитать, попробуй ещё раз чуть позже",
-  no_food: "Не вижу здесь еды. Попробуй другое фото или опиши текстом",
-  image_too_large: "Фото слишком большое",
-  unsupported_image: "Поддерживаются JPEG, PNG и WebP",
-  not_found: "Не найдено",
-  expired: "Срок действия промокода истёк",
-  exhausted: "Промокод уже использовали максимальное число раз",
-  already_used: "Ты уже активировал этот промокод",
-  new_users_only: "Этот промокод только для новых пользователей",
-  too_many_attempts: "Слишком много попыток, попробуй через час",
+const messages = (): Record<string, string> => ({
+  daily_limit: tr("На сегодня лимит распознаваний исчерпан", "You've hit today's analysis limit"),
+  analysis_failed: tr(
+    "Не получилось посчитать, попробуй ещё раз чуть позже",
+    "Couldn't analyze that, please try again a bit later",
+  ),
+  no_food: tr(
+    "Не вижу здесь еды. Попробуй другое фото или опиши текстом",
+    "I don't see any food here. Try another photo or describe it",
+  ),
+  image_too_large: tr("Фото слишком большое", "The photo is too large"),
+  unsupported_image: tr("Поддерживаются JPEG, PNG и WebP", "Only JPEG, PNG and WebP are supported"),
+  not_found: tr("Не найдено", "Not found"),
+  expired: tr("Срок действия промокода истёк", "This promo code has expired"),
+  exhausted: tr(
+    "Промокод уже использовали максимальное число раз",
+    "This promo code has reached its usage limit",
+  ),
+  already_used: tr("Ты уже активировал этот промокод", "You've already redeemed this promo code"),
+  new_users_only: tr(
+    "Этот промокод только для новых пользователей",
+    "This promo code is for new users only",
+  ),
+  too_many_attempts: tr(
+    "Слишком много попыток, попробуй через час",
+    "Too many attempts, try again in an hour",
+  ),
+  blocked: tr("Доступ ограничен", "Access restricted"),
   admin_only: "Только для админов",
-  blocked: "Доступ ограничен",
   cannot_change_self: "Нельзя заблокировать, удалить или разжаловать себя",
   cannot_block_admin: "Сначала сними с пользователя права админа",
   code_taken: "Такой промокод уже есть",
   invalid_message: "Telegram не принял сообщение, проверь HTML-разметку",
   telegram_unavailable: "Telegram недоступен, попробуй позже",
   invalid_state: "Рассылка уже запущена или завершена",
-};
+});
 
 export function errorMessage(error: unknown): string {
-  if (error instanceof ApiError) return MESSAGES[error.detail] ?? "Что-то пошло не так";
-  return "Нет связи с сервером";
+  if (error instanceof ApiError) {
+    return messages()[error.detail] ?? tr("Что-то пошло не так", "Something went wrong");
+  }
+  return tr("Нет связи с сервером", "Can't reach the server");
 }

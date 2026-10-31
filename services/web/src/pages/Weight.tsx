@@ -4,6 +4,7 @@ import { api, errorMessage } from "../api/client";
 import { LineChart } from "../components/LineChart";
 import { ErrorState, Spinner } from "../components/States";
 import { useInvalidate, useWeights } from "../lib/queries";
+import { tr } from "../lib/i18n";
 import { haptic } from "../lib/telegram";
 
 export function Weight() {
@@ -23,7 +24,7 @@ export function Weight() {
 
   return (
     <div className="page">
-      <h1>Вес</h1>
+      <h1>{tr("Вес", "Weight")}</h1>
       <form
         className="card inline-form"
         onSubmit={(e) => {
@@ -34,17 +35,20 @@ export function Weight() {
         <input
           className="input"
           inputMode="decimal"
-          placeholder="Вес сегодня, кг"
+          placeholder={tr("Вес сегодня, кг", "Today's weight, kg")}
           value={value}
           onChange={(e) => setValue(e.target.value.replace(/[^\d.,]/g, ""))}
         />
         <button className="btn btn-primary" disabled={!valid || save.isPending}>
-          Записать
+          {tr("Записать", "Log")}
         </button>
       </form>
       {save.isError && <p className="error">{errorMessage(save.error)}</p>}
       <p className="muted small">
-        Взвешивайся утром натощак, так цифры сравнимы между собой.
+        {tr(
+          "Взвешивайся утром натощак, так цифры сравнимы между собой.",
+          "Weigh yourself in the morning before eating so the numbers are comparable.",
+        )}
       </p>
 
       {isPending ? (
@@ -52,7 +56,7 @@ export function Weight() {
       ) : error ? (
         <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
       ) : data.length === 0 ? (
-        <p className="empty">Записей пока нет.</p>
+        <p className="empty">{tr("Записей пока нет.", "No entries yet.")}</p>
       ) : (
         <WeightStats points={data} />
       )}
@@ -68,22 +72,22 @@ function WeightStats({ points }: { points: { day: string; weight_kg: number }[] 
     <>
       <section className="stats-row">
         <div className="card stat">
-          <span className="muted">Сейчас</span>
+          <span className="muted">{tr("Сейчас", "Now")}</span>
           <strong>{last.toFixed(1)}</strong>
-          <span className="muted small">кг</span>
+          <span className="muted small">{tr("кг", "kg")}</span>
         </div>
         <div className="card stat">
-          <span className="muted">Изменение</span>
+          <span className="muted">{tr("Изменение", "Change")}</span>
           <strong>
             {delta > 0 ? "+" : ""}
             {delta.toFixed(1)}
           </strong>
-          <span className="muted small">кг с первой записи</span>
+          <span className="muted small">{tr("кг с первой записи", "kg since first entry")}</span>
         </div>
       </section>
       {points.length > 1 && (
         <section className="card">
-          <LineChart points={points.map((p) => ({ day: p.day, value: p.weight_kg }))} unit="кг" />
+          <LineChart points={points.map((p) => ({ day: p.day, value: p.weight_kg }))} unit={tr("кг", "kg")} />
         </section>
       )}
     </>

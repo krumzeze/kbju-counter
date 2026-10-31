@@ -7,6 +7,7 @@ import { MacroBars } from "../components/MacroBars";
 import { MealCard } from "../components/MealCard";
 import { ErrorState, Spinner } from "../components/States";
 import { dayLabel, round, shiftDay, todayIso } from "../lib/format";
+import { tr } from "../lib/i18n";
 import { useDay, useInvalidate } from "../lib/queries";
 
 export function Today() {
@@ -17,7 +18,7 @@ export function Today() {
   return (
     <div className="page">
       <div className="day-switch">
-        <button className="icon-btn" onClick={() => setDay(shiftDay(day, -1))} aria-label="Предыдущий день">
+        <button className="icon-btn" onClick={() => setDay(shiftDay(day, -1))} aria-label={tr("Предыдущий день", "Previous day")}>
           ‹
         </button>
         <h1>{dayLabel(day)}</h1>
@@ -25,7 +26,7 @@ export function Today() {
           className="icon-btn"
           onClick={() => setDay(shiftDay(day, 1))}
           disabled={isToday}
-          aria-label="Следующий день"
+          aria-label={tr("Следующий день", "Next day")}
         >
           ›
         </button>
@@ -44,26 +45,31 @@ export function Today() {
 
           {isToday && (
             <Link to="/add" className="btn btn-primary btn-block">
-              ＋ Добавить еду
+              ＋ {tr("Добавить еду", "Add food")}
             </Link>
           )}
 
           <section className="stats-row">
             <StepsCard steps={data.steps} kcal={data.steps_kcal} editable={isToday} />
             <Link to="/workouts" className="card stat">
-              <span className="muted">Подходов</span>
+              <span className="muted">{tr("Подходов", "Sets")}</span>
               <strong>{data.sets.length}</strong>
               <span className="muted small">
-                {data.sets.length ? "в зале сегодня" : "записать тренировку"}
+                {data.sets.length
+                  ? tr("в зале сегодня", "at the gym today")
+                  : tr("записать тренировку", "log a workout")}
               </span>
             </Link>
           </section>
 
           <section>
-            <h2>Приёмы пищи</h2>
+            <h2>{tr("Приёмы пищи", "Meals")}</h2>
             {data.meals.length === 0 ? (
               <p className="empty">
-                Пока пусто. Сфотографируй тарелку или опиши, что съел, а я посчитаю КБЖУ.
+                {tr(
+                  "Пока пусто. Сфотографируй тарелку или опиши, что съел, а я посчитаю КБЖУ.",
+                  "Nothing yet. Snap your plate or describe what you ate and I'll count the calories and macros.",
+                )}
               </p>
             ) : (
               <div className="stack">
@@ -101,7 +107,7 @@ function StepsCard({ steps, kcal, editable }: { steps: number; kcal: number; edi
           if (Number.isInteger(n) && n >= 0 && n <= 100000) save.mutate(n);
         }}
       >
-        <span className="muted">Шаги за день</span>
+        <span className="muted">{tr("Шаги за день", "Steps today")}</span>
         <input
           className="input"
           inputMode="numeric"
@@ -110,7 +116,7 @@ function StepsCard({ steps, kcal, editable }: { steps: number; kcal: number; edi
           onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
         />
         <button className="btn btn-primary small" disabled={save.isPending}>
-          Сохранить
+          {tr("Сохранить", "Save")}
         </button>
       </form>
     );
@@ -118,9 +124,11 @@ function StepsCard({ steps, kcal, editable }: { steps: number; kcal: number; edi
 
   return (
     <button className="card stat" onClick={() => editable && setEditing(true)} disabled={!editable}>
-      <span className="muted">Шаги</span>
+      <span className="muted">{tr("Шаги", "Steps")}</span>
       <strong>{round(steps)}</strong>
-      <span className="muted small">{kcal > 0 ? `+${round(kcal)} ккал к норме` : "нажми, чтобы ввести"}</span>
+      <span className="muted small">{kcal > 0
+          ? tr(`+${round(kcal)} ккал к норме`, `+${round(kcal)} kcal to target`)
+          : tr("нажми, чтобы ввести", "tap to enter")}</span>
     </button>
   );
 }

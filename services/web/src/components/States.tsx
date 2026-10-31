@@ -1,4 +1,6 @@
-export function Spinner({ label = "Загрузка…" }: { label?: string }) {
+import { tr } from "../lib/i18n";
+
+export function Spinner({ label = tr("Загрузка…", "Loading…") }: { label?: string }) {
   return (
     <div className="state">
       <div className="spinner" aria-hidden />
@@ -13,7 +15,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
       <p>{message}</p>
       {onRetry && (
         <button className="btn" onClick={onRetry}>
-          Повторить
+          {tr("Повторить", "Retry")}
         </button>
       )}
     </div>

@@ -1,16 +1,18 @@
 import type { Macros } from "../api/types";
 import { round } from "../lib/format";
+import { tr } from "../lib/i18n";
 
-const ROWS = [
-  { key: "protein", label: "Белки", className: "protein" },
-  { key: "fat", label: "Жиры", className: "fat" },
-  { key: "carbs", label: "Углеводы", className: "carbs" },
-] as const;
+const rows = () =>
+  [
+    { key: "protein", label: tr("Белки", "Protein"), className: "protein" },
+    { key: "fat", label: tr("Жиры", "Fat"), className: "fat" },
+    { key: "carbs", label: tr("Углеводы", "Carbs"), className: "carbs" },
+  ] as const;
 
 export function MacroBars({ eaten, target }: { eaten: Macros; target: Macros | null }) {
   return (
     <div className="macros">
-      {ROWS.map(({ key, label, className }) => {
+      {rows().map(({ key, label, className }) => {
         const value = eaten[key];
         const goal = target?.[key];
         const pct = goal ? Math.min(100, (value / goal) * 100) : 0;
@@ -20,7 +22,7 @@ export function MacroBars({ eaten, target }: { eaten: Macros; target: Macros | n
               <span>{label}</span>
               <span className="muted">
                 {round(value)}
-                {goal ? ` / ${round(goal)}` : ""} г
+                {goal ? ` / ${round(goal)}` : ""} {tr("г", "g")}
               </span>
             </div>
             <div className="bar">

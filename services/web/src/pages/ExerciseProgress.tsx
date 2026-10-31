@@ -3,6 +3,7 @@ import { errorMessage } from "../api/client";
 import { LineChart } from "../components/LineChart";
 import { ErrorState, Spinner } from "../components/States";
 import { shortDate } from "../lib/format";
+import { tr } from "../lib/i18n";
 import { useProgress } from "../lib/queries";
 
 export function ExerciseProgress() {
@@ -21,45 +22,45 @@ export function ExerciseProgress() {
     <div className="page">
       <h1 className="capitalize">{data.exercise}</h1>
       {points.length === 0 ? (
-        <p className="empty">Записей пока нет.</p>
+        <p className="empty">{tr("Записей пока нет.", "No entries yet.")}</p>
       ) : (
         <>
           <section className="stats-row three">
             <div className="card stat">
-              <span className="muted">Рекорд 1ПМ</span>
+              <span className="muted">{tr("Рекорд 1ПМ", "Best 1RM")}</span>
               <strong>{best.toFixed(1)}</strong>
-              <span className="muted small">кг, расчётный</span>
+              <span className="muted small">{tr("кг, расчётный", "kg, estimated")}</span>
             </div>
             <div className="card stat">
-              <span className="muted">Изменение</span>
+              <span className="muted">{tr("Изменение", "Change")}</span>
               <strong className={last - first >= 0 ? "positive" : "negative"}>
                 {last - first >= 0 ? "+" : ""}
                 {(last - first).toFixed(1)}
               </strong>
-              <span className="muted small">кг за период</span>
+              <span className="muted small">{tr("кг за период", "kg over the period")}</span>
             </div>
             <div className="card stat">
-              <span className="muted">Тренировок</span>
+              <span className="muted">{tr("Тренировок", "Workouts")}</span>
               <strong>{points.length}</strong>
-              <span className="muted small">в истории</span>
+              <span className="muted small">{tr("в истории", "in history")}</span>
             </div>
           </section>
 
           <section className="card">
-            <h2>Расчётный максимум на 1 раз</h2>
-            <LineChart points={points.map((p) => ({ day: p.day, value: p.e1rm }))} unit="кг" />
+            <h2>{tr("Расчётный максимум на 1 раз", "Estimated one-rep max")}</h2>
+            <LineChart points={points.map((p) => ({ day: p.day, value: p.e1rm }))} unit={tr("кг", "kg")} />
           </section>
 
           <section>
-            <h2>История</h2>
+            <h2>{tr("История", "History")}</h2>
             <div className="card">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Дата</th>
-                    <th>Лучший подход</th>
-                    <th>1ПМ</th>
-                    <th>Подходов</th>
+                    <th>{tr("Дата", "Date")}</th>
+                    <th>{tr("Лучший подход", "Best set")}</th>
+                    <th>{tr("1ПМ", "1RM")}</th>
+                    <th>{tr("Подходов", "Sets")}</th>
                   </tr>
                 </thead>
                 <tbody>

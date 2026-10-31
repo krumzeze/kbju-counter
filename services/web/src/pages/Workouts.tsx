@@ -5,6 +5,7 @@ import { api, errorMessage } from "../api/client";
 import type { WorkoutSet } from "../api/types";
 import { Spinner } from "../components/States";
 import { todayIso } from "../lib/format";
+import { tr } from "../lib/i18n";
 import { useDay, useExercises, useInvalidate } from "../lib/queries";
 import { haptic } from "../lib/telegram";
 
@@ -21,17 +22,17 @@ export function Workouts() {
 
   return (
     <div className="page">
-      <h1>Тренировка</h1>
+      <h1>{tr("Тренировка", "Workout")}</h1>
       <SetForm suggestions={exercises.data ?? []} />
 
       <section>
-        <h2>Сегодня</h2>
+        <h2>{tr("Сегодня", "Today")}</h2>
         {day.isPending ? <Spinner /> : <TodaySets sets={day.data?.sets ?? []} />}
       </section>
 
       {exercises.data && exercises.data.length > 0 && (
         <section>
-          <h2>Прогресс</h2>
+          <h2>{tr("Прогресс", "Progress")}</h2>
           <div className="chips">
             {exercises.data.map((name) => (
               <Link key={name} className="chip" to={`/workouts/${encodeURIComponent(name)}`}>
@@ -75,11 +76,11 @@ function SetForm({ suggestions }: { suggestions: string[] }) {
       }}
     >
       <label className="field">
-        <span>Упражнение</span>
+        <span>{tr("Упражнение", "Exercise")}</span>
         <input
           className="input"
           list="exercise-list"
-          placeholder="Жим лёжа"
+          placeholder={tr("Жим лёжа", "Bench press")}
           value={exercise}
           onChange={(e) => setExercise(e.target.value)}
           maxLength={128}
@@ -93,8 +94,8 @@ function SetForm({ suggestions }: { suggestions: string[] }) {
 
       <div className="sets-grid">
         <span className="muted small">#</span>
-        <span className="muted small">Вес, кг</span>
-        <span className="muted small">Повторы</span>
+        <span className="muted small">{tr("Вес, кг", "Weight, kg")}</span>
+        <span className="muted small">{tr("Повторы", "Reps")}</span>
         <span />
         {rows.map((row, i) => (
           <SetRow
@@ -112,7 +113,7 @@ function SetForm({ suggestions }: { suggestions: string[] }) {
         className="btn-ghost"
         onClick={() => rows.length < 20 && setRows([...rows, emptyRow(rows[rows.length - 1])])}
       >
-        ＋ Подход
+        ＋ {tr("Подход", "Set")}
       </button>
 
       {save.isError && <p className="error">{errorMessage(save.error)}</p>}
@@ -120,7 +121,7 @@ function SetForm({ suggestions }: { suggestions: string[] }) {
         className="btn btn-primary btn-block"
         disabled={!exercise.trim() || !sets.length || save.isPending}
       >
-        Записать {sets.length > 0 ? `(${sets.length})` : ""}
+        {tr("Записать", "Log")} {sets.length > 0 ? `(${sets.length})` : ""}
       </button>
     </form>
   );
@@ -150,7 +151,7 @@ function SetRow({
         placeholder="80"
         value={row.weight}
         onChange={(e) => onChange({ weight: e.target.value.replace(/[^\d.,]/g, "") })}
-        aria-label={`Вес, подход ${index + 1}`}
+        aria-label={tr(`Вес, подход ${index + 1}`, `Weight, set ${index + 1}`)}
       />
       <input
         className="input"
@@ -158,10 +159,10 @@ function SetRow({
         placeholder="8"
         value={row.reps}
         onChange={(e) => onChange({ reps: e.target.value.replace(/\D/g, "") })}
-        aria-label={`Повторы, подход ${index + 1}`}
+        aria-label={tr(`Повторы, подход ${index + 1}`, `Reps, set ${index + 1}`)}
       />
       {onRemove ? (
-        <button type="button" className="icon-btn" onClick={onRemove} aria-label="Убрать подход">
+        <button type="button" className="icon-btn" onClick={onRemove} aria-label={tr("Убрать подход", "Remove set")}>
           ×
         </button>
       ) : (
@@ -178,7 +179,7 @@ function TodaySets({ sets }: { sets: WorkoutSet[] }) {
     onSuccess: () => invalidate("day", "progress"),
   });
 
-  if (sets.length === 0) return <p className="empty">Сегодня подходов ещё не было.</p>;
+  if (sets.length === 0) return <p className="empty">{tr("Сегодня подходов ещё не было.", "No sets logged today yet.")}</p>;
 
   const grouped = new Map<string, WorkoutSet[]>();
   for (const s of sets) grouped.set(s.exercise, [...(grouped.get(s.exercise) ?? []), s]);
@@ -193,13 +194,13 @@ function TodaySets({ sets }: { sets: WorkoutSet[] }) {
             {items.map((s) => (
               <li key={s.id}>
                 <span>
-                  {s.weight_kg} кг × {s.reps}
+                  {s.weight_kg} {tr("кг", "kg")} × {s.reps}
                 </span>
                 <button
                   className="icon-btn"
                   disabled={remove.isPending}
                   onClick={() => remove.mutate(s.id)}
-                  aria-label="Удалить подход"
+                  aria-label={tr("Удалить подход", "Delete set")}
                 >
                   ×
                 </button>

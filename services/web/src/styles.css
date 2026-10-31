@@ -627,8 +627,7 @@ button:disabled {
   font-size: 18px;
 }
 
-.meal-kcal::after {
-  content: " ккал";
+.meal-kcal small {
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);

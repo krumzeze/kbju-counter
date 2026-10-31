@@ -1,4 +1,6 @@
-export const round = (n: number) => Math.round(n).toLocaleString("ru-RU");
+import { locale, tr } from "./i18n";
+
+export const round = (n: number) => Math.round(n).toLocaleString(locale());
 
 export function todayIso(): string {
   const d = new Date();
@@ -12,9 +14,9 @@ export function shiftDay(iso: string, days: number): string {
 }
 
 export function dayLabel(iso: string): string {
-  if (iso === todayIso()) return "Сегодня";
-  if (iso === shiftDay(todayIso(), -1)) return "Вчера";
-  return new Date(`${iso}T12:00:00Z`).toLocaleDateString("ru-RU", {
+  if (iso === todayIso()) return tr("Сегодня", "Today");
+  if (iso === shiftDay(todayIso(), -1)) return tr("Вчера", "Yesterday");
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString(locale(), {
     day: "numeric",
     month: "long",
     weekday: "short",
@@ -22,7 +24,7 @@ export function dayLabel(iso: string): string {
 }
 
 export const shortDate = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString(locale(), { day: "2-digit", month: "2-digit" });
 
 export function daysLeft(isoDateTime: string): number {
   return Math.max(0, Math.ceil((new Date(isoDateTime).getTime() - Date.now()) / 86400000));
@@ -35,6 +37,8 @@ export function plural(n: number, one: string, few: string, many: string): strin
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
   return many;
 }
+
+export const daysWord = (n: number) => tr(plural(n, "день", "дня", "дней"), n === 1 ? "day" : "days");
 
 export const usd = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: n < 1 && n > 0 ? 4 : 2 })}`;

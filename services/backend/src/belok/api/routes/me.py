@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.api.deps import CurrentUser, SessionDep, SettingsDep
 from belok.api.schemas import (
+    LanguageIn,
     MeOut,
     ProfileIn,
     PromoRedeemIn,
@@ -34,6 +35,13 @@ async def put_profile(body: ProfileIn, user: CurrentUser, session: SessionDep) -
     await update_profile(
         session, user, body.sex, body.age, body.height_cm, body.weight_kg, body.goal
     )
+    await session.commit()
+    return await _me(session, user)
+
+
+@router.put("/me/language")
+async def put_language(body: LanguageIn, user: CurrentUser, session: SessionDep) -> MeOut:
+    user.language = body.language
     await session.commit()
     return await _me(session, user)
 
@@ -84,6 +92,7 @@ async def _me(session: AsyncSession, user: User) -> MeOut:
         goal=user.goal,
         weight_kg=weight,
         timezone=user.timezone,
+        language=user.language,
         trial_ends_at=user.trial_ends_at,
         subscription_until=user.subscription_until,
         has_access=has_access(user, utcnow()),

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from belok.bot import texts
 from belok.config import Settings
 from belok.db.models import User
+from belok.i18n import guess_language
 from belok.services.access import has_access
 from belok.services.notify import notify_admins
 from belok.services.users import get_or_create_user
@@ -49,11 +50,12 @@ class UserMiddleware(BaseMiddleware):
         )
         user.bot_blocked = False
         data["user"] = user
+        data["lang"] = user.language or guess_language(tg_user.language_code)
         if created:
             await _announce(data["bot"], session, user)
         if user.is_blocked:
             if isinstance(event, Update) and event.message:
-                await event.message.answer(texts.BLOCKED)
+                await event.message.answer(texts.t(data["lang"], "blocked"))
             return None
         return await handler(event, data)
 
@@ -83,9 +85,9 @@ class RequireActiveUser(BaseMiddleware):
         if user is None:
             return None
         if not user.profile_complete:
-            return await _reply(event, texts.PROFILE_REQUIRED)
+            return await _reply(event, texts.t(data["lang"], "profile_required"))
         if not has_access(user, utcnow()):
-            return await _reply(event, texts.ACCESS_EXPIRED)
+            return await _reply(event, texts.t(data["lang"], "access_expired"))
         return await handler(event, data)
 
 

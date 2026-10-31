@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from belok.db.models import Meal
 from belok.domain.nutrition import Goal, Macros, Sex
+from belok.i18n import Language
 
 
 class MacrosOut(BaseModel):
@@ -81,6 +82,7 @@ class MeOut(BaseModel):
     goal: Goal | None
     weight_kg: float | None
     timezone: str
+    language: Language | None
     trial_ends_at: datetime
     subscription_until: datetime | None
     has_access: bool
@@ -88,6 +90,10 @@ class MeOut(BaseModel):
     access_until: datetime
     is_admin: bool
     base_target: MacrosOut | None
+
+
+class LanguageIn(BaseModel):
+    language: Language
 
 
 class PromoRedeemIn(BaseModel):

@@ -19,6 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from belok.domain.nutrition import Goal, Macros, Sex
+from belok.i18n import Language
 
 
 class Base(DeclarativeBase):
@@ -37,6 +38,7 @@ class User(Base):
     first_name: Mapped[str | None] = mapped_column(String(128))
     source: Mapped[str | None] = mapped_column(String(64))
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    language: Mapped[Language | None] = mapped_column(String(2))
 
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))

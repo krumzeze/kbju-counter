@@ -1,13 +1,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api, errorMessage, hasToken, setToken, setUnauthorizedHandler } from "./api/client";
 import { Layout } from "./components/Layout";
 import { ErrorState, Spinner } from "./components/States";
+import { detectedLang, setLang, tr } from "./lib/i18n";
 import { useMe } from "./lib/queries";
 import { webApp } from "./lib/telegram";
 import { AddMeal } from "./pages/AddMeal";
 import { ExerciseProgress } from "./pages/ExerciseProgress";
+import { LanguagePicker } from "./pages/LanguagePicker";
 import { Login } from "./pages/Login";
 import { Paywall } from "./pages/Paywall";
 import { Profile } from "./pages/Profile";
@@ -55,7 +57,14 @@ export function App() {
     case "checking":
       return <Spinner />;
     case "failed":
-      return <ErrorState message="Не удалось войти. Закрой и снова открой приложение." />;
+      return (
+        <ErrorState
+          message={tr(
+            "Не удалось войти. Закрой и снова открой приложение.",
+            "Couldn't sign in. Close the app and open it again.",
+          )}
+        />
+      );
     case "anonymous":
       return <Login onToken={signIn} />;
     case "authenticated":
@@ -65,12 +74,17 @@ export function App() {
 
 function AuthenticatedApp() {
   const { data: me, isPending, error, refetch } = useMe();
+  const inAdmin = useLocation().pathname.startsWith("/admin");
   if (isPending) return <Spinner />;
   if (error) return <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />;
 
+  const lang = inAdmin ? "ru" : (me.language ?? detectedLang);
+  setLang(lang);
+  if (!me.language && !inAdmin) return <LanguagePicker />;
+
   if (!me.profile_complete && !me.is_admin) {
     return (
-      <Routes>
+      <Routes key={lang}>
         <Route path="*" element={<Profile me={me} onboarding />} />
       </Routes>
     );
@@ -81,7 +95,7 @@ function AuthenticatedApp() {
     return me.has_access ? page : <Paywall />;
   };
   return (
-    <Routes>
+    <Routes key={lang}>
       <Route element={<Layout admin={me.is_admin} />}>
         <Route index element={paid(<Today />)} />
         <Route path="add" element={paid(<AddMeal />)} />

@@ -5,11 +5,15 @@ from dataclasses import dataclass
 from anthropic import AnthropicError, AsyncAnthropic
 from pydantic import BaseModel, Field, ValidationError
 
+from belok.i18n import Language
+
 SYSTEM_PROMPT = """You estimate the nutritional content of meals.
 Identify each distinct food item. Estimate its portion weight in grams from visual cues \
 (plate and utensil size, typical servings) or from the user's description, then estimate \
 calories, protein, fat and carbohydrates for that portion.
-Write the title and item names in Russian. If there is no food, return an empty items list."""
+Write the title and item names in {language}. If there is no food, return an empty items list."""
+
+LANGUAGE_NAMES = {Language.RU: "Russian", Language.EN: "English"}
 
 # USD per million input and output tokens.
 PRICES = {"claude-haiku-5-5": (0.10, 0.50)}
@@ -25,7 +29,7 @@ class FoodItem(BaseModel):
 
 
 class FoodAnalysis(BaseModel):
-    title: str = Field(default="Приём пищи", max_length=255)
+    title: str = Field(default="Meal", max_length=255)
     items: list[FoodItem] = Field(default_factory=list)
 
 
@@ -51,7 +55,9 @@ class FoodAnalyzer:
         self._client = AsyncAnthropic(api_key=api_key, timeout=60, max_retries=2)
         self.model = model
 
-    async def from_photo(self, image: bytes, caption: str | None = None) -> AnalysisResult:
+    async def from_photo(
+        self, image: bytes, caption: str | None, language: Language
+    ) -> AnalysisResult:
         content: list[dict] = [
             {
                 "type": "image",
@@ -64,18 +70,18 @@ class FoodAnalyzer:
         ]
         if caption:
             content.append({"type": "text", "text": f"User note: {caption}"})
-        return await self._complete(content)
+        return await self._complete(content, language)
 
-    async def from_text(self, text: str) -> AnalysisResult:
-        return await self._complete([{"type": "text", "text": text}])
+    async def from_text(self, text: str, language: Language) -> AnalysisResult:
+        return await self._complete([{"type": "text", "text": text}], language)
 
-    async def _complete(self, content: list[dict]) -> AnalysisResult:
+    async def _complete(self, content: list[dict], language: Language) -> AnalysisResult:
         started = time.monotonic()
         try:
             response = await self._client.messages.parse(
                 model=self.model,
                 max_tokens=8000,
-                system=SYSTEM_PROMPT,
+                system=SYSTEM_PROMPT.format(language=LANGUAGE_NAMES[language]),
                 messages=[{"role": "user", "content": content}],
                 output_format=FoodAnalysis,
             )

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { niceCeil, shortDate } from "../lib/format";
+import { tr } from "../lib/i18n";
 import { useWidth } from "../lib/useWidth";
 
 interface Point {
@@ -52,7 +53,7 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
       <svg
         viewBox={`0 0 ${WIDTH} ${height}`}
         role="img"
-        aria-label="График"
+        aria-label={tr("График", "Chart")}
         onMouseLeave={() => setActive(null)}
       >
         {ticks.map((t) => (

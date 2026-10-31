@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from belok.api.app import create_app
 from belok.config import Settings
 from belok.db.models import Base
+from belok.i18n import Language
 from belok.llm.analyzer import AnalysisResult, FoodAnalysis, FoodItem
 from tests.telegram_signing import BOT_TOKEN, sign_init_data
 
@@ -59,10 +60,12 @@ class FakeAnalyzer:
     def __init__(self) -> None:
         self.items = [FoodItem(name="Гречка", grams=200, kcal=220, protein=8, fat=2, carbs=42)]
 
-    async def from_photo(self, image: bytes, caption: str | None = None) -> AnalysisResult:
+    async def from_photo(
+        self, image: bytes, caption: str | None, language: Language
+    ) -> AnalysisResult:
         return self._result()
 
-    async def from_text(self, text: str) -> AnalysisResult:
+    async def from_text(self, text: str, language: Language) -> AnalysisResult:
         return self._result()
 
     def _result(self) -> AnalysisResult:

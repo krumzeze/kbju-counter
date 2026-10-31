@@ -1,7 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, api, errorMessage } from "../api/client";
-import { plural } from "../lib/format";
+import { daysWord } from "../lib/format";
+import { tr } from "../lib/i18n";
 import { useInvalidate } from "../lib/queries";
 import { haptic, shareLink } from "../lib/telegram";
 
@@ -19,7 +20,7 @@ export function PromoCard() {
   });
   const failure =
     redeem.error instanceof ApiError && redeem.error.detail === "not_found"
-      ? "Такого промокода нет"
+      ? tr("Такого промокода нет", "This promo code doesn't exist")
       : redeem.error && errorMessage(redeem.error);
 
   return (
@@ -30,7 +31,7 @@ export function PromoCard() {
         if (code.trim()) redeem.mutate();
       }}
     >
-      <h2>Промокод</h2>
+      <h2>{tr("Промокод", "Promo code")}</h2>
       <div className="inline-form">
         <input
           className="input mono"
@@ -41,13 +42,13 @@ export function PromoCard() {
           onChange={(e) => setCode(e.target.value.toUpperCase())}
         />
         <button className="btn btn-primary" disabled={!code.trim() || redeem.isPending}>
-          Применить
+          {tr("Применить", "Apply")}
         </button>
       </div>
       {failure && <p className="error small">{failure}</p>}
       {redeem.data && (
         <p className="success small">
-          +{redeem.data.days} {plural(redeem.data.days, "день", "дня", "дней")} доступа 🎉
+          +{redeem.data.days} {daysWord(redeem.data.days)} {tr("доступа", "of access")} 🎉
         </p>
       )}
     </form>
@@ -62,18 +63,23 @@ export function ReferralCard() {
 
   return (
     <section className="card stack">
-      <h2>Пригласи друзей</h2>
+      <h2>{tr("Пригласи друзей", "Invite friends")}</h2>
       <p className="muted small">
-        Друг получит {data.trial_days} дней бесплатно, а ты +{data.reward_days} дней доступа за каждую
-        его оплату подписки.
+        {tr(
+          `Друг получит ${data.trial_days} дней бесплатно, а ты +${data.reward_days} дней доступа за каждую его оплату подписки.`,
+          `Your friend gets ${data.trial_days} free days, and you get +${data.reward_days} days of access for each subscription payment they make.`,
+        )}
       </p>
       <input className="input mono" readOnly value={link} onFocus={(e) => e.target.select()} />
       <div className="actions">
         <button
           className="btn btn-primary"
-          onClick={() => shareLink(link, "Считаю калории по фото в Белке, попробуй:")}
+          onClick={() => shareLink(
+              link,
+              tr("Считаю калории по фото в Белке, попробуй:", "I count calories from photos with Belok, try it:"),
+            )}
         >
-          Поделиться
+          {tr("Поделиться", "Share")}
         </button>
         <button
           className="btn"
@@ -87,21 +93,21 @@ export function ReferralCard() {
             }
           }}
         >
-          {copied ? "Скопировано" : "Копировать"}
+          {copied ? tr("Скопировано", "Copied") : tr("Копировать", "Copy")}
         </button>
       </div>
       <div className="stats-row three">
         <div className="stat">
           <strong>{data.invited}</strong>
-          <span className="muted">пригласил</span>
+          <span className="muted">{tr("пригласил", "invited")}</span>
         </div>
         <div className="stat">
           <strong>{data.paid}</strong>
-          <span className="muted">оплатили</span>
+          <span className="muted">{tr("оплатили", "paid")}</span>
         </div>
         <div className="stat">
           <strong>{data.days}</strong>
-          <span className="muted">дней получил</span>
+          <span className="muted">{tr("дней получил", "days earned")}</span>
         </div>
       </div>
     </section>

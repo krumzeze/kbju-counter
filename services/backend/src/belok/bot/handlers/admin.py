@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from belok.bot import texts
 from belok.config import Settings
 from belok.db.models import User
+from belok.i18n import Language
 from belok.services.monitor import summary_text
 from belok.timeutil import utcnow
 
@@ -14,10 +15,10 @@ router = Router(name="admin")
 
 @router.message(Command("admin"))
 async def cmd_admin(
-    message: Message, session: AsyncSession, user: User, settings: Settings
+    message: Message, session: AsyncSession, user: User, settings: Settings, lang: Language
 ) -> None:
     if not user.is_admin:
-        await message.answer(texts.HELP)
+        await message.answer(texts.t(lang, "help"))
         return
     markup = None
     if settings.webapp_url:

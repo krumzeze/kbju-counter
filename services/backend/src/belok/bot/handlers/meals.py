@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.bot import texts
 from belok.bot.keyboards import MealCb, meal_kb
+from belok.bot.texts import t
 from belok.config import Settings
 from belok.db.models import User
+from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, AnalysisResult, FoodAnalyzer
 from belok.services.meals import (
     SCALE_STEP,
@@ -30,12 +32,13 @@ async def on_photo(
     user: User,
     analyzer: FoodAnalyzer,
     settings: Settings,
+    lang: Language,
 ) -> None:
     async def call() -> AnalysisResult:
         image = await bot.download(message.photo[-1])
-        return await analyzer.from_photo(image.read(), message.caption)
+        return await analyzer.from_photo(image.read(), message.caption, lang)
 
-    await _analyze(message, session, user, settings, "photo", "Смотрю на фото…", call)
+    await _analyze(message, session, user, settings, lang, "photo", "looking_photo", call)
 
 
 @router.message(StateFilter(None), F.text, ~F.text.startswith("/"))
@@ -45,33 +48,41 @@ async def on_text_meal(
     user: User,
     analyzer: FoodAnalyzer,
     settings: Settings,
+    lang: Language,
 ) -> None:
     if len(message.text) > 500:
-        await message.answer("Слишком длинное описание, опиши блюдо короче")
+        await message.answer(t(lang, "text_too_long"))
         return
     await _analyze(
         message,
         session,
         user,
         settings,
+        lang,
         "text",
-        "Считаю…",
-        lambda: analyzer.from_text(message.text),
+        "counting",
+        lambda: analyzer.from_text(message.text, lang),
     )
 
 
 @router.callback_query(MealCb.filter())
 async def on_meal_action(
-    callback: CallbackQuery, callback_data: MealCb, session: AsyncSession, user: User
+    callback: CallbackQuery,
+    callback_data: MealCb,
+    session: AsyncSession,
+    user: User,
+    lang: Language,
 ) -> None:
     meal = await get_meal(session, user.id, callback_data.id)
     if meal is None:
-        await callback.answer("Запись не найдена")
+        await callback.answer(t(lang, "entry_not_found"))
         return
 
     if callback_data.action == "del":
         await session.delete(meal)
-        await callback.message.edit_text(f"<s>{texts.meal_card(meal)}</s>\n\nУдалено")
+        await callback.message.edit_text(
+            f"<s>{texts.meal_card(lang, meal)}</s>\n\n{t(lang, 'deleted')}"
+        )
         await callback.answer()
         return
 
@@ -81,7 +92,9 @@ async def on_meal_action(
         await callback.answer()
         return
     meal.scale = new_scale
-    await callback.message.edit_text(texts.meal_card(meal), reply_markup=meal_kb(meal.id))
+    await callback.message.edit_text(
+        texts.meal_card(lang, meal), reply_markup=meal_kb(lang, meal.id)
+    )
     await callback.answer()
 
 
@@ -90,23 +103,24 @@ async def _analyze(
     session: AsyncSession,
     user: User,
     settings: Settings,
+    lang: Language,
     kind: str,
-    progress_text: str,
+    progress_key: str,
     call: Callable[[], Awaitable[AnalysisResult]],
 ) -> None:
     try:
         await ensure_within_limit(session, user, settings.daily_analysis_limit)
     except DailyLimitReached:
-        await message.answer("На сегодня лимит распознаваний исчерпан, приходи завтра")
+        await message.answer(t(lang, "daily_limit"))
         return
 
-    status = await message.answer(progress_text)
+    status = await message.answer(t(lang, progress_key))
     try:
         meal = await analyze_meal(session, user, kind, call)
     except AnalysisError:
-        await status.edit_text("Не получилось посчитать, попробуй ещё раз чуть позже")
+        await status.edit_text(t(lang, "analysis_failed"))
         return
     if meal is None:
-        await status.edit_text("Не вижу здесь еды. Попробуй другое фото или опиши текстом")
+        await status.edit_text(t(lang, "no_food"))
         return
-    await status.edit_text(texts.meal_card(meal), reply_markup=meal_kb(meal.id))
+    await status.edit_text(texts.meal_card(lang, meal), reply_markup=meal_kb(lang, meal.id))

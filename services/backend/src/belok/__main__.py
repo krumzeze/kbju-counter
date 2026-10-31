@@ -6,10 +6,10 @@ from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
-from aiogram.types import MenuButtonWebApp, WebAppInfo
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from belok.bot.setup import COMMANDS, build_dispatcher
+from belok.bot.menu import setup_defaults
+from belok.bot.setup import build_dispatcher
 from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
 from belok.services.broadcasts import run_worker
@@ -39,13 +39,7 @@ async def main() -> None:
     ]
 
     try:
-        await bot.set_my_commands(COMMANDS)
-        if settings.webapp_url:
-            await bot.set_chat_menu_button(
-                menu_button=MenuButtonWebApp(
-                    text="Открыть", web_app=WebAppInfo(url=settings.webapp_url)
-                )
-            )
+        await setup_defaults(bot, settings)
         await dp.start_polling(bot, settings=settings, analyzer=analyzer)
     finally:
         for task in background:

@@ -1,23 +1,10 @@
 from aiogram import Dispatcher, Router
 from aiogram.fsm.storage.base import BaseStorage
-from aiogram.types import BotCommand
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from belok.bot.handlers import admin, meals, start, tracking, workouts
 from belok.bot.middlewares import DbSessionMiddleware, RequireActiveUser, UserMiddleware
 from belok.config import Settings
-
-COMMANDS = [
-    BotCommand(command="today", description="Итоги дня"),
-    BotCommand(command="weight", description="Записать вес"),
-    BotCommand(command="steps", description="Записать шаги"),
-    BotCommand(command="gym", description="Записать подходы"),
-    BotCommand(command="progress", description="Прогресс по упражнению"),
-    BotCommand(command="profile", description="Изменить анкету"),
-    BotCommand(command="invite", description="Пригласить друга"),
-    BotCommand(command="promo", description="Активировать промокод"),
-    BotCommand(command="help", description="Помощь"),
-]
 
 
 def build_dispatcher(

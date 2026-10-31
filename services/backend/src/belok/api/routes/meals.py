@@ -10,6 +10,7 @@ from belok.api.schemas import DayOut, MealOut, MealPatchIn, SetOut, TextMealIn, 
 from belok.config import Settings
 from belok.db.models import User
 from belok.domain.nutrition import steps_kcal
+from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, AnalysisResult
 from belok.services.meals import DailyLimitReached, analyze_meal, clamp_scale, ensure_within_limit
 from belok.services.repo import day_summary, get_meal, meals_on, sets_on
@@ -58,7 +59,7 @@ async def create_meal_from_photo(
     if len(image) > MAX_PHOTO_BYTES:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "image_too_large")
     return await _analyze(
-        session, settings, user, "photo", lambda: analyzer.from_photo(image, note)
+        session, settings, user, "photo", lambda: analyzer.from_photo(image, note, _language(user))
     )
 
 
@@ -70,7 +71,9 @@ async def create_meal_from_text(
     settings: SettingsDep,
     analyzer: AnalyzerDep,
 ) -> MealOut:
-    return await _analyze(session, settings, user, "text", lambda: analyzer.from_text(body.text))
+    return await _analyze(
+        session, settings, user, "text", lambda: analyzer.from_text(body.text, _language(user))
+    )
 
 
 @router.patch("/meals/{meal_id}")
@@ -115,3 +118,7 @@ async def _analyze(
     if meal is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_food")
     return MealOut.of(meal)
+
+
+def _language(user: User) -> Language:
+    return user.language or Language.RU

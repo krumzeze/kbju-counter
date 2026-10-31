@@ -1,3 +1,5 @@
+import type { Lang } from "../lib/i18n";
+
 export type Sex = "m" | "f";
 export type Goal = "lose" | "maintain" | "gain";
 
@@ -54,6 +56,7 @@ export interface Me {
   goal: Goal | null;
   weight_kg: number | null;
   timezone: string;
+  language: Lang | null;
   trial_ends_at: string;
   subscription_until: string | null;
   has_access: boolean;

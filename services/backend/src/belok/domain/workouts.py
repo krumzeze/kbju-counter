@@ -19,7 +19,7 @@ def normalize_exercise(name: str) -> str:
 
 
 def parse_workout(text: str) -> tuple[str, list[ParsedSet]]:
-    """Parse "жим лежа 80x8 80x8 75x10" or "присед 100x5x3" (weight x reps x sets)."""
+    """Parse "bench press 80x8 80x8 75x10" or "squat 100x5x3" (weight x reps x sets)."""
     name_parts: list[str] = []
     sets: list[ParsedSet] = []
     for token in text.split():

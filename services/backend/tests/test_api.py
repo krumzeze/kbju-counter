@@ -50,6 +50,15 @@ async def test_profile_sets_base_target(client):
     assert me["base_target"]["kcal"] == pytest.approx(1780 * 1.2)
 
 
+async def test_language_starts_unset_and_can_be_chosen(client):
+    headers = await login(client)
+    assert (await client.get("/api/me", headers=headers)).json()["language"] is None
+    response = await client.put("/api/me/language", json={"language": "en"}, headers=headers)
+    assert response.json()["language"] == "en"
+    bad = await client.put("/api/me/language", json={"language": "de"}, headers=headers)
+    assert bad.status_code == 422
+
+
 async def test_invalid_timezone_is_rejected(client):
     headers = await login(client)
     response = await client.put(

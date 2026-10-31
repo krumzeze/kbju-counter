@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Meal } from "../api/types";
 import { round } from "../lib/format";
+import { locale, tr } from "../lib/i18n";
 import { useInvalidate } from "../lib/queries";
 
 const STEP = 0.25;
@@ -17,7 +18,7 @@ export function MealCard({ meal, defaultOpen = false }: { meal: Meal; defaultOpe
     onSuccess: () => invalidate("day"),
   });
   const busy = scale.isPending || remove.isPending;
-  const time = new Date(meal.created_at).toLocaleTimeString("ru-RU", {
+  const time = new Date(meal.created_at).toLocaleTimeString(locale(), {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -32,12 +33,15 @@ export function MealCard({ meal, defaultOpen = false }: { meal: Meal; defaultOpe
           <div>
             <strong>{meal.title}</strong>
             <span className="muted">
-              {time} · Б {round(meal.totals.protein)} · Ж {round(meal.totals.fat)} · У{" "}
-              {round(meal.totals.carbs)}
+              {time} · {tr("Б", "P")} {round(meal.totals.protein)} · {tr("Ж", "F")}{" "}
+              {round(meal.totals.fat)} · {tr("У", "C")} {round(meal.totals.carbs)}
             </span>
           </div>
         </div>
-        <span className="meal-kcal">{round(meal.totals.kcal)}</span>
+        <span className="meal-kcal">
+          {round(meal.totals.kcal)}
+          <small> {tr("ккал", "kcal")}</small>
+        </span>
       </summary>
 
       <ul className="meal-items">
@@ -45,18 +49,19 @@ export function MealCard({ meal, defaultOpen = false }: { meal: Meal; defaultOpe
           <li key={item.id}>
             <span>{item.name}</span>
             <span className="muted">
-              {round(item.grams * meal.scale)} г · {round(item.kcal * meal.scale)} ккал
+              {round(item.grams * meal.scale)} {tr("г", "g")} · {round(item.kcal * meal.scale)}{" "}
+              {tr("ккал", "kcal")}
             </span>
           </li>
         ))}
       </ul>
 
       <div className="meal-actions">
-        <div className="stepper" role="group" aria-label="Размер порции">
+        <div className="stepper" role="group" aria-label={tr("Размер порции", "Portion size")}>
           <button
             disabled={busy || meal.scale <= STEP}
             onClick={() => scale.mutate(meal.scale - STEP)}
-            aria-label="Уменьшить порцию"
+            aria-label={tr("Уменьшить порцию", "Smaller portion")}
           >
             −
           </button>
@@ -64,13 +69,13 @@ export function MealCard({ meal, defaultOpen = false }: { meal: Meal; defaultOpe
           <button
             disabled={busy || meal.scale >= 5}
             onClick={() => scale.mutate(meal.scale + STEP)}
-            aria-label="Увеличить порцию"
+            aria-label={tr("Увеличить порцию", "Larger portion")}
           >
             +
           </button>
         </div>
         <button className="btn-ghost danger" disabled={busy} onClick={() => remove.mutate()}>
-          Удалить
+          {tr("Удалить", "Delete")}
         </button>
       </div>
     </details>

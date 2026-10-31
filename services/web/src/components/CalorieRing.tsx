@@ -1,4 +1,5 @@
 import { round } from "../lib/format";
+import { tr } from "../lib/i18n";
 
 interface Props {
   eaten: number;
@@ -34,14 +35,14 @@ export function CalorieRing({ eaten, target }: Props) {
         {left === null ? (
           <>
             <strong>{round(eaten)}</strong>
-            <span>ккал съедено</span>
+            <span>{tr("ккал съедено", "kcal eaten")}</span>
           </>
         ) : (
           <>
             <strong>{round(Math.abs(left))}</strong>
-            <span>{left >= 0 ? "ккал осталось" : "ккал сверх нормы"}</span>
+            <span>{left >= 0 ? tr("ккал осталось", "kcal left") : tr("ккал сверх нормы", "kcal over")}</span>
             <small>
-              {round(eaten)} из {round(target!)}
+              {round(eaten)} {tr("из", "of")} {round(target!)}
             </small>
           </>
         )}

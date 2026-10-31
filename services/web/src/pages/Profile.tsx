@@ -1,16 +1,22 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { errorMessage, setToken } from "../api/client";
+import { api, errorMessage, setToken } from "../api/client";
 import type { Goal, Me, Sex } from "../api/types";
-import { daysLeft, plural, round } from "../lib/format";
+import { daysLeft, daysWord, round } from "../lib/format";
+import { type Lang, locale, tr } from "../lib/i18n";
 import { PromoCard, ReferralCard } from "../components/Growth";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
 
-const GOALS: { value: Goal; label: string; hint: string }[] = [
-  { value: "lose", label: "Похудеть", hint: "дефицит 15%" },
-  { value: "maintain", label: "Держать вес", hint: "по норме" },
-  { value: "gain", label: "Набрать массу", hint: "профицит 10%" },
+const goals = (): { value: Goal; label: string; hint: string }[] => [
+  { value: "lose", label: tr("Похудеть", "Lose weight"), hint: tr("дефицит 15%", "15% deficit") },
+  {
+    value: "maintain",
+    label: tr("Держать вес", "Maintain weight"),
+    hint: tr("по норме", "maintenance"),
+  },
+  { value: "gain", label: tr("Набрать массу", "Gain muscle"), hint: tr("профицит 10%", "10% surplus") },
 ];
 
 export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boolean }) {
@@ -32,22 +38,28 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
     <div className="page">
       {onboarding ? (
         <>
-          <h1>Давай знакомиться</h1>
+          <h1>{tr("Давай знакомиться", "Let's get to know you")}</h1>
           <p className="muted">
-            Пять вопросов, и я рассчитаю твою норму калорий и БЖУ. Шаги и тренировки будут добавлять
-            к ней калории каждый день.
+            {tr(
+              "Пять вопросов, и я рассчитаю твою норму калорий и БЖУ. Шаги и тренировки будут добавлять к ней калории каждый день.",
+              "Five questions and I'll calculate your daily calorie and macro target. Steps and workouts add calories to it every day.",
+            )}
           </p>
         </>
       ) : (
         <>
-          <h1>Профиль</h1>
+          <h1>{tr("Профиль", "Profile")}</h1>
           <AccessCard me={me} />
+          <LanguageCard me={me} />
           {me.base_target && (
             <div className="card">
-              <span className="muted">Базовая норма без активности</span>
+              <span className="muted">{tr("Базовая норма без активности", "Base target before activity")}</span>
               <p className="target-line">
-                <strong>{round(me.base_target.kcal)} ккал</strong> · Б {round(me.base_target.protein)}{" "}
-                · Ж {round(me.base_target.fat)} · У {round(me.base_target.carbs)}
+                <strong>
+                  {round(me.base_target.kcal)} {tr("ккал", "kcal")}
+                </strong>{" "}
+                · {tr("Б", "P")} {round(me.base_target.protein)} · {tr("Ж", "F")}{" "}
+                {round(me.base_target.fat)} · {tr("У", "C")} {round(me.base_target.carbs)}
               </p>
             </div>
           )}
@@ -73,25 +85,36 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
         }}
       >
         <div className="field">
-          <span>Пол</span>
+          <span>{tr("Пол", "Sex")}</span>
           <div className="segmented">
             <button type="button" aria-selected={sex === "m"} onClick={() => setSex("m")}>
-              Мужской
+              {tr("Мужской", "Male")}
             </button>
             <button type="button" aria-selected={sex === "f"} onClick={() => setSex("f")}>
-              Женский
+              {tr("Женский", "Female")}
             </button>
           </div>
         </div>
         <div className="fields-3">
-          <NumberField label="Возраст" value={age} onChange={setAge} placeholder="25" />
-          <NumberField label="Рост, см" value={height} onChange={setHeight} placeholder="178" />
-          <NumberField label="Вес, кг" value={weight} onChange={setWeight} placeholder="74.5" decimal />
+          <NumberField label={tr("Возраст", "Age")} value={age} onChange={setAge} placeholder="25" />
+          <NumberField
+            label={tr("Рост, см", "Height, cm")}
+            value={height}
+            onChange={setHeight}
+            placeholder="178"
+          />
+          <NumberField
+            label={tr("Вес, кг", "Weight, kg")}
+            value={weight}
+            onChange={setWeight}
+            placeholder="74.5"
+            decimal
+          />
         </div>
         <div className="field">
-          <span>Цель</span>
+          <span>{tr("Цель", "Goal")}</span>
           <div className="goal-list">
-            {GOALS.map((g) => (
+            {goals().map((g) => (
               <button
                 type="button"
                 key={g.value}
@@ -106,9 +129,9 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           </div>
         </div>
         {save.isError && <p className="error">{errorMessage(save.error)}</p>}
-        {save.isSuccess && !onboarding && <p className="success">Сохранено</p>}
+        {save.isSuccess && !onboarding && <p className="success">{tr("Сохранено", "Saved")}</p>}
         <button className="btn btn-primary btn-block" disabled={!valid || save.isPending}>
-          {onboarding ? "Рассчитать норму" : "Сохранить"}
+          {onboarding ? tr("Рассчитать норму", "Calculate my target") : tr("Сохранить", "Save")}
         </button>
       </form>
 
@@ -127,7 +150,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
             window.location.assign("/");
           }}
         >
-          Выйти
+          {tr("Выйти", "Sign out")}
         </button>
       )}
     </div>
@@ -159,12 +182,13 @@ function NumberField(props: {
 
 function AccessCard({ me }: { me: Me }) {
   if (me.status === "lifetime") {
-    return <div className="card access">Бесплатный доступ навсегда</div>;
+    return <div className="card access">{tr("Бесплатный доступ навсегда", "Free access forever")}</div>;
   }
   if (me.status === "active") {
     return (
       <div className="card access">
-        Доступ активен до {new Date(me.access_until).toLocaleDateString("ru-RU")}
+        {tr("Доступ активен до", "Access active until")}{" "}
+        {new Date(me.access_until).toLocaleDateString(locale())}
       </div>
     );
   }
@@ -172,8 +196,34 @@ function AccessCard({ me }: { me: Me }) {
   return (
     <div className="card access">
       {left > 0
-        ? `Пробный период: осталось ${left} ${plural(left, "день", "дня", "дней")}`
-        : "Пробный период закончился"}
+        ? tr(`Пробный период: осталось ${left} ${daysWord(left)}`, `Free trial: ${left} ${daysWord(left)} left`)
+        : tr("Пробный период закончился", "Your free trial has ended")}
+    </div>
+  );
+}
+
+function LanguageCard({ me }: { me: Me }) {
+  const client = useQueryClient();
+  const change = useMutation({
+    mutationFn: (lang: Lang) => api.setLanguage(lang),
+    onSuccess: (updated) => client.setQueryData(["me"], updated),
+  });
+  return (
+    <div className="card field">
+      <span>{tr("Язык", "Language")}</span>
+      <div className="segmented">
+        {(["ru", "en"] as const).map((lang) => (
+          <button
+            key={lang}
+            type="button"
+            aria-selected={me.language === lang}
+            disabled={change.isPending}
+            onClick={() => me.language !== lang && change.mutate(lang)}
+          >
+            {lang === "ru" ? "Русский" : "English"}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Meal } from "../api/types";
 import { MealCard } from "../components/MealCard";
+import { tr } from "../lib/i18n";
 import { prepareImage } from "../lib/image";
 import { useInvalidate } from "../lib/queries";
 import { haptic } from "../lib/telegram";
@@ -52,15 +53,20 @@ export function AddMeal() {
   if (meal) {
     return (
       <div className="page">
-        <h1>Готово</h1>
-        <p className="muted">Если порция на фото больше или меньше, поправь её кнопками.</p>
+        <h1>{tr("Готово", "Done")}</h1>
+        <p className="muted">
+          {tr(
+            "Если порция на фото больше или меньше, поправь её кнопками.",
+            "If the portion is bigger or smaller than it looks, adjust it with the buttons.",
+          )}
+        </p>
         <MealCard meal={meal} defaultOpen />
         <div className="row">
           <button className="btn" onClick={reset}>
-            Добавить ещё
+            {tr("Добавить ещё", "Add another")}
           </button>
           <Link className="btn btn-primary" to="/">
-            К итогам дня
+            {tr("К итогам дня", "Back to today")}
           </Link>
         </div>
       </div>
@@ -71,13 +77,13 @@ export function AddMeal() {
 
   return (
     <div className="page">
-      <h1>Что съел?</h1>
+      <h1>{tr("Что съел?", "What did you eat?")}</h1>
       <div className="segmented" role="tablist">
         <button role="tab" aria-selected={mode === "photo"} onClick={() => setMode("photo")}>
-          📸 Фото
+          📸 {tr("Фото", "Photo")}
         </button>
         <button role="tab" aria-selected={mode === "text"} onClick={() => setMode("text")}>
-          ✍️ Текстом
+          ✍️ {tr("Текстом", "Text")}
         </button>
       </div>
 
@@ -85,11 +91,11 @@ export function AddMeal() {
         <>
           <button className="dropzone" onClick={() => fileInput.current?.click()}>
             {preview ? (
-              <img src={preview} alt="Фото блюда" />
+              <img src={preview} alt={tr("Фото блюда", "Meal photo")} />
             ) : (
               <span>
-                <strong>Сфотографируй тарелку</strong>
-                <span className="muted">или выбери фото из галереи</span>
+                <strong>{tr("Сфотографируй тарелку", "Take a photo of your plate")}</strong>
+                <span className="muted">{tr("или выбери фото из галереи", "or pick one from your gallery")}</span>
               </span>
             )}
           </button>
@@ -102,7 +108,7 @@ export function AddMeal() {
           />
           <input
             className="input"
-            placeholder="Подсказка, например: рис 150 г, без масла"
+            placeholder={tr("Подсказка, например: рис 150 г, без масла", "Hint, e.g. rice 150 g, no oil")}
             maxLength={200}
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -113,7 +119,7 @@ export function AddMeal() {
           className="input"
           rows={4}
           maxLength={500}
-          placeholder="2 яйца, тост с маслом, кофе с молоком"
+          placeholder={tr("2 яйца, тост с маслом, кофе с молоком", "2 eggs, buttered toast, coffee with milk")}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
@@ -126,7 +132,7 @@ export function AddMeal() {
         disabled={!canSubmit || analyze.isPending}
         onClick={() => analyze.mutate()}
       >
-        {analyze.isPending ? "Считаю КБЖУ…" : "Посчитать"}
+        {analyze.isPending ? tr("Считаю КБЖУ…", "Counting…") : tr("Посчитать", "Analyze")}
       </button>
     </div>
   );
