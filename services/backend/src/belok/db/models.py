@@ -134,8 +134,41 @@ class Exercise(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String(128))
+    catalog_id: Mapped[str | None] = mapped_column(String(96))
+    group: Mapped[str | None] = mapped_column(String(16))
+    cardio: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
-    __table_args__ = (UniqueConstraint("user_id", "name"),)
+    __table_args__ = (
+        Index(
+            "uq_exercises_user_id_name",
+            "user_id",
+            "name",
+            unique=True,
+            postgresql_where=text("catalog_id IS NULL"),
+        ),
+        Index(
+            "uq_exercises_user_id_catalog_id",
+            "user_id",
+            "catalog_id",
+            unique=True,
+            postgresql_where=text("catalog_id IS NOT NULL"),
+        ),
+    )
+
+
+class Workout(Base):
+    __tablename__ = "workouts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    day: Mapped[date] = mapped_column(Date)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    title: Mapped[str | None] = mapped_column(String(64))
+    # [{"exercise_id": int, "sets": int}] in display order, including exercises with no sets yet.
+    plan: Mapped[list] = mapped_column(JSON, default=list)
+
+    __table_args__ = (Index("ix_workouts_user_id_day", "user_id", "day"),)
 
 
 class WorkoutSet(Base):
@@ -143,16 +176,29 @@ class WorkoutSet(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    workout_id: Mapped[int] = mapped_column(ForeignKey("workouts.id", ondelete="CASCADE"))
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id", ondelete="CASCADE"))
     day: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    weight_kg: Mapped[float] = mapped_column(Float)
-    reps: Mapped[int] = mapped_column(Integer)
+    weight_kg: Mapped[float] = mapped_column(Float, default=0.0)
+    reps: Mapped[int | None] = mapped_column(Integer)
+    duration_s: Mapped[int | None] = mapped_column(Integer)
 
     __table_args__ = (
         Index("ix_workout_sets_user_id_day", "user_id", "day"),
         Index("ix_workout_sets_exercise_id_day", "exercise_id", "day"),
+        Index("ix_workout_sets_workout_id", "workout_id"),
     )
+
+
+class WorkoutTemplate(Base):
+    __tablename__ = "workout_templates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    items: Mapped[list] = mapped_column(JSON, default=list)
 
 
 class LlmUsage(Base):

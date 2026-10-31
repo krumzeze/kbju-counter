@@ -5,17 +5,8 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.db.models import (
-    BodyWeight,
-    DailyActivity,
-    Exercise,
-    LlmUsage,
-    Meal,
-    User,
-    WorkoutSet,
-)
+from belok.db.models import BodyWeight, DailyActivity, LlmUsage, Meal, User, WorkoutSet
 from belok.domain.nutrition import Macros, daily_target
-from belok.domain.workouts import ParsedSet
 
 
 async def upsert_weight(session: AsyncSession, user_id: int, day: date, weight_kg: float) -> None:
@@ -55,84 +46,11 @@ async def recent_weights(session: AsyncSession, user_id: int, limit: int) -> lis
     return list(result)
 
 
-async def get_or_create_exercise(session: AsyncSession, user_id: int, name: str) -> Exercise:
-    stmt = (
-        insert(Exercise)
-        .values(user_id=user_id, name=name)
-        .on_conflict_do_nothing(index_elements=["user_id", "name"])
-    )
-    await session.execute(stmt)
-    return await session.scalar(
-        select(Exercise).where(Exercise.user_id == user_id, Exercise.name == name)
-    )
-
-
-async def add_sets(
-    session: AsyncSession, user_id: int, exercise: Exercise, day: date, sets: list[ParsedSet]
-) -> None:
-    session.add_all(
-        WorkoutSet(
-            user_id=user_id, exercise_id=exercise.id, day=day, weight_kg=s.weight_kg, reps=s.reps
-        )
-        for s in sets
-    )
-
-
-async def list_exercises(session: AsyncSession, user_id: int) -> list[str]:
-    result = await session.scalars(
-        select(Exercise.name).where(Exercise.user_id == user_id).order_by(Exercise.name)
-    )
-    return list(result)
-
-
-async def exercise_history(
-    session: AsyncSession, user_id: int, name: str, limit: int
-) -> list[tuple[date, list[WorkoutSet]]]:
-    days = (
-        await session.scalars(
-            select(WorkoutSet.day)
-            .join(Exercise)
-            .where(Exercise.user_id == user_id, Exercise.name == name)
-            .group_by(WorkoutSet.day)
-            .order_by(WorkoutSet.day.desc())
-            .limit(limit)
-        )
-    ).all()
-    if not days:
-        return []
-    sets = await session.scalars(
-        select(WorkoutSet)
-        .join(Exercise)
-        .where(Exercise.user_id == user_id, Exercise.name == name, WorkoutSet.day.in_(days))
-        .order_by(WorkoutSet.day, WorkoutSet.id)
-    )
-    by_day: dict[date, list[WorkoutSet]] = {}
-    for s in sets:
-        by_day.setdefault(s.day, []).append(s)
-    return sorted(by_day.items())
-
-
 async def meals_on(session: AsyncSession, user_id: int, day: date) -> list[Meal]:
     result = await session.scalars(
         select(Meal).where(Meal.user_id == user_id, Meal.day == day).order_by(Meal.created_at)
     )
     return list(result)
-
-
-async def sets_on(session: AsyncSession, user_id: int, day: date) -> list[tuple[WorkoutSet, str]]:
-    result = await session.execute(
-        select(WorkoutSet, Exercise.name)
-        .join(Exercise)
-        .where(WorkoutSet.user_id == user_id, WorkoutSet.day == day)
-        .order_by(WorkoutSet.id)
-    )
-    return [(s, name) for s, name in result.all()]
-
-
-async def get_set(session: AsyncSession, user_id: int, set_id: int) -> WorkoutSet | None:
-    return await session.scalar(
-        select(WorkoutSet).where(WorkoutSet.id == set_id, WorkoutSet.user_id == user_id)
-    )
 
 
 async def get_meal(session: AsyncSession, user_id: int, meal_id: int) -> Meal | None:

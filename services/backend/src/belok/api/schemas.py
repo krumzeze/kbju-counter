@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo, available_timezones
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from belok.api.workout_schemas import SetOut
 from belok.db.models import Meal
 from belok.domain.nutrition import Goal, Macros, Sex
 from belok.i18n import Language
@@ -51,14 +52,6 @@ class MealOut(BaseModel):
             items=[MealItemOut.model_validate(i) for i in meal.items],
             totals=MacrosOut.model_validate(meal.totals()),
         )
-
-
-class SetOut(BaseModel):
-    id: int
-    exercise: str
-    day: date
-    weight_kg: float
-    reps: int
 
 
 class DayOut(BaseModel):
@@ -173,29 +166,6 @@ class WeightOut(BaseModel):
 
 class StepsIn(BaseModel):
     steps: int = Field(ge=0, le=100_000)
-
-
-class SetIn(BaseModel):
-    weight_kg: float = Field(ge=0, le=1000)
-    reps: int = Field(ge=1, le=1000)
-
-
-class WorkoutIn(BaseModel):
-    exercise: str = Field(min_length=1, max_length=128)
-    sets: list[SetIn] = Field(min_length=1, max_length=20)
-
-
-class ProgressPointOut(BaseModel):
-    day: date
-    top_weight_kg: float
-    top_reps: int
-    e1rm: float
-    sets: int
-
-
-class ProgressOut(BaseModel):
-    exercise: str
-    points: list[ProgressPointOut]
 
 
 def macros_out(m: Macros | None) -> MacrosOut | None:

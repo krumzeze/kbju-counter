@@ -149,27 +149,6 @@ async def test_weights(client):
     assert [w["weight_kg"] for w in weights] == [79.4]
 
 
-async def test_workouts_and_progress(client):
-    headers = await onboarded(client)
-    body = {
-        "exercise": "Жим лёжа",
-        "sets": [{"weight_kg": 80, "reps": 8}, {"weight_kg": 90, "reps": 3}],
-    }
-    sets = (await client.post("/api/workouts", json=body, headers=headers)).json()
-    assert [s["exercise"] for s in sets] == ["жим лежа", "жим лежа"]
-
-    assert (await client.get("/api/exercises", headers=headers)).json() == ["жим лежа"]
-    progress = (
-        await client.get("/api/progress", params={"exercise": "жим лежа"}, headers=headers)
-    ).json()
-    assert progress["points"][0]["e1rm"] == pytest.approx(101.3, abs=0.1)
-    assert progress["points"][0]["sets"] == 2
-
-    assert (await client.delete(f"/api/sets/{sets[0]['id']}", headers=headers)).status_code == 204
-    day = (await client.get("/api/day", headers=headers)).json()
-    assert len(day["sets"]) == 1
-
-
 async def test_expired_trial_blocks_data_but_not_profile(client):
     headers = await onboarded(client)
     async with client.app.state.sessionmaker() as session:
