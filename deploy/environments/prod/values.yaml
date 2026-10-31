@@ -1,7 +1,7 @@
 host: belok.hamdcreative.com
 
 image:
-  tag: pending
+  tag: "911836e43d4c9000619402cba0bcad7be6536046"
 
 config:
   BOT_USERNAME: ""
