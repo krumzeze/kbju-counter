@@ -196,7 +196,7 @@ button:disabled {
   position: fixed;
   left: 50%;
   bottom: calc(12px + env(safe-area-inset-bottom));
-  z-index: 30;
+  z-index: 40;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
@@ -792,6 +792,12 @@ button:disabled {
 
 .summary .bar-fill {
   background: var(--ink);
+}
+
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .tiles {
@@ -1633,10 +1639,6 @@ button:disabled {
 }
 
 @media (min-width: 960px) {
-  .app:not(.mini) {
-    padding-bottom: 56px;
-  }
-
   .topbar {
     position: sticky;
     top: 0;
@@ -1664,52 +1666,24 @@ button:disabled {
     max-width: none;
   }
 
-  .app:not(.mini) .tabbar {
-    top: 12px;
-    right: max(32px, calc((100vw - 1120px) / 2 + 32px));
-    bottom: auto;
-    left: auto;
-    display: flex;
-    gap: 4px;
-    width: auto;
-    height: 52px;
-    padding: 0 6px;
-    border-radius: 20px;
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    transform: none;
-    color: var(--ink);
+  .tabbar {
+    width: 560px;
   }
 
-  .app:not(.mini) .tab {
+  .tab {
     display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
-    height: 40px;
-    padding: 0 14px;
-    border-radius: 14px;
-    color: var(--muted);
   }
 
-  .app:not(.mini) .tab .tab-label,
-  .app:not(.mini) .tab.active .icon {
+  .tab .tab-label,
+  .tab.active .icon {
     display: block;
   }
 
-  .app:not(.mini) .tab.active {
-    background: var(--ink);
-  }
-
-  .app:not(.mini) .tab.active::after {
-    display: none;
-  }
-
-  .app:not(.mini) .tab-add {
-    order: 9;
-    width: 40px;
-    height: 40px;
-    margin-left: 4px;
-    border-radius: 14px;
-    box-shadow: none;
+  .tab.active::after {
+    bottom: 4px;
   }
 
   .hello h1 {
@@ -1739,10 +1713,6 @@ button:disabled {
     grid-template-columns: 1fr 1fr;
     align-items: start;
     gap: 12px;
-  }
-
-  .rest-bar {
-    bottom: 24px;
   }
 }
 
