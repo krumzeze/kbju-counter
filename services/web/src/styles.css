@@ -1155,6 +1155,35 @@ button:disabled {
   object-fit: contain;
 }
 
+.dropzone > .dropzone-empty {
+  align-self: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 24px 0 0;
+}
+
+.dropzone-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 20px;
+}
+
+.dropzone-empty .dropzone-icon {
+  margin-bottom: 28px;
+}
+
+.dropzone .add-art {
+  display: block;
+  width: min(100%, 300px);
+  height: auto;
+  aspect-ratio: 1;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+}
+
 .dropzone-icon {
   display: grid;
   place-items: center;

@@ -102,17 +102,20 @@ export function AddMeal() {
             {preview ? (
               <img src={preview} alt={tr("Фото блюда", "Meal photo")} />
             ) : (
-              <span>
+              <span className="dropzone-empty">
+                <span className="dropzone-text">
+                  <strong>{tr("Сфотографируй тарелку", "Take a photo of your plate")}</strong>
+                  <span className="muted">{tr("или выбери фото из галереи", "or pick one from your gallery")}</span>
+                </span>
                 <Art
                   name="add-photo"
+                  className="art add-art"
                   fallback={
                     <span className="dropzone-icon">
                       <Icon name="camera" size={32} />
                     </span>
                   }
                 />
-                <strong>{tr("Сфотографируй тарелку", "Take a photo of your plate")}</strong>
-                <span className="muted">{tr("или выбери фото из галереи", "or pick one from your gallery")}</span>
               </span>
             )}
           </button>
