@@ -1489,6 +1489,120 @@ button:disabled {
   }
 }
 
+@media (min-width: 960px) {
+  .app:not(.mini) {
+    padding-bottom: 56px;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    max-width: 1120px;
+    height: 76px;
+    padding: 0 32px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .content {
+    max-width: 1120px;
+    padding: 16px 32px 0;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .page.wide,
+  .app.admin .page {
+    max-width: none;
+  }
+
+  .app:not(.mini) .tabbar {
+    top: 12px;
+    right: max(32px, calc((100vw - 1120px) / 2 + 32px));
+    bottom: auto;
+    left: auto;
+    display: flex;
+    gap: 4px;
+    width: auto;
+    height: 52px;
+    padding: 0 6px;
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transform: none;
+    color: var(--ink);
+  }
+
+  .app:not(.mini) .tab {
+    display: flex;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 14px;
+    color: var(--muted);
+  }
+
+  .app:not(.mini) .tab .tab-label,
+  .app:not(.mini) .tab.active .icon {
+    display: block;
+  }
+
+  .app:not(.mini) .tab.active {
+    background: var(--ink);
+  }
+
+  .app:not(.mini) .tab.active::after {
+    display: none;
+  }
+
+  .app:not(.mini) .tab-add {
+    order: 9;
+    width: 40px;
+    height: 40px;
+    margin-left: 4px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .hello h1 {
+    font-size: 38px;
+  }
+
+  .date-strip {
+    max-width: 640px;
+  }
+
+  .dash {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 16px;
+  }
+
+  .dash .summary {
+    justify-content: space-between;
+  }
+
+  .tiles {
+    gap: 16px;
+  }
+
+  .meal-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 12px;
+  }
+
+  .rest-bar {
+    bottom: 24px;
+  }
+}
+
 /* Data viz tokens */
 
 :root {

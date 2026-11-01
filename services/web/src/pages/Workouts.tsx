@@ -30,7 +30,7 @@ export function Workouts() {
   });
 
   return (
-    <div className="page">
+    <div className="page wide">
       <h1>{tr("Зал", "Gym")}</h1>
 
       {active.isPending ? (
@@ -178,7 +178,7 @@ function History() {
   return (
     <section>
       <h2>{tr("История", "History")}</h2>
-      <div className="stack">
+      <div className="stack meal-list">
         {done.map((w) => (
           <HistoryItem key={w.id} workout={w} />
         ))}

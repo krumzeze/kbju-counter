@@ -44,7 +44,7 @@ export function Catalog() {
   const heading = group ? groupLabel(group) : equipment ? equipmentLabel(equipment) : tr("Упражнения", "Exercises");
 
   return (
-    <div className="page">
+    <div className="page wide">
       <h1>{heading}</h1>
       <input
         className="input search"

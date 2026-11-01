@@ -24,7 +24,7 @@ export function Today() {
   const name = me?.first_name?.split(" ")[0];
 
   return (
-    <div className="page">
+    <div className="page wide">
       <header className="hello">
         <div>
           <p className="hello-date capitalize">{longDate(day)}</p>
@@ -48,30 +48,32 @@ export function Today() {
         <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
       ) : (
         <>
-          <Summary data={data} />
+          <div className="dash">
+            <Summary data={data} />
 
-          <section className="tiles">
-            <WeightTile />
-            <StepsTile steps={data.steps} editable={isToday} />
-            <Link to="/workouts" className="tile-card tone-blush">
-              <h3>{tr("Тренировка", "Training")}</h3>
-              <div>
-                <strong>{data.sets.length}</strong>
-                <span className="unit">
-                  {data.sets.length
-                    ? count(data.sets.length, ["подход", "подхода", "подходов"], ["set", "sets"])
-                    : tr("начать в зале", "start at the gym")}
+            <section className="tiles">
+              <WeightTile />
+              <StepsTile steps={data.steps} editable={isToday} />
+              <Link to="/workouts" className="tile-card tone-blush">
+                <h3>{tr("Тренировка", "Training")}</h3>
+                <div>
+                  <strong>{data.sets.length}</strong>
+                  <span className="unit">
+                    {data.sets.length
+                      ? count(data.sets.length, ["подход", "подхода", "подходов"], ["set", "sets"])
+                      : tr("начать в зале", "start at the gym")}
+                  </span>
+                </div>
+              </Link>
+              <Link to="/add" className="tile-card tone-peach">
+                <h3>{tr("Добавить еду", "Add food")}</h3>
+                <span className="tile-icon">
+                  <Icon name="camera" size={26} />
                 </span>
-              </div>
-            </Link>
-            <Link to="/add" className="tile-card tone-peach">
-              <h3>{tr("Добавить еду", "Add food")}</h3>
-              <span className="tile-icon">
-                <Icon name="camera" size={26} />
-              </span>
-              <span className="unit">{tr("фото или текстом", "photo or text")}</span>
-            </Link>
-          </section>
+                <span className="unit">{tr("фото или текстом", "photo or text")}</span>
+              </Link>
+            </section>
+          </div>
 
           <section>
             <div className="section-head">
@@ -99,7 +101,7 @@ export function Today() {
                 )}
               </div>
             ) : (
-              <div className="stack">
+              <div className="stack meal-list">
                 {[...data.meals].reverse().map((meal) => (
                   <MealCard key={meal.id} meal={meal} />
                 ))}

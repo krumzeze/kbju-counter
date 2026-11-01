@@ -45,7 +45,7 @@ export function Analytics() {
     series === "workouts" ? w.workouts : series === "volume" ? w.volume_kg : w.sets;
 
   return (
-    <div className="page">
+    <div className="page wide">
       <h1>{tr("Аналитика", "Analytics")}</h1>
 
       <section className="kpis">
