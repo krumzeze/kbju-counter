@@ -1,6 +1,8 @@
 import logging
 from collections.abc import Awaitable, Callable
+from datetime import date
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.db.models import LlmUsage, Meal, MealItem, User
@@ -78,6 +80,51 @@ async def analyze_meal(
     session.add(meal)
     await session.flush()
     return meal
+
+
+def manual_meal(
+    user: User, day: date, title: str, grams: float, per_100g: tuple[float, float, float, float]
+) -> Meal:
+    kcal, protein, fat, carbs = (v * grams / 100 for v in per_100g)
+    item = MealItem(name=title, grams=grams, kcal=kcal, protein=protein, fat=fat, carbs=carbs)
+    return Meal(user_id=user.id, day=day, source="manual", title=title, scale=1.0, items=[item])
+
+
+def copy_meal(meal: Meal, day: date) -> Meal:
+    return Meal(
+        user_id=meal.user_id,
+        day=day,
+        source=meal.source,
+        title=meal.title,
+        scale=meal.scale,
+        items=[
+            MealItem(
+                name=i.name, grams=i.grams, kcal=i.kcal, protein=i.protein, fat=i.fat, carbs=i.carbs
+            )
+            for i in meal.items
+        ],
+    )
+
+
+async def meal_history(
+    session: AsyncSession, user_id: int, frequent: bool, limit: int
+) -> list[tuple[Meal, int]]:
+    """Past meals grouped by title: the latest copy of each and how many times it was eaten."""
+    times = func.count().label("times")
+    last = func.max(Meal.created_at).label("last")
+    query = (
+        select(func.max(Meal.id), times)
+        .where(Meal.user_id == user_id)
+        .group_by(func.lower(Meal.title))
+        .order_by(*((times.desc(), last.desc()) if frequent else (last.desc(),)))
+        .limit(limit)
+    )
+    rows = (await session.execute(query)).all()
+    meals = {
+        m.id: m
+        for m in await session.scalars(select(Meal).where(Meal.id.in_([r[0] for r in rows])))
+    }
+    return [(meals[meal_id], n) for meal_id, n in rows]
 
 
 def resize_item(meal: Meal, item: MealItem, grams: float) -> None:

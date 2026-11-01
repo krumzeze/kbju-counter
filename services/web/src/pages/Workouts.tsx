@@ -1,19 +1,23 @@
 import { useMutation } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Workout, WorkoutSummary } from "../api/types";
 import { Art } from "../components/Art";
+import { type ExerciseCardItem, ExerciseCards } from "../components/ExerciseCards";
 import { Icon } from "../components/Icon";
+import { type Sort, SortChips } from "../components/SortChips";
 import { Spinner } from "../components/States";
 import { compact, duration, kg } from "../lib/catalog";
-import { count, dayLabel } from "../lib/format";
+import { count, dayLabel, shortDate } from "../lib/format";
 import { tr } from "../lib/i18n";
 import {
   useActiveWorkout,
   useAnalytics,
+  useExercises,
   useInvalidate,
   useTemplates,
-  useWorkouts,
+  useWorkoutHistory,
 } from "../lib/queries";
 
 export function Workouts() {
@@ -22,7 +26,8 @@ export function Workouts() {
   const invalidate = useInvalidate();
 
   const start = useMutation({
-    mutationFn: (templateId?: number) => api.startWorkout(templateId),
+    mutationFn: (from: { template?: number; workout?: number }) =>
+      api.startWorkout(from.template, from.workout),
     onSuccess: async (w) => {
       await invalidate("workout", "workouts");
       navigate(`/workouts/${w.id}`);
@@ -41,7 +46,7 @@ export function Workouts() {
         <button
           className="btn btn-primary btn-block"
           disabled={start.isPending}
-          onClick={() => start.mutate(undefined)}
+          onClick={() => start.mutate({})}
         >
           <Icon name="play" size={18} />
           {tr("Начать тренировку", "Start workout")}
@@ -70,10 +75,13 @@ export function Workouts() {
 
       <Templates
         disabled={!!active.data || start.isPending}
-        onStart={(id) => start.mutate(id)}
+        onStart={(id) => start.mutate({ template: id })}
       />
 
-      <History />
+      <History
+        disabled={!!active.data || start.isPending}
+        onRepeat={(id) => start.mutate({ workout: id })}
+      />
     </div>
   );
 }
@@ -170,40 +178,124 @@ function Templates({ disabled, onStart }: { disabled: boolean; onStart: (id: num
   );
 }
 
-function History() {
-  const { data, isPending } = useWorkouts();
-  if (isPending) return null;
-  const done = (data ?? []).filter((w) => w.finished_at && w.sets > 0);
-  if (!done.length) return null;
+type HistoryTab = "workouts" | "exercises";
+
+function History({ disabled, onRepeat }: { disabled: boolean; onRepeat: (id: number) => void }) {
+  const [tab, setTab] = useState<HistoryTab>("workouts");
   return (
-    <section>
+    <section className="stack">
       <h2>{tr("История", "History")}</h2>
-      <div className="stack meal-list">
-        {done.map((w) => (
-          <HistoryItem key={w.id} workout={w} />
-        ))}
+      <div className="segmented" role="tablist">
+        <button role="tab" aria-selected={tab === "workouts"} onClick={() => setTab("workouts")}>
+          {tr("Тренировки", "Workouts")}
+        </button>
+        <button role="tab" aria-selected={tab === "exercises"} onClick={() => setTab("exercises")}>
+          {tr("Упражнения", "Exercises")}
+        </button>
       </div>
+      {tab === "workouts" ? (
+        <WorkoutHistory disabled={disabled} onRepeat={onRepeat} />
+      ) : (
+        <ExerciseHistory />
+      )}
     </section>
   );
 }
 
-function HistoryItem({ workout: w }: { workout: WorkoutSummary }) {
-  return (
-    <Link to={`/workouts/${w.id}`} className="card history-item">
-      <div className="history-head">
-        <strong className="capitalize">{w.title || dayLabel(w.day)}</strong>
-        <span className="muted small">{w.title ? dayLabel(w.day) : duration(w.started_at, w.finished_at)}</span>
+function WorkoutHistory({ disabled, onRepeat }: { disabled: boolean; onRepeat: (id: number) => void }) {
+  const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useWorkoutHistory();
+  if (isPending) return <Spinner />;
+  const done = (data?.pages.flat() ?? []).filter((w) => w.finished_at && w.sets > 0);
+  if (!done.length) {
+    return (
+      <div className="empty small">
+        <p>{tr("Здесь появятся завершённые тренировки.", "Finished workouts will show up here.")}</p>
       </div>
-      <span className="muted small clamp">{w.names.join(" · ")}</span>
-      <span className="history-stats small">
-        <span>
-          {w.exercises} {count(w.exercises, ["упражнение", "упражнения", "упражнений"], ["exercise", "exercises"])}
+    );
+  }
+  return (
+    <>
+      <div className="stack meal-list">
+        {done.map((w) => (
+          <HistoryItem key={w.id} workout={w} disabled={disabled} onRepeat={() => onRepeat(w.id)} />
+        ))}
+      </div>
+      {hasNextPage && (
+        <button className="btn btn-block" disabled={isFetchingNextPage} onClick={() => fetchNextPage()}>
+          {tr("Показать ещё", "Show more")}
+        </button>
+      )}
+    </>
+  );
+}
+
+function HistoryItem({
+  workout: w,
+  disabled,
+  onRepeat,
+}: {
+  workout: WorkoutSummary;
+  disabled: boolean;
+  onRepeat: () => void;
+}) {
+  return (
+    <div className="card history-item">
+      <Link to={`/workouts/${w.id}`} className="history-body">
+        <div className="history-head">
+          <strong className="capitalize">{w.title || dayLabel(w.day)}</strong>
+          <span className="muted small">{w.title ? dayLabel(w.day) : duration(w.started_at, w.finished_at)}</span>
+        </div>
+        <span className="muted small clamp">{w.names.join(" · ")}</span>
+        <span className="history-stats small">
+          <span>
+            {w.exercises} {count(w.exercises, ["упражнение", "упражнения", "упражнений"], ["exercise", "exercises"])}
+          </span>
+          <span>
+            {w.sets} {count(w.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}
+          </span>
+          {w.volume_kg > 0 && <span>{kg(w.volume_kg)}</span>}
         </span>
-        <span>
-          {w.sets} {count(w.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}
-        </span>
-        {w.volume_kg > 0 && <span>{kg(w.volume_kg)}</span>}
-      </span>
-    </Link>
+      </Link>
+      <button className="btn small history-repeat" disabled={disabled} onClick={onRepeat}>
+        <Icon name="play" size={16} />
+        {tr("Повторить", "Repeat")}
+      </button>
+    </div>
+  );
+}
+
+function ExerciseHistory() {
+  const { data, isPending } = useExercises();
+  const [sort, setSort] = useState<Sort>("frequent");
+  const items = useMemo<ExerciseCardItem[]>(() => {
+    const done = (data ?? []).filter((e) => e.sets > 0);
+    done.sort((a, b) =>
+      sort === "frequent" ? b.sets - a.sets : (b.last_day ?? "").localeCompare(a.last_day ?? ""),
+    );
+    return done.map((e) => ({
+      key: String(e.id),
+      name: e.name,
+      hint: `${e.sets} ${count(e.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}${
+        e.last_day ? ` · ${shortDate(e.last_day)}` : ""
+      }`,
+      catalogId: e.catalog_id,
+      group: e.group,
+      to: `/exercises/${e.id}`,
+    }));
+  }, [data, sort]);
+
+  if (isPending) return <Spinner />;
+  if (!items.length) {
+    return (
+      <div className="empty small">
+        <p>{tr("Здесь появятся упражнения, которые ты делал.", "Exercises you've done will show up here.")}</p>
+      </div>
+    );
+  }
+  return (
+    <>
+      <SortChips value={sort} onChange={setSort} />
+      <ExerciseCards items={items} />
+    </>
   );
 }

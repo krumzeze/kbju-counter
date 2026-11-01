@@ -138,6 +138,24 @@ async def test_templates(client):
     assert len((await client.get("/api/templates", headers=headers)).json()) == 1
 
 
+async def test_repeat_workout(client):
+    headers = await onboarded(client)
+    first = await start(client, headers, title="Грудь")
+    first = await add_exercise(client, headers, first["id"], catalog_id=BENCH, sets=2)
+    exercise_id = first["exercises"][0]["exercise"]["id"]
+    for _ in range(3):
+        await log(client, headers, first["id"], exercise_id, weight_kg=80, reps=8)
+    await finish(client, headers, first["id"])
+
+    again = await start(client, headers, from_workout_id=first["id"])
+    assert again["id"] != first["id"]
+    assert again["title"] == "Грудь"
+    [entry] = again["exercises"]
+    assert entry["exercise"]["id"] == exercise_id
+    assert entry["planned_sets"] == 3
+    assert entry["sets"] == []
+
+
 async def test_analytics(client):
     headers = await onboarded(client)
     workout = await start(client, headers)

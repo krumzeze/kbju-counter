@@ -114,7 +114,7 @@ export function UserDetail() {
                 <li key={m.id}>
                   <div className="hbar-head">
                     <strong>
-                      {m.source === "photo" ? "📸" : "✍️"} {m.title}
+                      {m.source === "photo" ? "📸" : m.source === "manual" ? "🍽️" : "✍️"} {m.title}
                     </strong>
                     <span>{round(m.totals.kcal)} ккал</span>
                   </div>

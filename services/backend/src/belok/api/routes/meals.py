@@ -1,6 +1,6 @@
 from collections.abc import Awaitable, Callable
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +9,9 @@ from belok.api.deps import ActiveUser, AnalyzerDep, SessionDep, SettingsDep
 from belok.api.routes.workouts import set_out
 from belok.api.schemas import (
     DayOut,
+    MacrosOut,
+    ManualMealIn,
+    MealHistoryOut,
     MealItemPatchIn,
     MealOut,
     MealPatchIn,
@@ -23,7 +26,10 @@ from belok.services.meals import (
     DailyLimitReached,
     analyze_meal,
     clamp_scale,
+    copy_meal,
     ensure_within_limit,
+    manual_meal,
+    meal_history,
     resize_item,
 )
 from belok.services.repo import day_summary, get_meal, meals_on
@@ -85,6 +91,47 @@ async def create_meal_from_text(
     return await _analyze(
         session, settings, user, "text", lambda: analyzer.from_text(body.text, _language(user))
     )
+
+
+@router.post("/meals/manual", status_code=status.HTTP_201_CREATED)
+async def create_manual_meal(body: ManualMealIn, user: ActiveUser, session: SessionDep) -> MealOut:
+    per_100g = (body.kcal, body.protein, body.fat, body.carbs)
+    meal = manual_meal(user, local_today(user.timezone), body.title, body.grams, per_100g)
+    session.add(meal)
+    await session.commit()
+    return MealOut.of(meal)
+
+
+@router.get("/meals/history")
+async def get_meal_history(
+    user: ActiveUser,
+    session: SessionDep,
+    sort: Annotated[Literal["frequent", "recent"], Query()] = "frequent",
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+) -> list[MealHistoryOut]:
+    rows = await meal_history(session, user.id, sort == "frequent", limit)
+    return [
+        MealHistoryOut(
+            meal_id=meal.id,
+            title=meal.title,
+            source=meal.source,
+            times=times,
+            last_eaten=meal.created_at,
+            totals=MacrosOut.model_validate(meal.totals()),
+        )
+        for meal, times in rows
+    ]
+
+
+@router.post("/meals/{meal_id}/repeat", status_code=status.HTTP_201_CREATED)
+async def repeat_meal(meal_id: int, user: ActiveUser, session: SessionDep) -> MealOut:
+    meal = await get_meal(session, user.id, meal_id)
+    if meal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "meal_not_found")
+    copy = copy_meal(meal, local_today(user.timezone))
+    session.add(copy)
+    await session.commit()
+    return MealOut.of(copy)
 
 
 @router.patch("/meals/{meal_id}")

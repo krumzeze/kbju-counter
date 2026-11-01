@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { ProfileInput } from "../api/types";
+import type { Sort } from "../components/SortChips";
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: api.me });
 
@@ -25,7 +26,18 @@ export const usePlans = () =>
 
 export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: api.analytics });
 
-export const useWorkouts = () => useQuery({ queryKey: ["workouts"], queryFn: api.workouts });
+const WORKOUT_PAGE = 20;
+
+export const useWorkoutHistory = () =>
+  useInfiniteQuery({
+    queryKey: ["workouts"],
+    queryFn: ({ pageParam }) => api.workouts(pageParam),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (last) => (last.length === WORKOUT_PAGE ? last[last.length - 1].id : undefined),
+  });
+
+export const useMealHistory = (sort: Sort) =>
+  useQuery({ queryKey: ["meal-history", sort], queryFn: () => api.mealHistory(sort) });
 
 export const useActiveWorkout = () =>
   useQuery({ queryKey: ["workout", "active"], queryFn: api.activeWorkout });

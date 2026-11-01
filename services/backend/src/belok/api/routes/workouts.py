@@ -324,6 +324,10 @@ async def start_workout(body: WorkoutStartIn, user: ActiveUser, session: Session
             raise HTTPException(status.HTTP_404_NOT_FOUND, "template_not_found")
         title = title or template.name
         plan = [dict(i) for i in template.items]
+    elif body.from_workout_id is not None:
+        source = await _workout(session, user, body.from_workout_id)
+        title = title or source.title
+        plan = await _plan_of(session, user, source)
     workout = await svc.start_workout(session, user, title, plan)
     await session.commit()
     return await _workout_out(session, user, workout)
@@ -427,18 +431,22 @@ async def get_templates(user: ActiveUser, session: SessionDep) -> list[TemplateO
 
 async def _template_items(session: AsyncSession, user: User, body: TemplateIn) -> list[dict]:
     if body.workout_id is not None:
-        workout = await _workout(session, user, body.workout_id)
-        out = await _workout_out(session, user, workout)
-        return [
-            {"exercise_id": e.exercise.id, "sets": max(len(e.sets), e.planned_sets) or 3}
-            for e in out.exercises
-        ]
+        return await _plan_of(session, user, await _workout(session, user, body.workout_id))
     items = []
     for item in body.items:
         exercise = await _resolve(session, user, item)
         if all(i["exercise_id"] != exercise.id for i in items):
             items.append({"exercise_id": exercise.id, "sets": item.sets})
     return items
+
+
+async def _plan_of(session: AsyncSession, user: User, workout: Workout) -> list[dict]:
+    """The exercises of a workout as a plan, keeping as many sets as were done or planned."""
+    out = await _workout_out(session, user, workout)
+    return [
+        {"exercise_id": e.exercise.id, "sets": max(len(e.sets), e.planned_sets) or 3}
+        for e in out.exercises
+    ]
 
 
 @router.post("/templates", status_code=status.HTTP_201_CREATED)

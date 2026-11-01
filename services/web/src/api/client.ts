@@ -16,7 +16,9 @@ import type {
   Count,
   Dashboard,
   Day,
+  ManualMealInput,
   Meal,
+  MealHistoryItem,
   Me,
   Prefs,
   ProfileInput,
@@ -124,6 +126,10 @@ export const api = {
   },
   scaleMeal: (id: number, scale: number) => request<Meal>("PATCH", `/meals/${id}`, { scale }),
   deleteMeal: (id: number) => request<void>("DELETE", `/meals/${id}`),
+  mealManual: (body: ManualMealInput) => request<Meal>("POST", "/meals/manual", body),
+  mealHistory: (sort: "frequent" | "recent") =>
+    request<MealHistoryItem[]>("GET", `/meals/history?sort=${sort}`),
+  repeatMeal: (id: number) => request<Meal>("POST", `/meals/${id}/repeat`),
   resizeMealItem: (mealId: number, itemId: number, grams: number) =>
     request<Meal>("PATCH", `/meals/${mealId}/items/${itemId}`, { grams }),
   deleteMealItem: (mealId: number, itemId: number) =>
@@ -142,11 +148,15 @@ export const api = {
   progress: (exerciseId: number) => request<Progress>("GET", `/exercises/${exerciseId}/progress`),
   analytics: () => request<Analytics>("GET", "/analytics"),
 
-  workouts: () => request<WorkoutSummary[]>("GET", "/workouts"),
+  workouts: (beforeId?: number) =>
+    request<WorkoutSummary[]>("GET", beforeId ? `/workouts?before_id=${beforeId}` : "/workouts"),
   activeWorkout: () => request<Workout | null>("GET", "/workouts/active"),
   workout: (id: number) => request<Workout>("GET", `/workouts/${id}`),
-  startWorkout: (templateId?: number) =>
-    request<Workout>("POST", "/workouts", { template_id: templateId ?? null }),
+  startWorkout: (templateId?: number, fromWorkoutId?: number) =>
+    request<Workout>("POST", "/workouts", {
+      template_id: templateId ?? null,
+      from_workout_id: fromWorkoutId ?? null,
+    }),
   patchWorkout: (id: number, body: { title?: string | null; finished?: boolean }) =>
     request<Workout>("PATCH", `/workouts/${id}`, body),
   deleteWorkout: (id: number) => request<void>("DELETE", `/workouts/${id}`),

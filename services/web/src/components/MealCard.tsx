@@ -45,10 +45,7 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
     <details className="card meal" open={defaultOpen}>
       <summary>
         <span className="meal-icon" aria-hidden>
-          <Art
-            name={meal.source === "photo" ? "meal-photo" : "meal-text"}
-            fallback={meal.source === "photo" ? "🥗" : "🍳"}
-          />
+          <MealIcon source={meal.source} />
         </span>
         <span className="meal-title">
           <strong>{meal.title}</strong>
@@ -200,5 +197,14 @@ function ItemRow({
         </button>
       )}
     </li>
+  );
+}
+
+export function MealIcon({ source }: { source: Meal["source"] }) {
+  return (
+    <Art
+      name={source === "photo" ? "meal-photo" : "meal-text"}
+      fallback={source === "photo" ? "🥗" : "🍳"}
+    />
   );
 }

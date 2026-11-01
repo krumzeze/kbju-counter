@@ -167,6 +167,31 @@ class MealItemPatchIn(BaseModel):
     grams: float = Field(ge=1, le=3000)
 
 
+class ManualMealIn(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    grams: float = Field(ge=1, le=3000)
+    kcal: float = Field(ge=0, le=900)
+    protein: float = Field(ge=0, le=100)
+    fat: float = Field(ge=0, le=100)
+    carbs: float = Field(ge=0, le=100)
+
+    @field_validator("title")
+    @classmethod
+    def strip_title(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("empty title")
+        return value.strip()
+
+
+class MealHistoryOut(BaseModel):
+    meal_id: int
+    title: str
+    source: str
+    times: int
+    last_eaten: datetime
+    totals: MacrosOut
+
+
 class WeightIn(BaseModel):
     weight_kg: float = Field(ge=30, le=300)
 

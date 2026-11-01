@@ -113,6 +113,36 @@ async def test_edit_and_remove_meal_items(client, analyzer):
     assert missing.status_code == 404
 
 
+async def test_manual_meal_history_and_repeat(client):
+    headers = await onboarded(client)
+    body = {"title": " Сырники ", "grams": 250, "kcal": 220, "protein": 18, "fat": 9, "carbs": 16}
+    manual = await client.post("/api/meals/manual", json=body, headers=headers)
+    assert manual.status_code == 201
+    meal = manual.json()
+    assert meal["title"] == "Сырники"
+    assert meal["source"] == "manual"
+    assert meal["totals"]["kcal"] == pytest.approx(550)
+    assert meal["totals"]["protein"] == pytest.approx(45)
+
+    await client.post("/api/meals/text", json={"text": "гречка"}, headers=headers)
+    repeated = await client.post(f"/api/meals/{meal['id']}/repeat", headers=headers)
+    assert repeated.status_code == 201
+    assert repeated.json()["id"] != meal["id"]
+    assert repeated.json()["totals"]["kcal"] == pytest.approx(550)
+
+    frequent = (await client.get("/api/meals/history", headers=headers)).json()
+    assert [(h["title"], h["times"]) for h in frequent] == [("Сырники", 2), ("Обед", 1)]
+    recent = (await client.get("/api/meals/history?sort=recent", headers=headers)).json()
+    assert recent[0]["meal_id"] == repeated.json()["id"]
+
+    day = (await client.get("/api/day", headers=headers)).json()
+    assert len(day["meals"]) == 3
+    blank = await client.post("/api/meals/manual", json=body | {"title": "  "}, headers=headers)
+    assert blank.status_code == 422
+    missing = await client.post("/api/meals/999999/repeat", headers=headers)
+    assert missing.status_code == 404
+
+
 async def test_meal_lifecycle(client):
     headers = await onboarded(client)
 

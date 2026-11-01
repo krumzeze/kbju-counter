@@ -129,6 +129,7 @@ class PlanItemIn(ExerciseRef):
 
 class WorkoutStartIn(BaseModel):
     template_id: int | None = None
+    from_workout_id: int | None = None
     title: str | None = Field(default=None, max_length=64)
 
 

@@ -6,12 +6,20 @@ import type { Meal } from "../api/types";
 import { Art } from "../components/Art";
 import { Icon } from "../components/Icon";
 import { MealCard } from "../components/MealCard";
+import { ManualMeal, MealHistory } from "../components/MealSources";
 import { tr } from "../lib/i18n";
 import { prepareImage } from "../lib/image";
 import { useInvalidate } from "../lib/queries";
 import { haptic } from "../lib/telegram";
 
-type Mode = "photo" | "text";
+type Mode = "photo" | "text" | "manual" | "history";
+
+const modes = (): { value: Mode; label: string }[] => [
+  { value: "photo", label: tr("Фото", "Photo") },
+  { value: "text", label: tr("Текст", "Text") },
+  { value: "manual", label: tr("Вручную", "Manual") },
+  { value: "history", label: tr("История", "History") },
+];
 
 export function AddMeal() {
   const [mode, setMode] = useState<Mode>("photo");
@@ -30,7 +38,7 @@ export function AddMeal() {
     onSuccess: async (result) => {
       haptic("success");
       setMeal(result);
-      await invalidate("day");
+      await invalidate("day", "meal-history");
     },
     onError: () => haptic("error"),
   });
@@ -61,8 +69,8 @@ export function AddMeal() {
             <h1>{tr("Готово", "Done")}</h1>
             <p className="muted">
               {tr(
-                "Если порция больше или меньше, поправь её кнопками.",
-                "If the portion is bigger or smaller, adjust it with the buttons.",
+                "Если порция больше или меньше, поправь граммы или размер порции.",
+                "If the portion is bigger or smaller, adjust the grams or the portion size.",
               )}
             </p>
           </div>
@@ -86,17 +94,18 @@ export function AddMeal() {
     <div className="page">
       <h1>{tr("Что съел?", "What did you eat?")}</h1>
       <div className="segmented" role="tablist">
-        <button role="tab" aria-selected={mode === "photo"} onClick={() => setMode("photo")}>
-          <Icon name="camera" size={18} />
-          {tr("Фото", "Photo")}
-        </button>
-        <button role="tab" aria-selected={mode === "text"} onClick={() => setMode("text")}>
-          <Icon name="pen" size={18} />
-          {tr("Текстом", "Text")}
-        </button>
+        {modes().map((m) => (
+          <button key={m.value} role="tab" aria-selected={mode === m.value} onClick={() => setMode(m.value)}>
+            {m.label}
+          </button>
+        ))}
       </div>
 
-      {mode === "photo" ? (
+      {mode === "manual" ? (
+        <ManualMeal onDone={setMeal} />
+      ) : mode === "history" ? (
+        <MealHistory onDone={setMeal} />
+      ) : mode === "photo" ? (
         <>
           <button className="dropzone" onClick={() => fileInput.current?.click()}>
             {preview ? (
@@ -145,15 +154,18 @@ export function AddMeal() {
         />
       )}
 
-      {analyze.isError && <p className="error">{errorMessage(analyze.error)}</p>}
-
-      <button
-        className="btn btn-primary btn-block"
-        disabled={!canSubmit || analyze.isPending}
-        onClick={() => analyze.mutate()}
-      >
-        {analyze.isPending ? tr("Считаю КБЖУ…", "Counting…") : tr("Посчитать", "Analyze")}
-      </button>
+      {(mode === "photo" || mode === "text") && (
+        <>
+          {analyze.isError && <p className="error">{errorMessage(analyze.error)}</p>}
+          <button
+            className="btn btn-primary btn-block"
+            disabled={!canSubmit || analyze.isPending}
+            onClick={() => analyze.mutate()}
+          >
+            {analyze.isPending ? tr("Считаю КБЖУ…", "Counting…") : tr("Посчитать", "Analyze")}
+          </button>
+        </>
+      )}
     </div>
   );
 }

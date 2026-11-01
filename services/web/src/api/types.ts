@@ -20,10 +20,28 @@ export interface Meal {
   id: number;
   day: string;
   created_at: string;
-  source: "photo" | "text";
+  source: "photo" | "text" | "manual";
   title: string;
   scale: number;
   items: MealItem[];
+  totals: Macros;
+}
+
+export interface ManualMealInput {
+  title: string;
+  grams: number;
+  kcal: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+}
+
+export interface MealHistoryItem {
+  meal_id: number;
+  title: string;
+  source: "photo" | "text" | "manual";
+  times: number;
+  last_eaten: string;
   totals: Macros;
 }
 
