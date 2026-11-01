@@ -4,7 +4,8 @@ import { errorMessage } from "../api/client";
 import type { MuscleGroup } from "../api/types";
 import { BACK_FIRST, BodyMap, GROUP_VIEW } from "../components/BodyMap";
 import { Art } from "../components/Art";
-import { ExerciseThumb, groupValues } from "../components/ExerciseThumb";
+import { type ExerciseCardItem, ExerciseCards } from "../components/ExerciseCards";
+import { groupValues } from "../components/ExerciseThumb";
 import { ErrorState, Spinner } from "../components/States";
 import {
   EQUIPMENT,
@@ -20,8 +21,6 @@ import {
 import { tr } from "../lib/i18n";
 import { useCatalog } from "../lib/queries";
 
-const LIMIT = 100;
-
 export function Catalog() {
   const { data, isPending, error, refetch } = useCatalog();
   const [params, setParams] = useSearchParams();
@@ -36,6 +35,19 @@ export function Catalog() {
     );
     return sortCatalog(searchCatalog(pool, query));
   }, [data, group, equipment, query]);
+
+  const cards = useMemo<ExerciseCardItem[]>(
+    () =>
+      results.map((x) => ({
+        key: x.id,
+        name: x.name,
+        hint: `${x.primary.map(muscleLabel).join(", ")} · ${equipmentLabel(x.equipment)}`,
+        catalogId: x.id,
+        group: x.group,
+        to: `/catalog/${encodeURIComponent(x.id)}`,
+      })),
+    [results],
+  );
 
   if (isPending) return <Spinner />;
   if (error) return <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />;
@@ -121,26 +133,7 @@ export function Catalog() {
               <p>{tr("Ничего не нашлось.", "Nothing found.")}</p>
             </div>
           ) : (
-            <ul className="pick-list">
-              {results.slice(0, LIMIT).map((x) => (
-                <li key={x.id}>
-                  <Link to={`/catalog/${encodeURIComponent(x.id)}`}>
-                    <ExerciseThumb catalogId={x.id} group={x.group} />
-                    <span>
-                      <strong className="capitalize">{x.name}</strong>
-                      <span className="muted small">
-                        {x.primary.map(muscleLabel).join(", ")} · {equipmentLabel(x.equipment)}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {results.length > LIMIT && (
-            <p className="muted small center">
-              {tr(`Ещё ${results.length - LIMIT}, уточни поиск`, `${results.length - LIMIT} more, refine the search`)}
-            </p>
+            <ExerciseCards items={cards} />
           )}
         </>
       )}

@@ -5,18 +5,11 @@ import type { ExerciseRef, MuscleGroup } from "../api/types";
 import { GROUPS, equipmentLabel, groupLabel, searchCatalog, sortCatalog } from "../lib/catalog";
 import { tr } from "../lib/i18n";
 import { useCatalog, useExercises, useInvalidate } from "../lib/queries";
-import { ExerciseThumb } from "./ExerciseThumb";
+import { type ExerciseCardItem, ExerciseCards } from "./ExerciseCards";
 import { Spinner } from "./States";
 
-const LIMIT = 60;
-
-interface Row {
-  key: string;
+interface Row extends Omit<ExerciseCardItem, "to" | "onPick"> {
   ref: ExerciseRef;
-  name: string;
-  hint: string;
-  catalogId: string | null;
-  group: MuscleGroup | null;
 }
 
 export function ExercisePicker({
@@ -52,7 +45,7 @@ export function ExercisePicker({
     },
   });
 
-  const { recent, rows, total } = useMemo(() => {
+  const { recent, rows } = useMemo(() => {
     const mine = exercises.data ?? [];
     const recent: Row[] = query || group
       ? []
@@ -87,9 +80,8 @@ export function ExercisePicker({
       catalogId: x.id,
       group: x.group,
     }));
-    const all = [...custom, ...found];
-    return { recent, rows: all.slice(0, LIMIT), total: all.length };
-  }, [catalog.data, exercises.data, query, group]);
+    return { recent: cards(recent, onPick), rows: cards([...custom, ...found], onPick) };
+  }, [catalog.data, exercises.data, query, group, onPick]);
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -129,16 +121,11 @@ export function ExercisePicker({
               {recent.length > 0 && (
                 <>
                   <h3 className="muted small">{tr("Недавние", "Recent")}</h3>
-                  <PickList rows={recent} onPick={onPick} />
+                  <ExerciseCards items={recent} />
                   <h3 className="muted small">{tr("Все упражнения", "All exercises")}</h3>
                 </>
               )}
-              <PickList rows={rows} onPick={onPick} />
-              {total > LIMIT && (
-                <p className="muted small center">
-                  {tr(`Ещё ${total - LIMIT}, уточни поиск`, `${total - LIMIT} more, refine the search`)}
-                </p>
-              )}
+              <ExerciseCards items={rows} />
               {query.trim() && (
                 <button
                   className="btn btn-block"
@@ -157,20 +144,13 @@ export function ExercisePicker({
   );
 }
 
-function PickList({ rows, onPick }: { rows: Row[]; onPick: (ref: ExerciseRef) => void }) {
-  return (
-    <ul className="pick-list">
-      {rows.map((r) => (
-        <li key={r.key}>
-          <button onClick={() => onPick(r.ref)}>
-            <ExerciseThumb catalogId={r.catalogId} group={r.group} />
-            <span>
-              <strong className="capitalize">{r.name}</strong>
-              <span className="muted small">{r.hint}</span>
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
+function cards(rows: Row[], onPick: (ref: ExerciseRef) => void): ExerciseCardItem[] {
+  return rows.map((r) => ({
+    key: r.key,
+    name: r.name,
+    hint: r.hint,
+    catalogId: r.catalogId,
+    group: r.group,
+    onPick: () => onPick(r.ref),
+  }));
 }
