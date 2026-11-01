@@ -67,7 +67,7 @@ export function AddMeal() {
             </p>
           </div>
         </div>
-        <MealCard meal={meal} defaultOpen />
+        <MealCard meal={meal} defaultOpen onChange={setMeal} onDelete={reset} />
         <div className="row">
           <button className="btn" onClick={reset}>
             {tr("Добавить ещё", "Add another")}

@@ -163,6 +163,10 @@ class MealPatchIn(BaseModel):
     scale: float = Field(ge=0.25, le=5)
 
 
+class MealItemPatchIn(BaseModel):
+    grams: float = Field(ge=1, le=3000)
+
+
 class WeightIn(BaseModel):
     weight_kg: float = Field(ge=30, le=300)
 

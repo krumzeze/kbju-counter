@@ -80,5 +80,16 @@ async def analyze_meal(
     return meal
 
 
+def resize_item(meal: Meal, item: MealItem, grams: float) -> None:
+    """Set the portion-adjusted weight of an item, scaling its macros to match."""
+    base = grams / meal.scale
+    ratio = base / item.grams
+    item.grams = base
+    item.kcal *= ratio
+    item.protein *= ratio
+    item.fat *= ratio
+    item.carbs *= ratio
+
+
 def clamp_scale(scale: float) -> float:
     return min(MAX_SCALE, max(MIN_SCALE, scale))

@@ -124,6 +124,10 @@ export const api = {
   },
   scaleMeal: (id: number, scale: number) => request<Meal>("PATCH", `/meals/${id}`, { scale }),
   deleteMeal: (id: number) => request<void>("DELETE", `/meals/${id}`),
+  resizeMealItem: (mealId: number, itemId: number, grams: number) =>
+    request<Meal>("PATCH", `/meals/${mealId}/items/${itemId}`, { grams }),
+  deleteMealItem: (mealId: number, itemId: number) =>
+    request<Meal>("DELETE", `/meals/${mealId}/items/${itemId}`),
 
   weights: () => request<WeightPoint[]>("GET", "/weights"),
   saveWeight: (weight_kg: number) => request<void>("PUT", "/weights/today", { weight_kg }),

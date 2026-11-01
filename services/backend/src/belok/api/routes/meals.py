@@ -7,12 +7,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.api.deps import ActiveUser, AnalyzerDep, SessionDep, SettingsDep
 from belok.api.routes.workouts import set_out
-from belok.api.schemas import DayOut, MealOut, MealPatchIn, TextMealIn, macros_out
+from belok.api.schemas import (
+    DayOut,
+    MealItemPatchIn,
+    MealOut,
+    MealPatchIn,
+    TextMealIn,
+    macros_out,
+)
 from belok.config import Settings
-from belok.db.models import User
+from belok.db.models import Meal, MealItem, User
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, AnalysisResult
-from belok.services.meals import DailyLimitReached, analyze_meal, clamp_scale, ensure_within_limit
+from belok.services.meals import (
+    DailyLimitReached,
+    analyze_meal,
+    clamp_scale,
+    ensure_within_limit,
+    resize_item,
+)
 from belok.services.repo import day_summary, get_meal, meals_on
 from belok.services.workouts import sets_on
 from belok.timeutil import local_today
@@ -84,6 +97,38 @@ async def patch_meal(
     meal.scale = clamp_scale(body.scale)
     await session.commit()
     return MealOut.of(meal)
+
+
+@router.patch("/meals/{meal_id}/items/{item_id}")
+async def patch_meal_item(
+    meal_id: int, item_id: int, body: MealItemPatchIn, user: ActiveUser, session: SessionDep
+) -> MealOut:
+    meal, item = await _meal_item(session, user, meal_id, item_id)
+    resize_item(meal, item, body.grams)
+    await session.commit()
+    return MealOut.of(meal)
+
+
+@router.delete("/meals/{meal_id}/items/{item_id}")
+async def delete_meal_item(
+    meal_id: int, item_id: int, user: ActiveUser, session: SessionDep
+) -> MealOut:
+    meal, item = await _meal_item(session, user, meal_id, item_id)
+    if len(meal.items) == 1:
+        raise HTTPException(status.HTTP_409_CONFLICT, "last_item")
+    meal.items.remove(item)
+    await session.commit()
+    return MealOut.of(meal)
+
+
+async def _meal_item(
+    session: AsyncSession, user: User, meal_id: int, item_id: int
+) -> tuple[Meal, MealItem]:
+    meal = await get_meal(session, user.id, meal_id)
+    item = next((i for i in meal.items if i.id == item_id), None) if meal else None
+    if meal is None or item is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "meal_not_found")
+    return meal, item
 
 
 @router.delete("/meals/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)

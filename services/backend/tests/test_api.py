@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy import update
 
 from belok.db.models import User
+from belok.llm.analyzer import FoodItem
 from belok.timeutil import utcnow
 from tests.conftest import PROFILE, login, onboarded
 from tests.telegram_signing import sign_widget
@@ -81,6 +82,35 @@ async def test_analysis_does_not_hold_a_db_connection(client, analyzer):
     response = await client.post("/api/meals/text", json={"text": "гречка"}, headers=headers)
     assert response.status_code == 201
     assert seen == [0]
+
+
+async def test_edit_and_remove_meal_items(client, analyzer):
+    analyzer.items = [
+        FoodItem(name="Котлета", grams=100, kcal=250, protein=15, fat=18, carbs=8),
+        FoodItem(name="Пюре", grams=200, kcal=180, protein=4, fat=6, carbs=28),
+    ]
+    headers = await onboarded(client)
+    meal = (await client.post("/api/meals/text", json={"text": "обед"}, headers=headers)).json()
+    meal = (
+        await client.patch(f"/api/meals/{meal['id']}", json={"scale": 2}, headers=headers)
+    ).json()
+    cutlet, puree = meal["items"]
+
+    url = f"/api/meals/{meal['id']}/items"
+    resized = await client.patch(f"{url}/{cutlet['id']}", json={"grams": 300}, headers=headers)
+    assert resized.status_code == 200
+    item = resized.json()["items"][0]
+    assert item["grams"] * resized.json()["scale"] == pytest.approx(300)
+    assert item["kcal"] == pytest.approx(375)
+
+    removed = await client.delete(f"{url}/{puree['id']}", headers=headers)
+    assert [i["name"] for i in removed.json()["items"]] == ["Котлета"]
+    assert removed.json()["totals"]["kcal"] == pytest.approx(750)
+
+    last = await client.delete(f"{url}/{cutlet['id']}", headers=headers)
+    assert last.status_code == 409
+    missing = await client.patch(f"{url}/{puree['id']}", json={"grams": 50}, headers=headers)
+    assert missing.status_code == 404
 
 
 async def test_meal_lifecycle(client):
