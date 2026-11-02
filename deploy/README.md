@@ -22,6 +22,7 @@ kubectl create secret generic belok-secrets -n belok --dry-run=client -o yaml \
   --from-literal=LLM_API_KEY=... \
   --from-literal=API_SECRET=$(openssl rand -hex 32) \
   --from-literal=TRIBUTE_API_KEY=... \
+  --from-literal=STT_API_KEY=... \
   | kubeseal --controller-namespace kube-system -o yaml > deploy/belok-base/belok-secrets.yaml
 ```
 
@@ -30,6 +31,8 @@ kubectl create secret generic belok-secrets -n belok --dry-run=client -o yaml \
 4. В @BotFather `/setdomain` для Login Widget.
 5. В Tribute: «Настройки» → «API-ключи» → «URL вебхука» = `https://<host>/api/payments/tribute`.
    Коды товаров из ссылок `web.tribute.tg/p/<код>` и сроки в днях задаёт `TRIBUTE_PLANS`.
+6. Голосовые сообщения работают, только если задан `STT_API_KEY`: ключ любого
+   OpenAI-совместимого API распознавания речи, адрес и модель в `STT_BASE_URL` и `STT_MODEL`.
 
 ## Операции
 
