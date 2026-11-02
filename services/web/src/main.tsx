@@ -6,13 +6,11 @@ import { ApiError } from "./api/client";
 import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { installGlobalHandlers } from "./lib/errorReporting";
-import { webApp } from "./lib/telegram";
+import { applyTheme, savedTheme } from "./lib/theme";
 import "./styles.css";
 
 installGlobalHandlers();
-
-webApp?.setHeaderColor?.("#f6f4ef");
-webApp?.setBackgroundColor?.("#f6f4ef");
+applyTheme(savedTheme());
 
 const queryClient = new QueryClient({
   defaultOptions: {
