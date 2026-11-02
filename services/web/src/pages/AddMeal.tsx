@@ -41,9 +41,12 @@ export function AddMeal({ me }: { me: Me }) {
     onSuccess: async (result) => {
       haptic("success");
       setMeal(result);
-      await invalidate("day", "meal-history");
+      await invalidate("day", "meal-history", "me");
     },
-    onError: () => haptic("error"),
+    onError: () => {
+      haptic("error");
+      void invalidate("me");
+    },
   });
 
   async function onFile(file: File | undefined) {
@@ -168,13 +171,27 @@ export function AddMeal({ me }: { me: Me }) {
       {(mode === "photo" || mode === "text") && (
         <>
           {analyze.isError && <p className="error">{errorMessage(analyze.error)}</p>}
-          <button
-            className="btn btn-primary btn-block"
-            disabled={!canSubmit || analyze.isPending}
-            onClick={() => analyze.mutate()}
-          >
-            {analyze.isPending ? tr("Считаю КБЖУ…", "Counting…") : tr("Посчитать", "Analyze")}
-          </button>
+          {!me.has_access && me.analyses_left > 0 && (
+            <p className="muted small center">
+              {tr(
+                `Бесплатных распознаваний сегодня: ${me.analyses_left}`,
+                `Free recognitions left today: ${me.analyses_left}`,
+              )}
+            </p>
+          )}
+          {!me.has_access && me.analyses_left === 0 ? (
+            <Link to="/premium" className="btn btn-primary btn-block">
+              {tr("Больше распознаваний в Premium ⭐", "More recognitions with Premium ⭐")}
+            </Link>
+          ) : (
+            <button
+              className="btn btn-primary btn-block"
+              disabled={!canSubmit || analyze.isPending}
+              onClick={() => analyze.mutate()}
+            >
+              {analyze.isPending ? tr("Считаю КБЖУ…", "Counting…") : tr("Посчитать", "Analyze")}
+            </button>
+          )}
         </>
       )}
     </div>

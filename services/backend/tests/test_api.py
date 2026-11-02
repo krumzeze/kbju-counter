@@ -238,13 +238,18 @@ async def test_weights(client):
     assert [w["weight_kg"] for w in weights] == [79.4]
 
 
-async def test_expired_trial_blocks_data_but_not_profile(client):
+async def test_expired_trial_keeps_free_features(client):
     headers = await onboarded(client)
     async with client.app.state.sessionmaker() as session:
         await session.execute(
             update(User).where(User.id == 1001).values(trial_ends_at=utcnow() - timedelta(days=1))
         )
         await session.commit()
-    assert (await client.get("/api/day", headers=headers)).status_code == 402
+    assert (await client.get("/api/day", headers=headers)).status_code == 200
     me = (await client.get("/api/me", headers=headers)).json()
-    assert me["has_access"] is False
+    assert (me["has_access"], me["analyses_left"]) == (False, 2)
+    for _ in range(2):
+        r = await client.post("/api/meals/text", json={"text": "еда"}, headers=headers)
+        assert r.status_code == 201
+    r = await client.post("/api/meals/text", json={"text": "еда"}, headers=headers)
+    assert (r.status_code, r.json()["detail"]) == (402, "premium_required")

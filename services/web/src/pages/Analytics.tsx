@@ -10,6 +10,7 @@ import { GROUPS, compact, groupLabel, kg } from "../lib/catalog";
 import { count } from "../lib/format";
 import { tr } from "../lib/i18n";
 import { useAnalytics, useExercises } from "../lib/queries";
+import { PremiumNote } from "../components/PremiumNote";
 
 type Series = "workouts" | "volume" | "sets";
 
@@ -47,6 +48,7 @@ export function Analytics() {
   return (
     <div className="page wide">
       <h1>{tr("Аналитика", "Analytics")}</h1>
+      <PremiumNote />
 
       <section className="kpis">
         <div className="card kpi">

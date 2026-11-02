@@ -109,6 +109,8 @@ export interface Me {
   adaptive: Adaptive | null;
   base_target: Macros | null;
   features: Record<FeatureKey, boolean>;
+  analyses_left: number;
+  free_history_days: number;
 }
 
 export interface Adaptive {
@@ -447,11 +449,19 @@ export interface Referrer extends UserBrief {
   days: number;
 }
 
+export interface SupportMessage {
+  id: number;
+  created_at: string;
+  from_admin: boolean;
+  text: string;
+}
+
 export interface Plan {
+  provider: "stars" | "tribute";
   code: string;
   days: number;
-  link: string;
-  web_link: string;
+  link: string | null;
+  web_link: string | null;
   amount: number | null;
   currency: string | null;
 }

@@ -14,8 +14,9 @@ import { ExerciseInfo } from "./pages/ExerciseInfo";
 import { ExerciseProgress } from "./pages/ExerciseProgress";
 import { LanguagePicker } from "./pages/LanguagePicker";
 import { Login } from "./pages/Login";
-import { Paywall } from "./pages/Paywall";
+import { Premium } from "./pages/Premium";
 import { Profile } from "./pages/Profile";
+import { Support } from "./pages/Support";
 import { TemplateEdit } from "./pages/TemplateEdit";
 import { Today } from "./pages/Today";
 import { Weight } from "./pages/Weight";
@@ -96,25 +97,24 @@ function AuthenticatedApp() {
     );
   }
 
-  const paid = (page: ReactNode) => {
-    if (!me.profile_complete) return <Profile me={me} onboarding />;
-    return me.has_access ? page : <Paywall />;
-  };
+  const onboarded = (page: ReactNode) => (me.profile_complete ? page : <Profile me={me} onboarding />);
   return (
     <Routes key={lang}>
       <Route element={<Layout />}>
-        <Route index element={paid(<Today />)} />
-        <Route path="add" element={paid(<AddMeal me={me} />)} />
-        <Route path="workouts" element={paid(<Workouts />)} />
-        <Route path="workouts/:id" element={paid(<WorkoutSession />)} />
-        <Route path="catalog" element={paid(<Catalog />)} />
-        <Route path="catalog/:id" element={paid(<ExerciseInfo />)} />
-        <Route path="exercises/:id" element={paid(<ExerciseProgress />)} />
-        <Route path="analytics" element={paid(<Analytics />)} />
-        <Route path="templates/new" element={paid(<TemplateEdit />)} />
-        <Route path="templates/:id" element={paid(<TemplateEdit />)} />
-        <Route path="weight" element={paid(<Weight />)} />
+        <Route index element={onboarded(<Today />)} />
+        <Route path="add" element={onboarded(<AddMeal me={me} />)} />
+        <Route path="workouts" element={onboarded(<Workouts />)} />
+        <Route path="workouts/:id" element={onboarded(<WorkoutSession />)} />
+        <Route path="catalog" element={onboarded(<Catalog />)} />
+        <Route path="catalog/:id" element={onboarded(<ExerciseInfo />)} />
+        <Route path="exercises/:id" element={onboarded(<ExerciseProgress />)} />
+        <Route path="analytics" element={onboarded(<Analytics />)} />
+        <Route path="templates/new" element={onboarded(<TemplateEdit />)} />
+        <Route path="templates/:id" element={onboarded(<TemplateEdit />)} />
+        <Route path="weight" element={onboarded(<Weight />)} />
         <Route path="profile" element={<Profile me={me} />} />
+        <Route path="premium" element={onboarded(<Premium me={me} />)} />
+        <Route path="support" element={<Support />} />
         {me.is_admin && (
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />

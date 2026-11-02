@@ -4,6 +4,7 @@ import { api, errorMessage } from "../api/client";
 import type { Adaptive, Me, Settings } from "../api/types";
 import { round } from "../lib/format";
 import { tr } from "../lib/i18n";
+import { PremiumNote } from "./PremiumNote";
 
 function useUpdateSettings() {
   const client = useQueryClient();
@@ -53,7 +54,7 @@ export function TargetSettings({ me }: { me: Me }) {
           disabled={save.isPending}
           onChange={(v) => save.mutate({ activity_adjust: v })}
         />
-        {adaptive && (adaptive.ready || me.adaptive_target) && (
+        {me.has_access && adaptive && (adaptive.ready || me.adaptive_target) && (
           <Toggle
             label={tr("Норма по фактическому расходу", "Target from your real expenditure")}
             hint={adaptiveHint(adaptive, me.adaptive_target)}
@@ -63,6 +64,14 @@ export function TargetSettings({ me }: { me: Me }) {
           />
         )}
       </div>
+      {!me.has_access && adaptive?.ready && (
+        <PremiumNote
+          text={tr(
+            "Норма по твоему реальному расходу готова. Включить её можно в Premium",
+            "Your target from real expenditure is ready. Turn it on with Premium",
+          )}
+        />
+      )}
       {adaptive && !adaptive.ready && !me.adaptive_target && <AdaptiveProgress data={adaptive} />}
       {save.isError && <p className="error small">{errorMessage(save.error)}</p>}
     </section>

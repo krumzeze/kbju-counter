@@ -1598,6 +1598,59 @@ button:disabled {
   object-fit: contain;
 }
 
+.perks {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.perks li::before {
+  content: "⭐ ";
+}
+
+.support-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.support-msg {
+  display: grid;
+  gap: 4px;
+  max-width: 85%;
+  align-self: flex-end;
+  padding: 10px 14px;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--sage-soft);
+}
+
+.support-msg.reply {
+  align-self: flex-start;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.support-msg p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.premium-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  color: inherit;
+  font-size: 14px;
+  text-decoration: none;
+}
+
 /* States */
 
 .state {

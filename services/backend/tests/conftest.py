@@ -50,11 +50,19 @@ class FakeBot:
     def __init__(self) -> None:
         self.sent: list[tuple[int, str]] = []
         self.fail_for: dict[int, Exception] = {}
+        self.invoices: list[dict] = []
 
-    async def send_message(self, chat_id: int, text: str, **kwargs) -> None:
+    id = 42
+
+    async def send_message(self, chat_id: int, text: str, **kwargs) -> SimpleNamespace:
         if chat_id in self.fail_for:
             raise self.fail_for[chat_id]
         self.sent.append((chat_id, text))
+        return SimpleNamespace(message_id=len(self.sent))
+
+    async def create_invoice_link(self, **kwargs) -> str:
+        self.invoices.append(kwargs)
+        return "https://t.me/$invoice"
 
     async def get_me(self) -> SimpleNamespace:
         return SimpleNamespace(username="belok_test_bot")

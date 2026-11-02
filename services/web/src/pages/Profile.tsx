@@ -9,7 +9,6 @@ import { Art } from "../components/Art";
 import { Avatar } from "../components/Avatar";
 import { PromoCard, ReferralCard } from "../components/Growth";
 import { Icon } from "../components/Icon";
-import { Plans } from "../components/Plans";
 import { ReminderSettings, TargetSettings } from "../components/Settings";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
@@ -61,7 +60,16 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
               <span className="muted small">{accessText(me)}</span>
             </div>
           </section>
-          {me.status !== "lifetime" && <Plans />}
+          {me.status !== "lifetime" && (
+            <Link to="/premium" className="card premium-note">
+              <span>
+                {me.status === "active"
+                  ? tr("Продлить Premium", "Extend Premium")
+                  : tr("Premium: фото, адаптивная норма и вся история", "Premium: photos, adaptive target and full history")}
+              </span>
+              <span aria-hidden>⭐</span>
+            </Link>
+          )}
           <LanguageCard me={me} />
           {me.base_target && (
             <div className="card peach">
@@ -153,6 +161,10 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           <ReminderSettings me={me} />
           <ReferralCard />
           <PromoCard />
+          <Link to="/support" className="card premium-note">
+            <span>{tr("Написать в поддержку", "Contact support")}</span>
+            <span aria-hidden>💬</span>
+          </Link>
         </>
       )}
 
@@ -209,12 +221,12 @@ function accessText(me: Me): string {
   if (me.status === "lifetime") return tr("Бесплатный доступ навсегда", "Free access forever");
   if (me.status === "active") {
     const until = new Date(me.access_until).toLocaleDateString(locale());
-    return tr(`Доступ активен до ${until}`, `Access active until ${until}`);
+    return tr(`Premium до ${until}`, `Premium until ${until}`);
   }
   const left = daysLeft(me.trial_ends_at);
   return left > 0
-    ? tr(`Пробный период: осталось ${left} ${daysWord(left)}`, `Free trial: ${left} ${daysWord(left)} left`)
-    : tr("Пробный период закончился", "Your free trial has ended");
+    ? tr(`Пробный Premium: осталось ${left} ${daysWord(left)}`, `Premium trial: ${left} ${daysWord(left)} left`)
+    : tr("Бесплатный тариф", "Free plan");
 }
 
 function LanguageCard({ me }: { me: Me }) {

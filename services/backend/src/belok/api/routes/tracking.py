@@ -2,8 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from belok.api.deps import ActiveUser, SessionDep
+from belok.api.deps import ActiveUser, SessionDep, SettingsDep
 from belok.api.schemas import StepsIn, WaterIn, WaterOut, WeightIn, WeightOut
+from belok.services.access import history_start
 from belok.services.repo import add_water, recent_weights, upsert_steps, upsert_weight
 from belok.timeutil import local_today
 
@@ -12,10 +13,14 @@ router = APIRouter(tags=["tracking"])
 
 @router.get("/weights")
 async def list_weights(
-    user: ActiveUser, session: SessionDep, limit: Annotated[int, Query(ge=1, le=365)] = 90
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    limit: Annotated[int, Query(ge=1, le=365)] = 90,
 ) -> list[WeightOut]:
     weights = await recent_weights(session, user.id, limit)
-    return [WeightOut.model_validate(w) for w in reversed(weights)]
+    start = history_start(user, local_today(user.timezone), settings.free_history_days)
+    return [WeightOut.model_validate(w) for w in reversed(weights) if not start or w.day >= start]
 
 
 @router.put("/weights/today", status_code=status.HTTP_204_NO_CONTENT)

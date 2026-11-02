@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from enum import StrEnum
 
 from belok.db.models import User
+from belok.timeutil import utcnow
 
 
 class AccessStatus(StrEnum):
@@ -34,3 +35,10 @@ def access_until(user: User) -> datetime:
 def grant_days(user: User, days: int, now: datetime) -> None:
     """Extend access by `days`, starting from whenever the current access ends."""
     user.subscription_until = max(now, access_until(user)) + timedelta(days=days)
+
+
+def history_start(user: User, today: date, free_days: int) -> date | None:
+    """First day a free user can see in long-term charts; None means unlimited."""
+    if has_access(user, utcnow()):
+        return None
+    return today - timedelta(days=free_days - 1)

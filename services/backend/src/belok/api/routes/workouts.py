@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.api.deps import ActiveUser, SessionDep
+from belok.api.deps import ActiveUser, SessionDep, SettingsDep
 from belok.api.workout_schemas import (
     AnalyticsOut,
     CatalogDetailOut,
@@ -38,8 +38,12 @@ from belok.db.models import Exercise, User, Workout, WorkoutSet, WorkoutTemplate
 from belok.domain.workouts import normalize_exercise
 from belok.i18n import Language
 from belok.services import workouts as svc
+from belok.services.access import has_access, history_start
+from belok.timeutil import local_today, utcnow
 
 router = APIRouter(tags=["workouts"])
+
+FREE_ANALYTICS_WEEKS = 4
 
 
 def _lang(user: User) -> Language:
@@ -237,6 +241,7 @@ async def get_progress(
     exercise_id: int,
     user: ActiveUser,
     session: SessionDep,
+    settings: SettingsDep,
     limit: Annotated[int, Query(ge=1, le=200)] = 60,
 ) -> ProgressOut:
     exercise = await svc.get_exercise(session, user.id, exercise_id)
@@ -244,7 +249,10 @@ async def get_progress(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "exercise_not_found")
     points = []
     records = RecordsOut(e1rm=0, weight_kg=0, reps=0, volume_kg=0, duration_s=0)
+    start = history_start(user, local_today(user.timezone), settings.free_history_days)
     for day, sets in await svc.exercise_history(session, user.id, exercise.id, limit):
+        if start and day < start:
+            continue
         top = max(sets, key=lambda s: (svc.set_e1rm(s), s.reps or 0))
         point = ProgressPointOut(
             day=day,
@@ -489,6 +497,8 @@ async def delete_template(template_id: int, user: ActiveUser, session: SessionDe
 async def get_analytics(
     user: ActiveUser, session: SessionDep, weeks: Annotated[int, Query(ge=4, le=52)] = 12
 ) -> AnalyticsOut:
+    if not has_access(user, utcnow()):
+        weeks = FREE_ANALYTICS_WEEKS
     data = await svc.analytics(session, user, weeks)
     lang = _lang(user)
     return AnalyticsOut(

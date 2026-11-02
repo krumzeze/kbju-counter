@@ -12,7 +12,6 @@ from belok.db.models import User
 from belok.llm.analyzer import FoodAnalyzer
 from belok.llm.speech import SpeechToText
 from belok.services import features
-from belok.services.access import has_access
 from belok.services.features import Feature
 from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
@@ -88,8 +87,6 @@ CurrentUser = Annotated[User, Depends(current_user)]
 async def active_user(user: CurrentUser) -> User:
     if not user.profile_complete:
         raise HTTPException(status.HTTP_409_CONFLICT, "profile_incomplete")
-    if not has_access(user, utcnow()):
-        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "access_expired")
     return user
 
 

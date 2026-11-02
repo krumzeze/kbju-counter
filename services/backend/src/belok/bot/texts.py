@@ -17,12 +17,12 @@ STRINGS: dict[str, dict[Language, str]] = {
         "Записывай, что ешь, и следи за КБЖУ: дневная норма рассчитана под твою цель, "
         "похудеть, набрать или держать форму. Отмечай тренировки и смотри, как растут "
         "результаты и меняется вес.\n\n"
-        "{trial} бесплатно.",
+        "Основные функции бесплатны, Premium можно попробовать {trial}.",
         EN: "Belok counts your calories and tracks your workouts.\n\n"
         "Log what you eat and keep an eye on your macros: your daily target is built around "
         "your goal, whether that's losing weight, gaining or staying in shape. Log your "
         "workouts and watch your progress and weight change over time.\n\n"
-        "{trial} free.",
+        "Core features are free, and you can try Premium for {trial}.",
     },
     "welcome": {
         RU: "Привет! Я Белок: считаю калории по фото, веду тренировки и вес.\n\n"
@@ -52,9 +52,47 @@ STRINGS: dict[str, dict[Language, str]] = {
         RU: "Сначала заполни профиль в приложении, чтобы я знал твою норму.",
         EN: "Fill in your profile in the app first so I know your target.",
     },
-    "voice_no_access": {
-        RU: "Пробный период закончился. Продлить доступ можно в приложении.",
-        EN: "Your free trial has ended. You can extend access in the app.",
+    "stars_title": {RU: "Белок Premium", EN: "Belok Premium"},
+    "stars_description": {
+        RU: "Распознавание еды по фото и описанию, адаптивная норма и вся история прогресса "
+        "на {period}.",
+        EN: "Food recognition from photos and text, adaptive target and full progress history "
+        "for {period}.",
+    },
+    "stars_label": {RU: "Premium на {period}", EN: "Premium for {period}"},
+    "stars_unavailable": {
+        RU: "Оплата сейчас недоступна, попробуй позже.",
+        EN: "Payments are unavailable right now, please try again later.",
+    },
+    "support_ask": {
+        RU: "Напиши свой вопрос одним сообщением, и я передам его команде. Ответ придёт сюда.",
+        EN: "Write your question in one message and I'll pass it to the team. "
+        "The reply will come here.",
+    },
+    "paysupport_ask": {
+        RU: "Проблема с оплатой? Опиши её одним сообщением: что покупал и что пошло не так. "
+        "Ответ придёт сюда.",
+        EN: "Having trouble with a payment? Describe it in one message: what you bought "
+        "and what went wrong. The reply will come here.",
+    },
+    "paysupport_payments": {RU: "Твои последние платежи:", EN: "Your recent payments:"},
+    "support_sent": {
+        RU: "Отправил, ответим здесь как можно скорее.",
+        EN: "Sent. We'll reply here as soon as we can.",
+    },
+    "support_too_many": {
+        RU: "Слишком много сообщений за сутки, подожди немного.",
+        EN: "Too many messages today, please wait a little.",
+    },
+    "support_reply": {
+        RU: "💬 <b>Ответ поддержки</b>\n\n{text}",
+        EN: "💬 <b>Support reply</b>\n\n{text}",
+    },
+    "free_limit": {
+        RU: "Бесплатные распознавания на сегодня закончились. С Premium их больше, "
+        "а вручную добавлять еду можно без ограничений.",
+        EN: "You've used today's free recognitions. Premium gives you more, "
+        "and manual logging is always unlimited.",
     },
     "voice_unavailable": {
         RU: "Голосовые сейчас недоступны. Опиши еду текстом в приложении.",
