@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from belok.db.models import BodyWeight, Meal, MealItem, User
 from belok.domain import adaptive
 from belok.domain.nutrition import Macros, bmr, maintenance_kcal, target_for
+from belok.services.access import has_access
 from belok.services.workouts import activity_kcal
+from belok.timeutil import utcnow
 
 
 class TargetSource(StrEnum):
@@ -63,7 +65,7 @@ async def target_on(session: AsyncSession, user: User, day: date, weight_kg: flo
     formula = maintenance_kcal(user.sex, weight_kg, user.height_cm, age, activity)
     estimate = await adaptive_estimate(session, user.id, day, formula)
 
-    if user.adaptive_target and estimate.tdee is not None:
+    if user.adaptive_target and has_access(user, utcnow()) and estimate.tdee is not None:
         # The measured expenditure already contains the user's usual activity.
         tdee = estimate.tdee if user.activity_adjust else estimate.tdee - activity
         source, shown_activity = TargetSource.ADAPTIVE, 0.0

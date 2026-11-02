@@ -46,10 +46,10 @@ async def access_until(client, user_id: int = 1001):
 async def test_plans_endpoint_lists_prices(client, catalog):
     headers = await onboarded(client)
     plans = (await client.get("/api/payments/plans", headers=headers)).json()
-    assert [(p["code"], p["days"], p["amount"]) for p in plans] == [
-        ("IMK", 30, 29900),
-        ("IMM", 90, 74900),
-    ]
+    tribute = [(p["code"], p["days"], p["amount"]) for p in plans if p["provider"] == "tribute"]
+    assert tribute == [("IMK", 30, 29900), ("IMM", 90, 74900)]
+    stars = [(p["days"], p["amount"], p["currency"]) for p in plans if p["provider"] == "stars"]
+    assert stars == [(30, 150, "XTR"), (90, 375, "XTR"), (365, 1250, "XTR")]
 
 
 async def test_purchase_extends_access_once(client, catalog, bot):

@@ -31,6 +31,7 @@ import type {
   Promo,
   PromoInput,
   Referral,
+  SupportMessage,
   Referrer,
   Segment,
   UserDetail,
@@ -193,6 +194,9 @@ export const api = {
   deleteTemplate: (id: number) => request<void>("DELETE", `/templates/${id}`),
 
   plans: () => request<Plan[]>("GET", "/payments/plans"),
+  support: () => request<SupportMessage[]>("GET", "/support"),
+  sendSupport: (text: string) => request<SupportMessage>("POST", "/support", { text }),
+  starsInvoice: (days: number) => request<{ link: string }>("POST", `/payments/stars/${days}`),
   redeemPromo: (code: string) =>
     request<{ days: number; access_until: string }>("POST", "/me/promo", { code }),
   referral: () => request<Referral>("GET", "/me/referral"),
@@ -253,6 +257,15 @@ export const adminApi = {
 
 const messages = (): Record<string, string> => ({
   daily_limit: tr("На сегодня лимит распознаваний исчерпан", "You've hit today's analysis limit"),
+  premium_required: tr(
+    "Бесплатные распознавания на сегодня закончились. Больше в Premium",
+    "You've used today's free recognitions. Get more with Premium",
+  ),
+  invoice_failed: tr("Не удалось создать счёт, попробуй ещё раз", "Couldn't create the invoice, please try again"),
+  too_many_messages: tr("Слишком много сообщений за сутки, подожди немного", "Too many messages today, please wait a little"),
+  empty_message: tr("Напиши сообщение", "Write a message"),
+  plan_not_found: tr("Такого тарифа больше нет", "This plan is no longer available"),
+  payments_disabled: tr("Оплата временно недоступна", "Payments are temporarily unavailable"),
   analysis_failed: tr(
     "Не получилось посчитать, попробуй ещё раз чуть позже",
     "Couldn't analyze that, please try again a bit later",

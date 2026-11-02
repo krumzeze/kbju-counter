@@ -5,10 +5,12 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from belok.config import Settings
 from belok.db.models import LlmUsage, Meal, MealItem, User
 from belok.llm.analyzer import AnalysisError, AnalysisResult
+from belok.services.access import has_access
 from belok.services.repo import analyses_on
-from belok.timeutil import local_today
+from belok.timeutil import local_today, utcnow
 
 log = logging.getLogger(__name__)
 
@@ -17,13 +19,27 @@ MIN_SCALE, MAX_SCALE = 0.25, 5.0
 
 
 class DailyLimitReached(Exception):
-    pass
+    def __init__(self, premium: bool) -> None:
+        super().__init__("premium" if premium else "free")
+        self.premium = premium
 
 
-async def ensure_within_limit(session: AsyncSession, user: User, default_limit: int) -> None:
-    limit = user.daily_limit if user.daily_limit is not None else default_limit
-    if await analyses_on(session, user.id, local_today(user.timezone)) >= limit:
-        raise DailyLimitReached
+def analysis_limit(user: User, settings: Settings) -> int:
+    if user.daily_limit is not None:
+        return user.daily_limit
+    if has_access(user, utcnow()):
+        return settings.daily_analysis_limit
+    return settings.free_daily_analyses
+
+
+async def analyses_left(session: AsyncSession, user: User, settings: Settings) -> int:
+    used = await analyses_on(session, user.id, local_today(user.timezone))
+    return max(0, analysis_limit(user, settings) - used)
+
+
+async def ensure_within_limit(session: AsyncSession, user: User, settings: Settings) -> None:
+    if await analyses_left(session, user, settings) == 0:
+        raise DailyLimitReached(has_access(user, utcnow()))
 
 
 async def analyze_meal(

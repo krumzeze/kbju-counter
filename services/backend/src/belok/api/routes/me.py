@@ -13,10 +13,12 @@ from belok.api.schemas import (
     SettingsIn,
     macros_out,
 )
+from belok.config import Settings
 from belok.db.models import User
 from belok.domain.nutrition import daily_target, maintenance_kcal
 from belok.services import features
 from belok.services.access import access_status, access_until, has_access
+from belok.services.meals import analyses_left
 from belok.services.promos import PromoResult, redeem
 from belok.services.referrals import referral_stats
 from belok.services.repo import latest_weight
@@ -29,38 +31,46 @@ router = APIRouter(tags=["me"])
 
 
 @router.get("/me")
-async def get_me(user: CurrentUser, session: SessionDep) -> MeOut:
-    return await _me(session, user)
+async def get_me(user: CurrentUser, session: SessionDep, settings: SettingsDep) -> MeOut:
+    return await _me(session, user, settings)
 
 
 @router.put("/me/profile")
-async def put_profile(body: ProfileIn, user: CurrentUser, session: SessionDep) -> MeOut:
+async def put_profile(
+    body: ProfileIn, user: CurrentUser, session: SessionDep, settings: SettingsDep
+) -> MeOut:
     if body.timezone:
         user.timezone = body.timezone
     await update_profile(
         session, user, body.sex, body.age, body.height_cm, body.weight_kg, body.goal
     )
     await session.commit()
-    return await _me(session, user)
+    return await _me(session, user, settings)
 
 
 @router.put("/me/language")
-async def put_language(body: LanguageIn, user: CurrentUser, session: SessionDep) -> MeOut:
+async def put_language(
+    body: LanguageIn, user: CurrentUser, session: SessionDep, settings: SettingsDep
+) -> MeOut:
     user.language = body.language
     await session.commit()
-    return await _me(session, user)
+    return await _me(session, user, settings)
 
 
 @router.patch("/me/settings")
-async def patch_settings(body: SettingsIn, user: CurrentUser, session: SessionDep) -> MeOut:
+async def patch_settings(
+    body: SettingsIn, user: CurrentUser, session: SessionDep, settings: SettingsDep
+) -> MeOut:
     if body.adaptive_target and not user.adaptive_target:
+        if not has_access(user, utcnow()):
+            raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "premium_required")
         info = await _adaptive(session, user)
         if info is None or not info.ready:
             raise HTTPException(status.HTTP_409_CONFLICT, "adaptive_not_ready")
     for field, value in body.model_dump(exclude_none=True).items():
         setattr(user, field, value)
     await session.commit()
-    return await _me(session, user)
+    return await _me(session, user, settings)
 
 
 @router.post("/me/promo")
@@ -93,7 +103,7 @@ async def get_referral(
     )
 
 
-async def _me(session: AsyncSession, user: User) -> MeOut:
+async def _me(session: AsyncSession, user: User, settings: Settings) -> MeOut:
     weight = await latest_weight(session, user.id)
     age = local_today(user.timezone).year - user.birth_year if user.birth_year else None
     target = None
@@ -124,6 +134,8 @@ async def _me(session: AsyncSession, user: User) -> MeOut:
         adaptive=await _adaptive(session, user, weight),
         base_target=macros_out(target),
         features={key.value: on for key, on in (await features.flags(session)).items()},
+        analyses_left=await analyses_left(session, user, settings),
+        free_history_days=settings.free_history_days,
     )
 
 

@@ -9,6 +9,7 @@ import { formatSet, kg } from "../lib/catalog";
 import { dayLabel } from "../lib/format";
 import { tr } from "../lib/i18n";
 import { useProgress } from "../lib/queries";
+import { PremiumNote } from "../components/PremiumNote";
 
 type Metric = "e1rm" | "weight" | "volume" | "reps";
 
@@ -35,6 +36,7 @@ export function ExerciseProgress() {
         )}
       </div>
 
+      <PremiumNote />
       {points.length === 0 ? (
         <p className="empty">{tr("Записей пока нет.", "No entries yet.")}</p>
       ) : (

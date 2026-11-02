@@ -25,6 +25,7 @@ from belok.db.models import Meal, MealItem, User
 from belok.domain.nutrition import water_target_ml
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, AnalysisResult
+from belok.services.access import has_access
 from belok.services.features import Feature
 from belok.services.meals import (
     DailyLimitReached,
@@ -46,7 +47,7 @@ from belok.services.products import (
 from belok.services.repo import day_summary, get_meal, meals_on
 from belok.services.targets import TargetSource
 from belok.services.workouts import sets_on
-from belok.timeutil import local_today
+from belok.timeutil import local_today, utcnow
 
 router = APIRouter(tags=["meals"])
 
@@ -68,7 +69,10 @@ async def get_day(
         target=macros_out(target.macros) if target else None,
         target_source=target.source if target else None,
         adaptive_paused=bool(
-            target and user.adaptive_target and target.source == TargetSource.FORMULA
+            target
+            and user.adaptive_target
+            and has_access(user, utcnow())
+            and target.source == TargetSource.FORMULA
         ),
         steps=summary.steps,
         water_ml=summary.water_ml,
@@ -248,8 +252,10 @@ async def _analyze(
     call: Callable[[], Awaitable[AnalysisResult]],
 ) -> MealOut:
     try:
-        await ensure_within_limit(session, user, settings.daily_analysis_limit)
+        await ensure_within_limit(session, user, settings)
     except DailyLimitReached as exc:
+        if not exc.premium:
+            raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "premium_required") from exc
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "daily_limit") from exc
     try:
         meal = await analyze_meal(session, user, kind, call)

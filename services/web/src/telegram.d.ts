@@ -17,6 +17,7 @@ interface TelegramWebApp {
   showConfirm?(message: string, callback: (confirmed: boolean) => void): void;
   openTelegramLink?(url: string): void;
   openLink?(url: string): void;
+  openInvoice?(url: string, callback: (status: "paid" | "cancelled" | "failed" | "pending") => void): void;
 }
 
 interface Window {

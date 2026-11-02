@@ -16,7 +16,6 @@ from belok.bot.texts import t
 from belok.db.models import BodyWeight, Meal, User
 from belok.i18n import Language
 from belok.services import features, heartbeat
-from belok.services.access import has_access
 from belok.services.features import Feature
 from belok.timeutil import utcnow
 
@@ -95,8 +94,6 @@ async def send_due(
     )
     sent = 0
     for user in users.all():
-        if not has_access(user, now):
-            continue
         local = now.astimezone(ZoneInfo(user.timezone))
         for kind in due(local):
             if not enabled(user, kind):

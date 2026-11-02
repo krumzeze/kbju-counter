@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 from zoneinfo import ZoneInfo, available_timezones
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -111,6 +112,8 @@ class MeOut(BaseModel):
     adaptive: AdaptiveOut | None
     base_target: MacrosOut | None
     features: dict[str, bool]
+    analyses_left: int
+    free_history_days: int
 
 
 class LanguageIn(BaseModel):
@@ -125,12 +128,17 @@ class SettingsIn(BaseModel):
 
 
 class PlanOut(BaseModel):
+    provider: Literal["stars", "tribute"]
     code: str
     days: int
-    link: str
-    web_link: str
+    link: str | None
+    web_link: str | None
     amount: int | None
     currency: str | None
+
+
+class StarsInvoiceOut(BaseModel):
+    link: str
 
 
 class PromoRedeemIn(BaseModel):

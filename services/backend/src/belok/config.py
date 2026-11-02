@@ -33,11 +33,15 @@ class Settings(BaseSettings):
     tribute_api_key: SecretStr | None = None
     # Comma-separated "<product code from the web.tribute.tg/p/ link>:<days>".
     tribute_plans: str = "IMK:30,IMM:90,IMO:365"
+    # Comma-separated "<days>:<price in Telegram Stars>".
+    stars_plans: str = "30:150,90:375,365:1250"
 
     trial_days: int = 4
     referral_trial_days: int = 7
     referral_reward_days: int = 7
     daily_analysis_limit: int = 20
+    free_daily_analyses: int = 2
+    free_history_days: int = 30
     default_timezone: str = "Europe/Moscow"
     log_level: str = "INFO"
 

@@ -12,7 +12,6 @@ from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, FoodAnalyzer
 from belok.llm.speech import SpeechError, SpeechToText
 from belok.services import features
-from belok.services.access import has_access
 from belok.services.features import Feature
 from belok.services.meals import DailyLimitReached, analyze_meal, ensure_within_limit
 from belok.services.repo import day_summary
@@ -38,9 +37,6 @@ async def voice_meal(
     if not user.profile_complete:
         await message.answer(t(lang, "voice_need_profile"), reply_markup=markup)
         return
-    if not has_access(user, utcnow()):
-        await message.answer(t(lang, "voice_no_access"), reply_markup=markup)
-        return
     if stt is None or not await features.enabled(session, Feature.VOICE):
         await message.answer(t(lang, "voice_unavailable"), reply_markup=markup)
         return
@@ -48,9 +44,10 @@ async def voice_meal(
         await message.answer(t(lang, "voice_too_long", seconds=MAX_VOICE_SECONDS))
         return
     try:
-        await ensure_within_limit(session, user, settings.daily_analysis_limit)
-    except DailyLimitReached:
-        await message.answer(t(lang, "daily_limit"))
+        await ensure_within_limit(session, user, settings)
+    except DailyLimitReached as exc:
+        key = "daily_limit" if exc.premium else "free_limit"
+        await message.answer(t(lang, key), reply_markup=None if exc.premium else markup)
         return
 
     await bot.send_chat_action(message.chat.id, ChatAction.TYPING)

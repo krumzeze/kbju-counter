@@ -7,6 +7,7 @@ import { ErrorState, Spinner } from "../components/States";
 import { useInvalidate, useWeights } from "../lib/queries";
 import { tr } from "../lib/i18n";
 import { haptic } from "../lib/telegram";
+import { PremiumNote } from "../components/PremiumNote";
 
 export function Weight() {
   const { data, isPending, error, refetch } = useWeights();
@@ -62,7 +63,10 @@ export function Weight() {
           <p>{tr("Записей пока нет. Запиши первый вес, и здесь появится график.", "No entries yet. Log your first weight and a chart will appear here.")}</p>
         </div>
       ) : (
-        <WeightStats points={data} />
+        <>
+          <WeightStats points={data} />
+          <PremiumNote />
+        </>
       )}
     </div>
   );

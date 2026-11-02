@@ -145,7 +145,8 @@ async def test_grant_revoke_and_lifetime(client):
 
     revoked = (await client.post(f"/api/admin/users/{USER}/revoke", headers=admin)).json()
     assert revoked["status"] == "expired"
-    assert (await client.get("/api/day", headers=user)).status_code == 402
+    adaptive = await client.patch("/api/me/settings", json={"adaptive_target": True}, headers=user)
+    assert adaptive.status_code == 402
 
     lifetime = await client.patch(
         f"/api/admin/users/{USER}", json={"lifetime_access": True}, headers=admin
