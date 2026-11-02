@@ -7,6 +7,23 @@ from belok.services.access import access_until
 RU, EN = Language.RU, Language.EN
 
 STRINGS: dict[str, dict[Language, str]] = {
+    "bot_name": {RU: "Белок", EN: "Belok"},
+    "bot_short_description": {
+        RU: "Подсчёт калорий и дневник тренировок в одном приложении.",
+        EN: "Calorie counting and workout tracking in one app.",
+    },
+    "bot_description": {
+        RU: "Белок считает калории и ведёт твои тренировки.\n\n"
+        "Записывай, что ешь, и следи за КБЖУ: дневная норма рассчитана под твою цель, "
+        "похудеть, набрать или держать форму. Отмечай тренировки и смотри, как растут "
+        "результаты и меняется вес.\n\n"
+        "{trial} бесплатно.",
+        EN: "Belok counts your calories and tracks your workouts.\n\n"
+        "Log what you eat and keep an eye on your macros: your daily target is built around "
+        "your goal, whether that's losing weight, gaining or staying in shape. Log your "
+        "workouts and watch your progress and weight change over time.\n\n"
+        "{trial} free.",
+    },
     "welcome": {
         RU: "Привет! Я Белок: считаю калории по фото, веду тренировки и вес.\n\n"
         "Всё работает в приложении, открой его кнопкой ниже. А ещё можно просто "
@@ -137,3 +154,13 @@ def payment_text(lang: Language, user: User, payment: Payment, refunded: bool) -
 
 def promo_ok(lang: Language, days: int) -> str:
     return t(lang, "promo_ok", days=days, unit="day" if days == 1 else "days")
+
+
+def days_count(lang: Language, days: int) -> str:
+    if lang == EN:
+        return f"{days} day" if days == 1 else f"{days} days"
+    if days % 10 == 1 and days % 100 != 11:
+        return f"{days} день"
+    if 2 <= days % 10 <= 4 and not 12 <= days % 100 <= 14:
+        return f"{days} дня"
+    return f"{days} дней"
