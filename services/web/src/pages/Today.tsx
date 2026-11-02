@@ -207,7 +207,7 @@ function TargetNote({ data }: { data: Day }) {
   );
 }
 
-const WATER_STEP = 250;
+const WATER_STEPS = [-250, -100, -50, 50, 100, 250];
 
 function WaterTile({ ml, target, editable }: { ml: number; target: number | null; editable: boolean }) {
   const client = useQueryClient();
@@ -223,7 +223,7 @@ function WaterTile({ ml, target, editable }: { ml: number; target: number | null
       <div className="water-head">
         <h3>{tr("Вода", "Water")}</h3>
         <span className="unit">
-          <strong>{(ml / 1000).toFixed(ml % 1000 ? 2 : 1).replace(/0$/, "")}</strong>
+          <strong>{Number((ml / 1000).toFixed(2))}</strong>
           {target ? ` / ${(target / 1000).toFixed(1)} ${tr("л", "L")}` : ` ${tr("л", "L")}`}
         </span>
       </div>
@@ -231,22 +231,19 @@ function WaterTile({ ml, target, editable }: { ml: number; target: number | null
         <span style={{ width: `${share}%` }} />
       </div>
       {editable && (
-        <div className="row">
-          <button
-            className="btn small"
-            disabled={add.isPending || ml === 0}
-            onClick={() => add.mutate(-WATER_STEP)}
-            aria-label={tr("Убрать стакан", "Remove a glass")}
-          >
-            −
-          </button>
-          <button
-            className="btn btn-primary small grow"
-            disabled={add.isPending}
-            onClick={() => add.mutate(WATER_STEP)}
-          >
-            + {tr("стакан", "glass")} {WATER_STEP} {tr("мл", "ml")}
-          </button>
+        <div className="water-steps">
+          {WATER_STEPS.map((delta) => (
+            <button
+              key={delta}
+              className={`btn small ${delta > 0 ? "add" : ""}`}
+              disabled={add.isPending || (delta < 0 && ml === 0)}
+              onClick={() => add.mutate(delta)}
+              aria-label={`${delta > 0 ? "+" : "−"}${Math.abs(delta)} ${tr("мл", "ml")}`}
+            >
+              {delta > 0 ? "+" : "−"}
+              {Math.abs(delta)}
+            </button>
+          ))}
         </div>
       )}
     </div>
