@@ -110,6 +110,7 @@ def food_db() -> FakeFoodDb:
 def settings() -> Settings:
     return Settings(
         bot_token=BOT_TOKEN,
+        # deepcode ignore HardcodedNonCryptoSecret/test: stub, tests use a fake analyzer
         llm_api_key="unused",
         api_secret="test-secret-" + "x" * 32,
         database_url=TEST_DATABASE_URL or "",

@@ -43,6 +43,7 @@ import type {
 } from "./types";
 import { type Lang, tr } from "../lib/i18n";
 
+// deepcode ignore HardcodedNonCryptoSecret: localStorage key name, not a secret
 const TOKEN_KEY = "belok.token";
 
 export class ApiError extends Error {
