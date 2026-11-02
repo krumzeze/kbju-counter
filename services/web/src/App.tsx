@@ -28,6 +28,7 @@ import { Log } from "./pages/admin/Log";
 import { Promos } from "./pages/admin/Promos";
 import { Referrals } from "./pages/admin/Referrals";
 import { Settings } from "./pages/admin/Settings";
+import { System } from "./pages/admin/System";
 import { UserDetail } from "./pages/admin/UserDetail";
 import { Users } from "./pages/admin/Users";
 
@@ -103,7 +104,7 @@ function AuthenticatedApp() {
     <Routes key={lang}>
       <Route element={<Layout />}>
         <Route index element={paid(<Today />)} />
-        <Route path="add" element={paid(<AddMeal />)} />
+        <Route path="add" element={paid(<AddMeal me={me} />)} />
         <Route path="workouts" element={paid(<Workouts />)} />
         <Route path="workouts/:id" element={paid(<WorkoutSession />)} />
         <Route path="catalog" element={paid(<Catalog />)} />
@@ -122,6 +123,7 @@ function AuthenticatedApp() {
             <Route path="broadcasts" element={<Broadcasts />} />
             <Route path="promos" element={<Promos />} />
             <Route path="referrals" element={<Referrals />} />
+            <Route path="system" element={<System />} />
             <Route path="log" element={<Log />} />
             <Route path="settings" element={<Settings />} />
           </Route>

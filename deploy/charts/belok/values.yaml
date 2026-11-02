@@ -8,7 +8,7 @@ image:
 
 imagePullSecrets: []
 
-# Secret with BOT_TOKEN, LLM_API_KEY, API_SECRET and TRIBUTE_API_KEY.
+# Secret with BOT_TOKEN, LLM_API_KEY, API_SECRET, TRIBUTE_API_KEY and optional STT_API_KEY.
 secretName: belok-secrets
 
 database:

@@ -55,6 +55,9 @@ class FoodAnalyzer:
         self._client = AsyncAnthropic(api_key=api_key, timeout=60, max_retries=2)
         self.model = model
 
+    async def ping(self) -> None:
+        await self._client.models.retrieve(self.model, timeout=10)
+
     async def from_photo(
         self, image: bytes, caption: str | None, language: Language
     ) -> AnalysisResult:

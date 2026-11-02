@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from belok.api.routes import admin, auth, me, meals, payments, tracking, workouts
 from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
+from belok.llm.speech import SpeechToText
+from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 
 
@@ -20,6 +22,8 @@ async def lifespan(app: FastAPI):
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     app.state.analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
+    app.state.food_db = FoodDatabase()
+    app.state.stt = SpeechToText.from_settings(settings)
     app.state.bot = Bot(
         settings.bot_token.get_secret_value(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),

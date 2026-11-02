@@ -219,6 +219,18 @@ async def test_steps_raise_daily_target_by_weekly_average(client):
     assert day["target"]["kcal"] == pytest.approx(before + 400 / 7)
 
 
+async def test_activity_adjust_can_be_disabled(client):
+    headers = await onboarded(client)
+    await client.put("/api/steps/today", json={"steps": 13000}, headers=headers)
+    me = (
+        await client.patch("/api/me/settings", json={"activity_adjust": False}, headers=headers)
+    ).json()
+    assert me["activity_adjust"] is False
+    day = (await client.get("/api/day", headers=headers)).json()
+    assert day["activity_kcal"] == 0
+    assert day["target"]["kcal"] == pytest.approx(me["base_target"]["kcal"])
+
+
 async def test_weights(client):
     headers = await onboarded(client)
     await client.put("/api/weights/today", json={"weight_kg": 79.4}, headers=headers)

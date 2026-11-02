@@ -9,12 +9,14 @@ dependencies = [
     "anthropic>=1",
     "asyncpg>=0.32.0",
     "fastapi>=0.162.0",
+    "pillow>=11",
     "pydantic-settings>=2.16.1",
     "pyjwt>=2.15.1",
     "python-multipart>=0.0.32",
     "redis[hiredis]>=8.1.0",
     "sqlalchemy[asyncio]>=2.1.6",
     "uvicorn[standard]>=0.54.0",
+    "zxing-cpp>=3.1.1",
 ]
 
 [build-system]

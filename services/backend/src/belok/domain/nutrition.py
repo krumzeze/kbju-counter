@@ -26,6 +26,7 @@ MINUTES_PER_SET = 2.5
 CARDIO_NET_MET = 6.0
 # Activity is averaged over this many days so the target stays steady between gym and rest days.
 ACTIVITY_WINDOW_DAYS = 7
+WATER_ML_PER_KG = 30
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +69,20 @@ def cardio_kcal(minutes: float, weight_kg: float) -> float:
     return CARDIO_NET_MET * weight_kg * minutes / 60
 
 
+def maintenance_kcal(
+    sex: Sex, weight_kg: float, height_cm: float, age: int, activity_kcal: float = 0.0
+) -> float:
+    return bmr(sex, weight_kg, height_cm, age) * SEDENTARY_FACTOR + activity_kcal
+
+
+def target_for(tdee: float, weight_kg: float, goal: Goal, floor_kcal: float = 0.0) -> Macros:
+    kcal = max(floor_kcal, tdee * GOAL_KCAL_FACTOR[goal])
+    protein = PROTEIN_G_PER_KG[goal] * weight_kg
+    fat = FAT_G_PER_KG * weight_kg
+    carbs = max(0.0, (kcal - protein * 4 - fat * 9) / 4)
+    return Macros(kcal, protein, fat, carbs)
+
+
 def daily_target(
     sex: Sex,
     weight_kg: float,
@@ -76,9 +91,9 @@ def daily_target(
     goal: Goal,
     activity_kcal: float = 0.0,
 ) -> Macros:
-    tdee = bmr(sex, weight_kg, height_cm, age) * SEDENTARY_FACTOR + activity_kcal
-    kcal = tdee * GOAL_KCAL_FACTOR[goal]
-    protein = PROTEIN_G_PER_KG[goal] * weight_kg
-    fat = FAT_G_PER_KG * weight_kg
-    carbs = max(0.0, (kcal - protein * 4 - fat * 9) / 4)
-    return Macros(kcal, protein, fat, carbs)
+    tdee = maintenance_kcal(sex, weight_kg, height_cm, age, activity_kcal)
+    return target_for(tdee, weight_kg, goal)
+
+
+def water_target_ml(weight_kg: float) -> int:
+    return round(weight_kg * WATER_ML_PER_KG / 50) * 50

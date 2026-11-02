@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
@@ -70,8 +70,9 @@ export function Today() {
                 <span className="tile-icon">
                   <Icon name="camera" size={26} />
                 </span>
-                <span className="unit">{tr("фото или текстом", "photo or text")}</span>
+                <span className="unit">{tr("фото, текст или штрихкод", "photo, text or barcode")}</span>
               </Link>
+              <WaterTile ml={data.water_ml} target={data.water_target_ml} editable={isToday} />
             </section>
           </div>
 
@@ -169,15 +170,86 @@ function Summary({ data }: { data: Day }) {
         </div>
       </div>
       <MacroBars eaten={data.eaten} target={target} />
-      {target && data.activity_kcal >= 1 && (
-        <p className="summary-note">
-          {tr(
-            `Норма включает +${round(data.activity_kcal)} ккал за среднюю активность за 7 дней`,
-            `Target includes +${round(data.activity_kcal)} kcal for your average activity over 7 days`,
-          )}
-        </p>
-      )}
+      {target && <TargetNote data={data} />}
     </section>
+  );
+}
+
+function TargetNote({ data }: { data: Day }) {
+  if (data.target_source === "adaptive") {
+    return (
+      <p className="summary-note">
+        {tr(
+          "Норма рассчитана по твоему фактическому расходу за 4 недели",
+          "Target is based on your real expenditure over the last 4 weeks",
+        )}
+      </p>
+    );
+  }
+  if (data.adaptive_paused) {
+    return (
+      <p className="summary-note">
+        {tr(
+          "Мало свежих записей и взвешиваний, поэтому норма пока по формуле",
+          "Not enough recent logs and weigh-ins, so the formula is used for now",
+        )}
+      </p>
+    );
+  }
+  if (data.activity_kcal < 1) return null;
+  return (
+    <p className="summary-note">
+      {tr(
+        `Норма включает +${round(data.activity_kcal)} ккал за среднюю активность за 7 дней`,
+        `Target includes +${round(data.activity_kcal)} kcal for your average activity over 7 days`,
+      )}
+    </p>
+  );
+}
+
+const WATER_STEP = 250;
+
+function WaterTile({ ml, target, editable }: { ml: number; target: number | null; editable: boolean }) {
+  const client = useQueryClient();
+  const add = useMutation({
+    mutationFn: (delta: number) => api.addWater(delta),
+    onSuccess: ({ water_ml }) => {
+      client.setQueryData<Day>(["day", todayIso()], (day) => day && { ...day, water_ml });
+    },
+  });
+  const share = target ? Math.min(100, (ml / target) * 100) : 0;
+  return (
+    <div className="tile-card tone-sky short wide-tile water">
+      <div className="water-head">
+        <h3>{tr("Вода", "Water")}</h3>
+        <span className="unit">
+          <strong>{(ml / 1000).toFixed(ml % 1000 ? 2 : 1).replace(/0$/, "")}</strong>
+          {target ? ` / ${(target / 1000).toFixed(1)} ${tr("л", "L")}` : ` ${tr("л", "L")}`}
+        </span>
+      </div>
+      <div className="progress">
+        <span style={{ width: `${share}%` }} />
+      </div>
+      {editable && (
+        <div className="row">
+          <button
+            className="btn small"
+            disabled={add.isPending || ml === 0}
+            onClick={() => add.mutate(-WATER_STEP)}
+            aria-label={tr("Убрать стакан", "Remove a glass")}
+          >
+            −
+          </button>
+          <button
+            className="btn btn-primary small grow"
+            disabled={add.isPending}
+            onClick={() => add.mutate(WATER_STEP)}
+          >
+            + {tr("стакан", "glass")} {WATER_STEP} {tr("мл", "ml")}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

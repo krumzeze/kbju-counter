@@ -13,6 +13,8 @@
   --sage-deep: #8e9e86;
   --sand: #e2dbd2;
   --blush: #f2d0bd;
+  --sky: #d5e5ec;
+  --water: #4f8aa6;
   --accent: #6f8a66;
   --accent-text: #ffffff;
   --accent-soft: var(--sage-soft);
@@ -292,6 +294,10 @@ button:disabled {
 .card.blush,
 .tone-blush {
   background: var(--blush);
+}
+
+.tone-sky {
+  background: var(--sky);
 }
 
 .card.peach,
@@ -2033,6 +2039,38 @@ button:disabled {
   color: var(--danger);
 }
 
+.badge.caution {
+  background: color-mix(in srgb, var(--fat) 18%, transparent);
+  color: color-mix(in srgb, var(--fat) 70%, var(--text));
+}
+
+.feature-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.health-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.health-row .user-cell {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.health-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
 .user-cards {
   display: none;
 }
@@ -3033,4 +3071,54 @@ span.set-check {
   font-size: 18px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.adaptive-progress {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.adaptive-row {
+  display: grid;
+  gap: 6px;
+}
+
+.wide-tile {
+  grid-column: 1 / -1;
+}
+
+.water {
+  gap: 10px;
+}
+
+.water-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.water-head strong {
+  display: inline;
+}
+
+.water .progress {
+  background: rgb(255 255 255 / 60%);
+}
+
+.water .progress span {
+  background: var(--water);
+  transition: width 0.25s ease;
+}
+
+.water .row > .grow {
+  flex: 3;
+}
+
+.barcode-scan {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
 }

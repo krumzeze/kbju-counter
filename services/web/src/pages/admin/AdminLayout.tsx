@@ -6,6 +6,7 @@ const SECTIONS = [
   { to: "/admin/broadcasts", label: "Рассылки" },
   { to: "/admin/promos", label: "Промокоды" },
   { to: "/admin/referrals", label: "Рефералы" },
+  { to: "/admin/system", label: "Система" },
   { to: "/admin/log", label: "Журнал" },
   { to: "/admin/settings", label: "Уведомления" },
 ];

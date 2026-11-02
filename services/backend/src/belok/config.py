@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     llm_api_key: SecretStr
     llm_model: str = "claude-haiku-5-5"
 
+    # Any OpenAI-compatible speech-to-text API; voice messages are off without a key.
+    stt_api_key: SecretStr | None = None
+    stt_base_url: str = "https://api.openai.com/v1"
+    stt_model: str = "whisper-1"
+
     api_secret: SecretStr | None = None
     bot_username: str | None = None
     webapp_url: str | None = None
@@ -36,7 +41,7 @@ class Settings(BaseSettings):
     default_timezone: str = "Europe/Moscow"
     log_level: str = "INFO"
 
-    @field_validator("admin_id", "tribute_api_key", mode="before")
+    @field_validator("admin_id", "tribute_api_key", "stt_api_key", mode="before")
     @classmethod
     def empty_as_none(cls, value: object) -> object:
         return None if value == "" else value

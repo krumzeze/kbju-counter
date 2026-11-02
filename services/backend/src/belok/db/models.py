@@ -58,6 +58,14 @@ class User(Base):
     birth_year: Mapped[int | None] = mapped_column(Integer)
     height_cm: Mapped[int | None] = mapped_column(Integer)
     goal: Mapped[Goal | None] = mapped_column(String(16))
+    activity_adjust: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=text("true")
+    )
+    adaptive_target: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
+    remind_meals: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    remind_weight: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
 
     @property
     def profile_complete(self) -> bool:
@@ -123,9 +131,46 @@ class DailyActivity(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     day: Mapped[date] = mapped_column(Date)
-    steps: Mapped[int] = mapped_column(Integer, default=0)
+    steps: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    water_ml: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
 
     __table_args__ = (UniqueConstraint("user_id", "day"),)
+
+
+class Product(Base):
+    """Packaged food by barcode, per 100 g. Rows without user_id cache Open Food Facts,
+    rows with user_id are labels the user typed in themselves."""
+
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(14))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(255))
+    kcal: Mapped[float] = mapped_column(Float)
+    protein: Mapped[float] = mapped_column(Float)
+    fat: Mapped[float] = mapped_column(Float)
+    carbs: Mapped[float] = mapped_column(Float)
+    serving_g: Mapped[float | None] = mapped_column(Float)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index(
+            "uq_products_code_shared",
+            "code",
+            unique=True,
+            postgresql_where=text("user_id IS NULL"),
+        ),
+        Index(
+            "uq_products_code_user_id",
+            "code",
+            "user_id",
+            unique=True,
+            postgresql_where=text("user_id IS NOT NULL"),
+        ),
+    )
 
 
 class Exercise(Base):
@@ -319,3 +364,24 @@ class AdminAction(Base):
     action: Mapped[str] = mapped_column(String(32))
     target_user_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
     details: Mapped[dict | None] = mapped_column(JSON)
+
+
+class FeatureFlag(Base):
+    """Admin kill switch; a feature without a row is enabled."""
+
+    __tablename__ = "feature_flags"
+
+    key: Mapped[str] = mapped_column(String(32), primary_key=True)
+    enabled: Mapped[bool]
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Heartbeat(Base):
+    """Last time a background worker finished a loop iteration."""
+
+    __tablename__ = "heartbeats"
+
+    name: Mapped[str] = mapped_column(String(32), primary_key=True)
+    beat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

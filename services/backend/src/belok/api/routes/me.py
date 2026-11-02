@@ -3,21 +3,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.api.deps import CurrentUser, SessionDep, SettingsDep
 from belok.api.schemas import (
+    AdaptiveOut,
     LanguageIn,
     MeOut,
     ProfileIn,
     PromoRedeemIn,
     PromoRedeemOut,
     ReferralOut,
+    SettingsIn,
     macros_out,
 )
 from belok.db.models import User
-from belok.domain.nutrition import daily_target
+from belok.domain.nutrition import daily_target, maintenance_kcal
+from belok.services import features
 from belok.services.access import access_status, access_until, has_access
 from belok.services.promos import PromoResult, redeem
 from belok.services.referrals import referral_stats
 from belok.services.repo import latest_weight
+from belok.services.targets import adaptive_estimate
 from belok.services.users import REFERRAL_PREFIX, update_profile
+from belok.services.workouts import activity_kcal
 from belok.timeutil import local_today, utcnow
 
 router = APIRouter(tags=["me"])
@@ -42,6 +47,18 @@ async def put_profile(body: ProfileIn, user: CurrentUser, session: SessionDep) -
 @router.put("/me/language")
 async def put_language(body: LanguageIn, user: CurrentUser, session: SessionDep) -> MeOut:
     user.language = body.language
+    await session.commit()
+    return await _me(session, user)
+
+
+@router.patch("/me/settings")
+async def patch_settings(body: SettingsIn, user: CurrentUser, session: SessionDep) -> MeOut:
+    if body.adaptive_target and not user.adaptive_target:
+        info = await _adaptive(session, user)
+        if info is None or not info.ready:
+            raise HTTPException(status.HTTP_409_CONFLICT, "adaptive_not_ready")
+    for field, value in body.model_dump(exclude_none=True).items():
+        setattr(user, field, value)
     await session.commit()
     return await _me(session, user)
 
@@ -100,5 +117,33 @@ async def _me(session: AsyncSession, user: User) -> MeOut:
         status=access_status(user, utcnow()).value,
         access_until=access_until(user),
         is_admin=user.is_admin,
+        activity_adjust=user.activity_adjust,
+        adaptive_target=user.adaptive_target,
+        remind_meals=user.remind_meals,
+        remind_weight=user.remind_weight,
+        adaptive=await _adaptive(session, user, weight),
         base_target=macros_out(target),
+        features={key.value: on for key, on in (await features.flags(session)).items()},
+    )
+
+
+async def _adaptive(
+    session: AsyncSession, user: User, weight: float | None = None
+) -> AdaptiveOut | None:
+    weight = weight or await latest_weight(session, user.id)
+    if not user.profile_complete or weight is None:
+        return None
+    today = local_today(user.timezone)
+    activity = await activity_kcal(session, user.id, today, weight)
+    formula = maintenance_kcal(
+        user.sex, weight, user.height_cm, today.year - user.birth_year, activity
+    )
+    estimate = await adaptive_estimate(session, user.id, today, formula)
+    return AdaptiveOut(
+        ready=estimate.ready,
+        logged_days=estimate.logged_days,
+        weigh_ins=estimate.weigh_ins,
+        span_days=estimate.span_days,
+        tdee=estimate.tdee,
+        formula_tdee=formula,
     )

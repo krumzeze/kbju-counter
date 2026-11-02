@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
-import type { Meal } from "../api/types";
+import type { Me, Meal } from "../api/types";
 import { Art } from "../components/Art";
 import { Icon } from "../components/Icon";
 import { MealCard } from "../components/MealCard";
@@ -14,15 +14,18 @@ import { haptic } from "../lib/telegram";
 
 type Mode = "photo" | "text" | "manual" | "history";
 
-const modes = (): { value: Mode; label: string }[] => [
-  { value: "photo", label: tr("Фото", "Photo") },
-  { value: "text", label: tr("Текст", "Text") },
-  { value: "manual", label: tr("Вручную", "Manual") },
-  { value: "history", label: tr("История", "History") },
-];
+const modes = (features: Me["features"]): { value: Mode; label: string }[] =>
+  [
+    { value: "photo" as const, label: tr("Фото", "Photo"), on: features.photo },
+    { value: "text" as const, label: tr("Текст", "Text"), on: features.text },
+    { value: "manual" as const, label: tr("Вручную", "Manual"), on: true },
+    { value: "history" as const, label: tr("История", "History"), on: true },
+  ].filter((m) => m.on);
 
-export function AddMeal() {
-  const [mode, setMode] = useState<Mode>("photo");
+export function AddMeal({ me }: { me: Me }) {
+  const available = modes(me.features);
+  const [chosen, setMode] = useState<Mode>(available[0].value);
+  const mode = available.some((m) => m.value === chosen) ? chosen : available[0].value;
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -94,7 +97,7 @@ export function AddMeal() {
     <div className="page">
       <h1>{tr("Что съел?", "What did you eat?")}</h1>
       <div className="segmented" role="tablist">
-        {modes().map((m) => (
+        {available.map((m) => (
           <button key={m.value} role="tab" aria-selected={mode === m.value} onClick={() => setMode(m.value)}>
             {m.label}
           </button>
@@ -102,7 +105,7 @@ export function AddMeal() {
       </div>
 
       {mode === "manual" ? (
-        <ManualMeal onDone={setMeal} />
+        <ManualMeal onDone={setMeal} barcode={me.features.barcode} />
       ) : mode === "history" ? (
         <MealHistory onDone={setMeal} />
       ) : mode === "photo" ? (
@@ -152,6 +155,14 @@ export function AddMeal() {
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
+      )}
+      {mode === "text" && me.features.voice && (
+        <p className="muted small">
+          {tr(
+            "Можно и голосом: отправь боту голосовое сообщение, и он сам всё запишет.",
+            "You can also use your voice: send the bot a voice message and it'll log it for you.",
+          )}
+        </p>
       )}
 
       {(mode === "photo" || mode === "text") && (
