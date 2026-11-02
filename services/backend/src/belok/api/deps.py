@@ -10,7 +10,10 @@ from belok.api.auth import InvalidAuth, decode_token
 from belok.config import Settings
 from belok.db.models import User
 from belok.llm.analyzer import FoodAnalyzer
+from belok.llm.speech import SpeechToText
+from belok.services import features
 from belok.services.access import has_access
+from belok.services.features import Feature
 from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 from belok.services.users import SEEN_RESOLUTION
@@ -36,6 +39,10 @@ def get_food_db(request: Request) -> FoodDatabase:
     return request.app.state.food_db
 
 
+def get_stt(request: Request) -> SpeechToText | None:
+    return request.app.state.stt
+
+
 def get_bot(request: Request) -> Bot:
     return request.app.state.bot
 
@@ -48,6 +55,7 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 AnalyzerDep = Annotated[FoodAnalyzer, Depends(get_analyzer)]
 FoodDbDep = Annotated[FoodDatabase, Depends(get_food_db)]
+SttDep = Annotated[SpeechToText | None, Depends(get_stt)]
 BotDep = Annotated[Bot, Depends(get_bot)]
 TributeDep = Annotated[TributeCatalog, Depends(get_tribute)]
 
@@ -95,3 +103,11 @@ async def admin_user(user: CurrentUser) -> User:
 
 
 AdminUser = Annotated[User, Depends(admin_user)]
+
+
+def require(feature: Feature):
+    async def check(session: SessionDep) -> None:
+        if not await features.enabled(session, feature):
+            raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "feature_disabled")
+
+    return Depends(check)

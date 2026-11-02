@@ -15,7 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from belok.bot.texts import t
 from belok.db.models import BodyWeight, Meal, User
 from belok.i18n import Language
+from belok.services import features, heartbeat
 from belok.services.access import has_access
+from belok.services.features import Feature
 from belok.timeutil import utcnow
 
 log = logging.getLogger(__name__)
@@ -66,7 +68,9 @@ async def run_reminders(
     while True:
         try:
             async with sessionmaker() as session:
-                await send_due(bot, session, claim, webapp_url, utcnow())
+                if await features.enabled(session, Feature.REMINDERS):
+                    await send_due(bot, session, claim, webapp_url, utcnow())
+                await heartbeat.beat(session, "reminders")
         except asyncio.CancelledError:
             raise
         except Exception:

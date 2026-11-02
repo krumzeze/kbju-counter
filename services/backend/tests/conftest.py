@@ -1,6 +1,7 @@
 import asyncio
 import os
 from collections.abc import AsyncIterator
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -12,6 +13,7 @@ from belok.config import Settings
 from belok.db.models import Base
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisResult, FoodAnalysis, FoodItem
+from belok.services import features
 from belok.services.products import ProductInfo
 from tests.telegram_signing import BOT_TOKEN, sign_init_data
 
@@ -54,6 +56,9 @@ class FakeBot:
             raise self.fail_for[chat_id]
         self.sent.append((chat_id, text))
 
+    async def get_me(self) -> SimpleNamespace:
+        return SimpleNamespace(username="belok_test_bot")
+
 
 class FakeAnalyzer:
     model = "fake/model"
@@ -65,6 +70,9 @@ class FakeAnalyzer:
         self, image: bytes, caption: str | None, language: Language
     ) -> AnalysisResult:
         return self._result()
+
+    async def ping(self) -> None:
+        pass
 
     async def from_text(self, text: str, language: Language) -> AnalysisResult:
         return self._result()
@@ -84,6 +92,9 @@ class FakeFoodDb:
     def __init__(self) -> None:
         self.products: dict[str, ProductInfo] = {}
         self.lookups: list[str] = []
+
+    async def ping(self) -> None:
+        pass
 
     async def lookup(self, code: str, language: Language) -> ProductInfo | None:
         self.lookups.append(code)
@@ -126,11 +137,13 @@ async def client(
         tables = ", ".join(t.name for t in Base.metadata.sorted_tables)
         await conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
 
+    features.reset_cache()
     app = create_app(settings)
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     app.state.analyzer = analyzer
     app.state.food_db = food_db
+    app.state.stt = None
     app.state.bot = bot
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:

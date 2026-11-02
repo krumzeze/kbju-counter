@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.api.deps import ActiveUser, AnalyzerDep, FoodDbDep, SessionDep, SettingsDep
+from belok.api.deps import ActiveUser, AnalyzerDep, FoodDbDep, SessionDep, SettingsDep, require
 from belok.api.routes.workouts import set_out
 from belok.api.schemas import (
     BarcodeOut,
@@ -25,6 +25,7 @@ from belok.db.models import Meal, MealItem, User
 from belok.domain.nutrition import water_target_ml
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, AnalysisResult
+from belok.services.features import Feature
 from belok.services.meals import (
     DailyLimitReached,
     analyze_meal,
@@ -79,7 +80,9 @@ async def get_day(
     )
 
 
-@router.post("/meals/photo", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/meals/photo", status_code=status.HTTP_201_CREATED, dependencies=[require(Feature.PHOTO)]
+)
 async def create_meal_from_photo(
     user: ActiveUser,
     session: SessionDep,
@@ -94,7 +97,9 @@ async def create_meal_from_photo(
     )
 
 
-@router.post("/meals/text", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/meals/text", status_code=status.HTTP_201_CREATED, dependencies=[require(Feature.TEXT)]
+)
 async def create_meal_from_text(
     body: TextMealIn,
     user: ActiveUser,
@@ -120,7 +125,7 @@ async def create_manual_meal(body: ManualMealIn, user: ActiveUser, session: Sess
     return MealOut.of(meal)
 
 
-@router.post("/barcode/photo")
+@router.post("/barcode/photo", dependencies=[require(Feature.BARCODE)])
 async def scan_barcode(
     user: ActiveUser,
     session: SessionDep,
@@ -134,7 +139,7 @@ async def scan_barcode(
     return await _barcode(session, food_db, user, code)
 
 
-@router.get("/barcode/{code}")
+@router.get("/barcode/{code}", dependencies=[require(Feature.BARCODE)])
 async def get_barcode(
     code: str, user: ActiveUser, session: SessionDep, food_db: FoodDbDep
 ) -> BarcodeOut:

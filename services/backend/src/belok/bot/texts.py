@@ -40,8 +40,8 @@ STRINGS: dict[str, dict[Language, str]] = {
         EN: "Your free trial has ended. You can extend access in the app.",
     },
     "voice_unavailable": {
-        RU: "Голосовые пока не поддерживаются. Опиши еду текстом в приложении.",
-        EN: "Voice messages aren't supported yet. Describe your meal as text in the app.",
+        RU: "Голосовые сейчас недоступны. Опиши еду текстом в приложении.",
+        EN: "Voice messages are unavailable right now. Describe your meal as text in the app.",
     },
     "voice_too_long": {
         RU: "Слишком длинное голосовое. Уложись в {seconds} секунд.",

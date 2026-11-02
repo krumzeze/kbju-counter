@@ -11,7 +11,9 @@ from belok.db.models import Meal, User
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, FoodAnalyzer
 from belok.llm.speech import SpeechError, SpeechToText
+from belok.services import features
 from belok.services.access import has_access
+from belok.services.features import Feature
 from belok.services.meals import DailyLimitReached, analyze_meal, ensure_within_limit
 from belok.services.repo import day_summary
 from belok.timeutil import local_today, utcnow
@@ -39,7 +41,7 @@ async def voice_meal(
     if not has_access(user, utcnow()):
         await message.answer(t(lang, "voice_no_access"), reply_markup=markup)
         return
-    if stt is None:
+    if stt is None or not await features.enabled(session, Feature.VOICE):
         await message.answer(t(lang, "voice_unavailable"), reply_markup=markup)
         return
     if message.voice.duration > MAX_VOICE_SECONDS:

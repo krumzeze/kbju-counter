@@ -110,6 +110,7 @@ class MeOut(BaseModel):
     remind_weight: bool
     adaptive: AdaptiveOut | None
     base_target: MacrosOut | None
+    features: dict[str, bool]
 
 
 class LanguageIn(BaseModel):

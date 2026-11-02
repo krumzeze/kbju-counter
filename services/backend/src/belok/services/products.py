@@ -101,6 +101,8 @@ class FoodDatabase:
         "nutriments,serving_quantity"
     )
 
+    PING_CODE = "3017620422003"
+
     async def lookup(self, code: str, language: Language) -> ProductInfo | None:
         try:
             async with (
@@ -117,6 +119,11 @@ class FoodDatabase:
         if data.get("status") != 1:
             return None
         return parse_off_product(data, language)
+
+    async def ping(self) -> None:
+        url = self.URL.format(code=self.PING_CODE)
+        async with self._http() as http, http.get(url, params={"fields": "code"}) as response:
+            response.raise_for_status()
 
     def _http(self) -> aiohttp.ClientSession:
         return aiohttp.ClientSession(

@@ -63,7 +63,7 @@ async def test_voice_without_speech_service_or_too_long(client, settings, analyz
     await onboarded(client)
     message = FakeMessage()
     await run_voice(client, settings, analyzer, None, message)
-    assert "не поддерживаются" in message.answers[0]
+    assert "недоступны" in message.answers[0]
     message = FakeMessage(duration=300)
     await run_voice(client, settings, analyzer, FakeStt("x"), message)
     assert "Слишком длинное" in message.answers[0]

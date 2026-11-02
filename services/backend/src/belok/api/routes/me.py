@@ -15,6 +15,7 @@ from belok.api.schemas import (
 )
 from belok.db.models import User
 from belok.domain.nutrition import daily_target, maintenance_kcal
+from belok.services import features
 from belok.services.access import access_status, access_until, has_access
 from belok.services.promos import PromoResult, redeem
 from belok.services.referrals import referral_stats
@@ -122,6 +123,7 @@ async def _me(session: AsyncSession, user: User) -> MeOut:
         remind_weight=user.remind_weight,
         adaptive=await _adaptive(session, user, weight),
         base_target=macros_out(target),
+        features={key.value: on for key, on in (await features.flags(session)).items()},
     )
 
 

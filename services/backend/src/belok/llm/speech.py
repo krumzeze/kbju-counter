@@ -25,6 +25,16 @@ class SpeechToText:
         self._url = f"{self._base}/audio/transcriptions"
         self.model = model
 
+    async def ping(self) -> None:
+        async with (
+            aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as http,
+            http.get(
+                f"{self._base}/models", headers={"Authorization": f"Bearer {self._api_key}"}
+            ) as response,
+        ):
+            if response.status != 200:
+                raise SpeechError(f"HTTP {response.status}")
+
     async def transcribe(self, audio: bytes, language: Language) -> str:
         form = aiohttp.FormData()
         form.add_field("file", audio, filename="voice.ogg", content_type="audio/ogg")

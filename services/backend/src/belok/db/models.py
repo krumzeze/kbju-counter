@@ -364,3 +364,24 @@ class AdminAction(Base):
     action: Mapped[str] = mapped_column(String(32))
     target_user_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
     details: Mapped[dict | None] = mapped_column(JSON)
+
+
+class FeatureFlag(Base):
+    """Admin kill switch; a feature without a row is enabled."""
+
+    __tablename__ = "feature_flags"
+
+    key: Mapped[str] = mapped_column(String(32), primary_key=True)
+    enabled: Mapped[bool]
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Heartbeat(Base):
+    """Last time a background worker finished a loop iteration."""
+
+    __tablename__ = "heartbeats"
+
+    name: Mapped[str] = mapped_column(String(32), primary_key=True)
+    beat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

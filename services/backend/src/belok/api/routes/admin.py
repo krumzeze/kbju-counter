@@ -7,7 +7,16 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
 
 from belok.api import admin_schemas as s
-from belok.api.deps import AdminUser, BotDep, SessionDep, SettingsDep
+from belok.api.deps import (
+    AdminUser,
+    AnalyzerDep,
+    BotDep,
+    FoodDbDep,
+    SessionDep,
+    SettingsDep,
+    SttDep,
+    TributeDep,
+)
 from belok.api.schemas import MealOut
 from belok.config import Settings
 from belok.db.models import (
@@ -18,10 +27,12 @@ from belok.db.models import (
     ReferralReward,
     User,
 )
-from belok.services import admin_users, stats
+from belok.services import admin_users, features, stats
 from belok.services.access import access_status, access_until, grant_days
 from belok.services.audit import log_action
 from belok.services.broadcasts import segment_size
+from belok.services.features import Feature
+from belok.services.health import Probes, run_checks
 from belok.services.notify import admin_prefs
 from belok.services.promos import PROMO_PREFIX, generate_code
 from belok.services.referrals import referral_stats
@@ -334,6 +345,39 @@ async def put_prefs(body: s.PrefsIn, admin: AdminUser, session: SessionDep) -> s
     admin.admin_prefs = admin_prefs(admin) | body.model_dump(exclude_none=True)
     await session.commit()
     return s.PrefsOut(**admin_prefs(admin))
+
+
+@router.get("/features")
+async def get_features(admin: AdminUser, session: SessionDep) -> list[s.FeatureOut]:
+    flags = await features.flags(session)
+    return [s.FeatureOut(key=key, enabled=value) for key, value in flags.items()]
+
+
+@router.put("/features/{key}")
+async def put_feature(
+    key: Feature, body: s.FeatureIn, admin: AdminUser, session: SessionDep
+) -> list[s.FeatureOut]:
+    old = await features.enabled(session, key)
+    if old != body.enabled:
+        log_action(session, admin, "set_feature", feature=key.value, old=old, new=body.enabled)
+        await features.set_enabled(session, key, body.enabled)
+    return await get_features(admin, session)
+
+
+@router.get("/health")
+async def get_health(
+    admin: AdminUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    bot: BotDep,
+    analyzer: AnalyzerDep,
+    stt: SttDep,
+    food_db: FoodDbDep,
+    tribute: TributeDep,
+) -> s.HealthOut:
+    probes = Probes(settings.redis_url, bot, analyzer, stt, food_db, tribute)
+    checks = await run_checks(session, probes)
+    return s.HealthOut(checked_at=utcnow(), checks=[s.CheckOut.model_validate(c) for c in checks])
 
 
 async def _get_user(session: SessionDep, user_id: int) -> User:

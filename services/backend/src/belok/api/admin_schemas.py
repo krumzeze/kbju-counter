@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from belok.api.schemas import MealOut
 from belok.services.admin_users import Segment
+from belok.services.features import Feature
+from belok.services.health import Status
 from belok.services.promos import CODE_PATTERN, normalize_code
 
 
@@ -231,3 +233,26 @@ class PrefsIn(BaseModel):
     payments: bool | None = None
     errors: bool | None = None
     daily: bool | None = None
+
+
+class FeatureOut(BaseModel):
+    key: Feature
+    enabled: bool
+
+
+class FeatureIn(BaseModel):
+    enabled: bool
+
+
+class CheckOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    key: str
+    status: Status
+    detail: str | None
+    latency_ms: int | None
+
+
+class HealthOut(BaseModel):
+    checked_at: datetime
+    checks: list[CheckOut]

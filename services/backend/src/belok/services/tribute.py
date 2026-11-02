@@ -79,6 +79,10 @@ class TributeCatalog:
         return bool(self._api_key and self._base)
 
     @property
+    def plan_count(self) -> int:
+        return len(self._base)
+
+    @property
     def api_key(self) -> str | None:
         return self._api_key
 
@@ -98,6 +102,11 @@ class TributeCatalog:
                 if plan.product_id == product_id:
                     return plan
         return None
+
+    async def ping(self) -> int:
+        """Returns how many configured plans exist in Tribute."""
+        products = await self._fetch()
+        return sum(1 for p in self._merge(products) if p.product_id is not None)
 
     async def _fetch(self) -> list[dict]:
         timeout = aiohttp.ClientTimeout(total=10)

@@ -8,6 +8,8 @@ from belok.api.deps import BotDep, CurrentUser, SessionDep, SettingsDep, Tribute
 from belok.api.schemas import PlanOut
 from belok.bot.texts import payment_text
 from belok.i18n import Language
+from belok.services import features
+from belok.services.features import Feature
 from belok.services.notify import notify_admins
 from belok.services.payments import handle_tribute_event
 from belok.services.tribute import signature_valid
@@ -18,8 +20,8 @@ router = APIRouter(tags=["payments"])
 
 
 @router.get("/payments/plans")
-async def get_plans(user: CurrentUser, tribute: TributeDep) -> list[PlanOut]:
-    if not tribute.enabled:
+async def get_plans(user: CurrentUser, session: SessionDep, tribute: TributeDep) -> list[PlanOut]:
+    if not tribute.enabled or not await features.enabled(session, Feature.PAYMENTS):
         return []
     return [
         PlanOut(
