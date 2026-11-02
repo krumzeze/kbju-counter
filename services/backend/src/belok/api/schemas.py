@@ -5,8 +5,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from belok.api.workout_schemas import SetOut
 from belok.db.models import Meal
+from belok.domain import adaptive
 from belok.domain.nutrition import Goal, Macros, Sex
 from belok.i18n import Language
+from belok.services.targets import TargetSource
 
 
 class MacrosOut(BaseModel):
@@ -58,11 +60,30 @@ class DayOut(BaseModel):
     day: date
     eaten: MacrosOut
     target: MacrosOut | None
+    target_source: TargetSource | None
+    # Adaptive target is switched on but there is not enough recent data, so the formula is used.
+    adaptive_paused: bool
     steps: int
+    water_ml: int
+    water_target_ml: int | None
     activity_kcal: float
     weight_kg: float | None
     meals: list[MealOut]
     sets: list[SetOut]
+
+
+class AdaptiveOut(BaseModel):
+    ready: bool
+    logged_days: int
+    weigh_ins: int
+    span_days: int
+    need_logged_days: int = adaptive.MIN_LOGGED_DAYS
+    need_weigh_ins: int = adaptive.MIN_WEIGH_INS
+    need_span_days: int = adaptive.MIN_WEIGHT_SPAN_DAYS
+    window_days: int = adaptive.WINDOW_DAYS
+    # Measured maintenance and the formula estimate it replaces, both without the goal factor.
+    tdee: float | None
+    formula_tdee: float
 
 
 class MeOut(BaseModel):
@@ -83,11 +104,23 @@ class MeOut(BaseModel):
     status: str
     access_until: datetime
     is_admin: bool
+    activity_adjust: bool
+    adaptive_target: bool
+    remind_meals: bool
+    remind_weight: bool
+    adaptive: AdaptiveOut | None
     base_target: MacrosOut | None
 
 
 class LanguageIn(BaseModel):
     language: Language
+
+
+class SettingsIn(BaseModel):
+    activity_adjust: bool | None = None
+    adaptive_target: bool | None = None
+    remind_meals: bool | None = None
+    remind_weight: bool | None = None
 
 
 class PlanOut(BaseModel):
@@ -174,6 +207,8 @@ class ManualMealIn(BaseModel):
     protein: float = Field(ge=0, le=100)
     fat: float = Field(ge=0, le=100)
     carbs: float = Field(ge=0, le=100)
+    # Saves the label under this barcode so the next scan finds it.
+    barcode: str | None = Field(default=None, pattern=r"^\d{8,14}$")
 
     @field_validator("title")
     @classmethod
@@ -181,6 +216,22 @@ class ManualMealIn(BaseModel):
         if not value.strip():
             raise ValueError("empty title")
         return value.strip()
+
+
+class ProductOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    kcal: float
+    protein: float
+    fat: float
+    carbs: float
+    serving_g: float | None
+
+
+class BarcodeOut(BaseModel):
+    code: str
+    product: ProductOut | None
 
 
 class MealHistoryOut(BaseModel):
@@ -205,6 +256,14 @@ class WeightOut(BaseModel):
 
 class StepsIn(BaseModel):
     steps: int = Field(ge=0, le=100_000)
+
+
+class WaterIn(BaseModel):
+    delta_ml: int = Field(ge=-2000, le=2000)
+
+
+class WaterOut(BaseModel):
+    water_ml: int
 
 
 def macros_out(m: Macros | None) -> MacrosOut | None:

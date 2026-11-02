@@ -11,6 +11,7 @@ from belok.config import Settings
 from belok.db.models import User
 from belok.llm.analyzer import FoodAnalyzer
 from belok.services.access import has_access
+from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 from belok.services.users import SEEN_RESOLUTION
 from belok.timeutil import utcnow
@@ -31,6 +32,10 @@ def get_analyzer(request: Request) -> FoodAnalyzer:
     return request.app.state.analyzer
 
 
+def get_food_db(request: Request) -> FoodDatabase:
+    return request.app.state.food_db
+
+
 def get_bot(request: Request) -> Bot:
     return request.app.state.bot
 
@@ -42,6 +47,7 @@ def get_tribute(request: Request) -> TributeCatalog:
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 AnalyzerDep = Annotated[FoodAnalyzer, Depends(get_analyzer)]
+FoodDbDep = Annotated[FoodDatabase, Depends(get_food_db)]
 BotDep = Annotated[Bot, Depends(get_bot)]
 TributeDep = Annotated[TributeCatalog, Depends(get_tribute)]
 

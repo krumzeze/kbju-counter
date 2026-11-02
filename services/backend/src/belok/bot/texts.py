@@ -9,9 +9,78 @@ RU, EN = Language.RU, Language.EN
 STRINGS: dict[str, dict[Language, str]] = {
     "welcome": {
         RU: "Привет! Я Белок: считаю калории по фото, веду тренировки и вес.\n\n"
-        "Всё работает в приложении, открой его кнопкой ниже.",
+        "Всё работает в приложении, открой его кнопкой ниже. А ещё можно просто "
+        "отправить мне голосовое о том, что ты съел.",
         EN: "Hi! I'm Belok: I count calories from photos and track your workouts and weight.\n\n"
-        "Everything lives in the app, open it with the button below.",
+        "Everything lives in the app, open it with the button below. You can also just "
+        "send me a voice message about what you ate.",
+    },
+    "remind_nothing_today": {
+        RU: "🍽 Сегодня ещё нет ни одной записи. Что было на завтрак и обед?",
+        EN: "🍽 Nothing logged today yet. What did you have for breakfast and lunch?",
+    },
+    "remind_lunch": {
+        RU: "🍲 Не забудь записать обед, пока помнишь порцию.",
+        EN: "🍲 Don't forget to log your lunch while you still remember the portion.",
+    },
+    "remind_dinner": {
+        RU: "🌙 Как прошёл ужин? Запиши его, чтобы день был полным.",
+        EN: "🌙 How was dinner? Log it so your day is complete.",
+    },
+    "remind_weight": {
+        RU: "⚖️ Пора взвеситься. Лучше утром, после туалета и до еды: так цифры честнее.",
+        EN: "⚖️ Time to weigh in. Morning is best, after the bathroom and before breakfast.",
+    },
+    "voice_need_profile": {
+        RU: "Сначала заполни профиль в приложении, чтобы я знал твою норму.",
+        EN: "Fill in your profile in the app first so I know your target.",
+    },
+    "voice_no_access": {
+        RU: "Пробный период закончился. Продлить доступ можно в приложении.",
+        EN: "Your free trial has ended. You can extend access in the app.",
+    },
+    "voice_unavailable": {
+        RU: "Голосовые пока не поддерживаются. Опиши еду текстом в приложении.",
+        EN: "Voice messages aren't supported yet. Describe your meal as text in the app.",
+    },
+    "voice_too_long": {
+        RU: "Слишком длинное голосовое. Уложись в {seconds} секунд.",
+        EN: "That voice message is too long. Please keep it under {seconds} seconds.",
+    },
+    "daily_limit": {
+        RU: "На сегодня лимит распознаваний исчерпан. Можно добавить еду вручную в приложении.",
+        EN: "You've reached today's recognition limit. You can still add food manually in the app.",
+    },
+    "voice_failed": {
+        RU: "Не получилось распознать, попробуй ещё раз.",
+        EN: "Couldn't process that, please try again.",
+    },
+    "voice_empty": {
+        RU: "Не расслышал. Попробуй сказать чуть громче или ближе к телефону.",
+        EN: "I couldn't hear anything. Try speaking a bit louder or closer to the phone.",
+    },
+    "voice_no_food": {
+        RU: "Я услышал «{text}», но не нашёл там еды. Расскажи, что и сколько ты съел.",
+        EN: 'I heard "{text}" but found no food in it. Tell me what and how much you ate.',
+    },
+    "voice_totals": {
+        RU: "Итого: <b>{kcal:.0f} ккал</b> · Б {p:.0f} · Ж {f:.0f} · У {c:.0f}",
+        EN: "Total: <b>{kcal:.0f} kcal</b> · P {p:.0f} · F {f:.0f} · C {c:.0f}",
+    },
+    "voice_day": {
+        RU: "За сегодня: {eaten:.0f} из {target:.0f} ккал",
+        EN: "Today: {eaten:.0f} of {target:.0f} kcal",
+    },
+    "voice_edit_hint": {
+        RU: "Поправить порцию можно в приложении.",
+        EN: "You can adjust the portion in the app.",
+    },
+    "log_meal": {RU: "Записать еду", EN: "Log food"},
+    "log_weight": {RU: "Записать вес", EN: "Log weight"},
+    "remind_stop": {RU: "Не напоминать", EN: "Stop reminding"},
+    "remind_stopped": {
+        RU: "Больше не напоминаю. Включить снова можно в профиле.",
+        EN: "Reminders are off. You can turn them back on in your profile.",
     },
     "app_unavailable": {
         RU: "Приложение скоро будет доступно.",

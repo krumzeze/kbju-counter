@@ -11,8 +11,11 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from belok.bot.menu import setup_defaults
 from belok.bot.setup import build_dispatcher
 from belok.config import Settings
+from belok.llm.analyzer import FoodAnalyzer
+from belok.llm.speech import SpeechToText
 from belok.services.broadcasts import run_worker
 from belok.services.monitor import run_monitor
+from belok.services.reminders import run_reminders
 
 
 async def main() -> None:
@@ -34,11 +37,14 @@ async def main() -> None:
         asyncio.create_task(
             run_monitor(bot, sessionmaker, storage.redis, settings.default_timezone)
         ),
+        asyncio.create_task(run_reminders(bot, sessionmaker, storage.redis, settings.webapp_url)),
     ]
+    analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
+    stt = SpeechToText.from_settings(settings)
 
     try:
         await setup_defaults(bot, settings)
-        await dp.start_polling(bot, settings=settings)
+        await dp.start_polling(bot, settings=settings, analyzer=analyzer, stt=stt)
     finally:
         for task in background:
             task.cancel()

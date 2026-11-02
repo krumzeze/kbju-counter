@@ -3,8 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from belok.api.deps import ActiveUser, SessionDep
-from belok.api.schemas import StepsIn, WeightIn, WeightOut
-from belok.services.repo import recent_weights, upsert_steps, upsert_weight
+from belok.api.schemas import StepsIn, WaterIn, WaterOut, WeightIn, WeightOut
+from belok.services.repo import add_water, recent_weights, upsert_steps, upsert_weight
 from belok.timeutil import local_today
 
 router = APIRouter(tags=["tracking"])
@@ -28,3 +28,10 @@ async def put_weight(body: WeightIn, user: ActiveUser, session: SessionDep) -> N
 async def put_steps(body: StepsIn, user: ActiveUser, session: SessionDep) -> None:
     await upsert_steps(session, user.id, local_today(user.timezone), body.steps)
     await session.commit()
+
+
+@router.post("/water/today")
+async def post_water(body: WaterIn, user: ActiveUser, session: SessionDep) -> WaterOut:
+    total = await add_water(session, user.id, local_today(user.timezone), body.delta_ml)
+    await session.commit()
+    return WaterOut(water_ml=total)

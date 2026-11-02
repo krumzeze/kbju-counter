@@ -5,9 +5,10 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.api.deps import ActiveUser, AnalyzerDep, SessionDep, SettingsDep
+from belok.api.deps import ActiveUser, AnalyzerDep, FoodDbDep, SessionDep, SettingsDep
 from belok.api.routes.workouts import set_out
 from belok.api.schemas import (
+    BarcodeOut,
     DayOut,
     MacrosOut,
     ManualMealIn,
@@ -15,11 +16,13 @@ from belok.api.schemas import (
     MealItemPatchIn,
     MealOut,
     MealPatchIn,
+    ProductOut,
     TextMealIn,
     macros_out,
 )
 from belok.config import Settings
 from belok.db.models import Meal, MealItem, User
+from belok.domain.nutrition import water_target_ml
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisError, AnalysisResult
 from belok.services.meals import (
@@ -32,7 +35,15 @@ from belok.services.meals import (
     meal_history,
     resize_item,
 )
+from belok.services.products import (
+    CODE_RE,
+    ProductInfo,
+    decode_barcode,
+    find_product,
+    remember_product,
+)
 from belok.services.repo import day_summary, get_meal, meals_on
+from belok.services.targets import TargetSource
 from belok.services.workouts import sets_on
 from belok.timeutil import local_today
 
@@ -47,14 +58,21 @@ async def get_day(
 ) -> DayOut:
     day = day or local_today(user.timezone)
     summary = await day_summary(session, user, day)
+    target = summary.target
     meals = await meals_on(session, user.id, day)
     sets = await sets_on(session, user.id, day)
     return DayOut(
         day=day,
         eaten=macros_out(summary.eaten),
-        target=macros_out(summary.target),
+        target=macros_out(target.macros) if target else None,
+        target_source=target.source if target else None,
+        adaptive_paused=bool(
+            target and user.adaptive_target and target.source == TargetSource.FORMULA
+        ),
         steps=summary.steps,
-        activity_kcal=summary.activity_kcal,
+        water_ml=summary.water_ml,
+        water_target_ml=water_target_ml(summary.weight_kg) if summary.weight_kg else None,
+        activity_kcal=target.activity_kcal if target else 0.0,
         weight_kg=summary.weight_kg,
         meals=[MealOut.of(m) for m in meals],
         sets=[set_out(s, e, _language(user)) for s, e in sets],
@@ -70,11 +88,7 @@ async def create_meal_from_photo(
     photo: Annotated[UploadFile, File()],
     note: Annotated[str | None, Form(max_length=200)] = None,
 ) -> MealOut:
-    if photo.content_type not in {"image/jpeg", "image/png", "image/webp"}:
-        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "unsupported_image")
-    image = await photo.read(MAX_PHOTO_BYTES + 1)
-    if len(image) > MAX_PHOTO_BYTES:
-        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "image_too_large")
+    image = await _read_photo(photo)
     return await _analyze(
         session, settings, user, "photo", lambda: analyzer.from_photo(image, note, _language(user))
     )
@@ -97,9 +111,42 @@ async def create_meal_from_text(
 async def create_manual_meal(body: ManualMealIn, user: ActiveUser, session: SessionDep) -> MealOut:
     per_100g = (body.kcal, body.protein, body.fat, body.carbs)
     meal = manual_meal(user, local_today(user.timezone), body.title, body.grams, per_100g)
+    if body.barcode:
+        meal.source = "barcode"
+        label = ProductInfo(body.title, *per_100g, serving_g=body.grams)
+        await remember_product(session, user.id, body.barcode, label)
     session.add(meal)
     await session.commit()
     return MealOut.of(meal)
+
+
+@router.post("/barcode/photo")
+async def scan_barcode(
+    user: ActiveUser,
+    session: SessionDep,
+    food_db: FoodDbDep,
+    photo: Annotated[UploadFile, File()],
+) -> BarcodeOut:
+    image = await _read_photo(photo)
+    code = await decode_barcode(image)
+    if code is None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_barcode")
+    return await _barcode(session, food_db, user, code)
+
+
+@router.get("/barcode/{code}")
+async def get_barcode(
+    code: str, user: ActiveUser, session: SessionDep, food_db: FoodDbDep
+) -> BarcodeOut:
+    if not CODE_RE.match(code):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "invalid_barcode")
+    return await _barcode(session, food_db, user, code)
+
+
+async def _barcode(session: AsyncSession, food_db: FoodDbDep, user: User, code: str) -> BarcodeOut:
+    info = await find_product(session, food_db, user.id, code, _language(user))
+    await session.commit()
+    return BarcodeOut(code=code, product=ProductOut.model_validate(info) if info else None)
 
 
 @router.get("/meals/history")
@@ -208,6 +255,15 @@ async def _analyze(
     if meal is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_food")
     return MealOut.of(meal)
+
+
+async def _read_photo(photo: UploadFile) -> bytes:
+    if photo.content_type not in {"image/jpeg", "image/png", "image/webp"}:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "unsupported_image")
+    image = await photo.read(MAX_PHOTO_BYTES + 1)
+    if len(image) > MAX_PHOTO_BYTES:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "image_too_large")
+    return image
 
 
 def _language(user: User) -> Language:

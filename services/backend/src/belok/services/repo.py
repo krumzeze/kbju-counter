@@ -6,8 +6,8 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.db.models import BodyWeight, DailyActivity, LlmUsage, Meal, User, WorkoutSet
-from belok.domain.nutrition import Macros, daily_target
-from belok.services.workouts import activity_kcal
+from belok.domain.nutrition import Macros
+from belok.services.targets import Target, target_on
 
 
 async def upsert_weight(session: AsyncSession, user_id: int, day: date, weight_kg: float) -> None:
@@ -20,11 +20,26 @@ async def upsert_weight(session: AsyncSession, user_id: int, day: date, weight_k
 
 
 async def upsert_steps(session: AsyncSession, user_id: int, day: date, steps: int) -> None:
-    stmt = insert(DailyActivity).values(user_id=user_id, day=day, steps=steps)
+    stmt = insert(DailyActivity).values(user_id=user_id, day=day, steps=steps, water_ml=0)
     await session.execute(
         stmt.on_conflict_do_update(
             index_elements=["user_id", "day"], set_={"steps": stmt.excluded.steps}
         )
+    )
+
+
+MAX_WATER_ML = 10_000
+
+
+async def add_water(session: AsyncSession, user_id: int, day: date, delta_ml: int) -> int:
+    stmt = insert(DailyActivity).values(
+        user_id=user_id, day=day, steps=0, water_ml=max(0, min(MAX_WATER_ML, delta_ml))
+    )
+    total = func.greatest(0, func.least(MAX_WATER_ML, DailyActivity.water_ml + delta_ml))
+    return await session.scalar(
+        stmt.on_conflict_do_update(
+            index_elements=["user_id", "day"], set_={"water_ml": total}
+        ).returning(DailyActivity.water_ml)
     )
 
 
@@ -69,12 +84,12 @@ async def analyses_on(session: AsyncSession, user_id: int, day: date) -> int:
 @dataclass(frozen=True, slots=True)
 class DaySummary:
     eaten: Macros
-    target: Macros | None
+    target: Target | None
     meals: int
     steps: int
+    water_ml: int
     sets: int
     weight_kg: float | None
-    activity_kcal: float
 
 
 async def day_summary(session: AsyncSession, user: User, day: date) -> DaySummary:
@@ -83,13 +98,8 @@ async def day_summary(session: AsyncSession, user: User, day: date) -> DaySummar
     for meal in meals:
         eaten += meal.totals()
 
-    steps = (
-        await session.scalar(
-            select(DailyActivity.steps).where(
-                DailyActivity.user_id == user.id, DailyActivity.day == day
-            )
-        )
-        or 0
+    activity = await session.scalar(
+        select(DailyActivity).where(DailyActivity.user_id == user.id, DailyActivity.day == day)
     )
     sets = (
         await session.scalar(
@@ -102,10 +112,14 @@ async def day_summary(session: AsyncSession, user: User, day: date) -> DaySummar
     weight = await latest_weight(session, user.id)
 
     target = None
-    activity = 0.0
     if user.profile_complete and weight is not None:
-        activity = await activity_kcal(session, user.id, day, weight)
-        target = daily_target(
-            user.sex, weight, user.height_cm, day.year - user.birth_year, user.goal, activity
-        )
-    return DaySummary(eaten, target, len(meals), steps, sets, weight, activity)
+        target = await target_on(session, user, day, weight)
+    return DaySummary(
+        eaten,
+        target,
+        len(meals),
+        activity.steps if activity else 0,
+        activity.water_ml if activity else 0,
+        sets,
+        weight,
+    )

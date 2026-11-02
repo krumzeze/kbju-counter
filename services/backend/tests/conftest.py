@@ -12,6 +12,7 @@ from belok.config import Settings
 from belok.db.models import Base
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisResult, FoodAnalysis, FoodItem
+from belok.services.products import ProductInfo
 from tests.telegram_signing import BOT_TOKEN, sign_init_data
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
@@ -79,6 +80,21 @@ class FakeAnalyzer:
         )
 
 
+class FakeFoodDb:
+    def __init__(self) -> None:
+        self.products: dict[str, ProductInfo] = {}
+        self.lookups: list[str] = []
+
+    async def lookup(self, code: str, language: Language) -> ProductInfo | None:
+        self.lookups.append(code)
+        return self.products.get(code)
+
+
+@pytest.fixture
+def food_db() -> FakeFoodDb:
+    return FakeFoodDb()
+
+
 @pytest.fixture
 def settings() -> Settings:
     return Settings(
@@ -103,7 +119,7 @@ def bot() -> FakeBot:
 
 @pytest.fixture
 async def client(
-    settings: Settings, analyzer: FakeAnalyzer, bot: FakeBot
+    settings: Settings, analyzer: FakeAnalyzer, bot: FakeBot, food_db: FakeFoodDb
 ) -> AsyncIterator[httpx.AsyncClient]:
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
@@ -114,6 +130,7 @@ async def client(
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     app.state.analyzer = analyzer
+    app.state.food_db = food_db
     app.state.bot = bot
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
