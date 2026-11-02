@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { adminApi, errorMessage } from "../../api/client";
-import type { CheckStatus, FeatureKey, HealthCheck } from "../../api/types";
+import type { AppError, CheckStatus, FeatureKey, HealthCheck } from "../../api/types";
 import { ErrorState, Spinner } from "../../components/States";
-import { useFeatures, useHealth } from "../../lib/adminQueries";
+import { useAdminMutation, useErrors, useFeatures, useHealth } from "../../lib/adminQueries";
 import { dateTime } from "../../lib/format";
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
@@ -59,6 +61,7 @@ export function System() {
     <>
       <Features />
       <Services />
+      <Errors />
     </>
   );
 }
@@ -147,6 +150,70 @@ function Services() {
         </>
       )}
     </section>
+  );
+}
+
+const SOURCES: Record<AppError["source"], string> = { api: "API", bot: "Бот", web: "Приложение" };
+
+function Errors() {
+  const { data, isPending, error, refetch } = useErrors();
+  const resolve = useAdminMutation(adminApi.resolveErrors, "errors");
+  return (
+    <section className="card">
+      <div className="section-head">
+        <h2>Ошибки</h2>
+        {data && data.length > 0 && (
+          <button className="btn small" disabled={resolve.isPending} onClick={() => resolve.mutate(undefined)}>
+            Очистить всё
+          </button>
+        )}
+      </div>
+      {isPending ? (
+        <Spinner />
+      ) : error ? (
+        <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
+      ) : data.length === 0 ? (
+        <p className="muted">За последние 30 дней ошибок нет</p>
+      ) : (
+        <ul className="list">
+          {data.map((e) => (
+            <ErrorRow key={e.fingerprint} error={e} onResolve={() => resolve.mutate(e.fingerprint)} />
+          ))}
+        </ul>
+      )}
+      {resolve.error && <p className="error">{errorMessage(resolve.error)}</p>}
+    </section>
+  );
+}
+
+function ErrorRow({ error: e, onResolve }: { error: AppError; onResolve: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="error-row">
+      <button className="error-head" onClick={() => setOpen(!open)}>
+        <span className="badge expired">{SOURCES[e.source] ?? e.source}</span>
+        <span className="error-message">{e.message}</span>
+        <span className="muted small">×{e.count}</span>
+      </button>
+      <div className="muted small">
+        {e.path && <code>{e.path}</code>} {dateTime(e.last_seen)}
+        {e.count > 1 && `, впервые ${dateTime(e.first_seen)}`}
+        {e.user_id && (
+          <>
+            {", "}
+            <Link className="positive" to={`/admin/users/${e.user_id}`}>пользователь {e.user_id}</Link>
+          </>
+        )}
+      </div>
+      {open && (
+        <>
+          {e.detail && <pre className="error-detail">{e.detail}</pre>}
+          <button className="btn small" onClick={onResolve}>
+            Исправлено
+          </button>
+        </>
+      )}
+    </li>
   );
 }
 

@@ -1,5 +1,6 @@
 import type {
   AdminAction,
+  AppError,
   Barcode,
   Analytics,
   CatalogDetail,
@@ -253,6 +254,9 @@ export const adminApi = {
   setFeature: (key: FeatureKey, enabled: boolean) =>
     request<FeatureFlag[]>("PUT", `/admin/features/${key}`, { enabled }),
   health: () => request<Health>("GET", "/admin/health"),
+  errors: () => request<AppError[]>("GET", "/admin/errors"),
+  resolveErrors: (fingerprint?: string) =>
+    request<void>("DELETE", fingerprint ? `/admin/errors?fingerprint=${fingerprint}` : "/admin/errors"),
 };
 
 const messages = (): Record<string, string> => ({
@@ -319,4 +323,15 @@ export function errorMessage(error: unknown): string {
     return messages()[error.detail] ?? tr("Что-то пошло не так", "Something went wrong");
   }
   return tr("Нет связи с сервером", "Can't reach the server");
+}
+
+export function reportClientError(message: string, stack?: string) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const body = JSON.stringify({
+    message: message.slice(0, 500),
+    stack: stack?.slice(0, 8000) ?? null,
+    path: location.pathname.slice(0, 256),
+  });
+  return fetch("/api/client-errors", { method: "POST", headers, body, keepalive: true }).catch(() => {});
 }

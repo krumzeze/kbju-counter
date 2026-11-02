@@ -409,3 +409,20 @@ class SupportRelay(Base):
     message_id: Mapped[int] = mapped_column(
         ForeignKey("support_messages.id", ondelete="CASCADE"), index=True
     )
+
+
+class AppError(Base):
+    """One row per distinct error; repeats bump the counter."""
+
+    __tablename__ = "app_errors"
+
+    fingerprint: Mapped[str] = mapped_column(String(40), primary_key=True)
+    source: Mapped[str] = mapped_column(String(8))
+    message: Mapped[str] = mapped_column(Text)
+    detail: Mapped[str | None] = mapped_column(Text)
+    path: Mapped[str | None] = mapped_column(String(256))
+    user_id: Mapped[int | None] = mapped_column(BigInteger)
+    count: Mapped[int] = mapped_column(Integer, default=1)
+    first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    alerted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

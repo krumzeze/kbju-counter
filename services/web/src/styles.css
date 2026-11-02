@@ -3188,3 +3188,45 @@ span.set-check {
   padding-bottom: 14px;
   border-bottom: 1px solid var(--border);
 }
+
+.error-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.error-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.error-message {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.error-detail {
+  max-height: 320px;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.crash {
+  min-height: 100vh;
+  justify-content: center;
+}

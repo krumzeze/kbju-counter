@@ -61,6 +61,9 @@ export const useHealth = () =>
     staleTime: 15_000,
   });
 
+export const useErrors = () =>
+  useQuery({ queryKey: ["admin", "errors"], queryFn: adminApi.errors, refetchInterval: 60_000 });
+
 export const usePrefs = () => useQuery({ queryKey: ["admin", "prefs"], queryFn: adminApi.prefs });
 
 export function useAdminMutation<T, R>(fn: (arg: T) => Promise<R>, ...keys: string[]) {

@@ -84,6 +84,17 @@ async def current_user(
 CurrentUser = Annotated[User, Depends(current_user)]
 
 
+def token_user_id(request: Request) -> int | None:
+    """User id from a valid bearer token, without touching the database."""
+    scheme, _, token = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+    try:
+        return decode_token(token, get_settings(request).api_secret.get_secret_value())
+    except InvalidAuth:
+        return None
+
+
 async def active_user(user: CurrentUser) -> User:
     if not user.profile_complete:
         raise HTTPException(status.HTTP_409_CONFLICT, "profile_incomplete")

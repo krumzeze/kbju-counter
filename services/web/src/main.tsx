@@ -4,8 +4,12 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ApiError } from "./api/client";
 import { App } from "./App";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { installGlobalHandlers } from "./lib/errorReporting";
 import { webApp } from "./lib/telegram";
 import "./styles.css";
+
+installGlobalHandlers();
 
 webApp?.setHeaderColor?.("#f6f4ef");
 webApp?.setBackgroundColor?.("#f6f4ef");
@@ -22,10 +26,12 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

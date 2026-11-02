@@ -27,7 +27,7 @@ from belok.db.models import (
     ReferralReward,
     User,
 )
-from belok.services import admin_users, features, stats
+from belok.services import admin_users, errors, features, stats
 from belok.services.access import access_status, access_until, grant_days
 from belok.services.audit import log_action
 from belok.services.broadcasts import segment_size
@@ -378,6 +378,19 @@ async def get_health(
     probes = Probes(settings.redis_url, bot, analyzer, stt, food_db, tribute)
     checks = await run_checks(session, probes)
     return s.HealthOut(checked_at=utcnow(), checks=[s.CheckOut.model_validate(c) for c in checks])
+
+
+@router.get("/errors")
+async def get_errors(admin: AdminUser, session: SessionDep) -> list[s.AppErrorOut]:
+    return [s.AppErrorOut.model_validate(e) for e in await errors.recent(session)]
+
+
+@router.delete("/errors", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_errors(
+    admin: AdminUser, session: SessionDep, fingerprint: str | None = None
+) -> Response:
+    await errors.resolve(session, fingerprint)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 async def _get_user(session: SessionDep, user_id: int) -> User:

@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from belok.db.models import LlmUsage
-from belok.services import heartbeat, stats
+from belok.services import errors, heartbeat, stats
 from belok.services.notify import notify_admins
 from belok.timeutil import utcnow
 
@@ -30,6 +30,7 @@ async def run_monitor(
             async with sessionmaker() as session:
                 await check_errors(bot, session, redis)
                 await daily_summary(bot, session, redis, tz)
+                await errors.prune(session)
                 await heartbeat.beat(session, "monitor")
         except asyncio.CancelledError:
             raise
