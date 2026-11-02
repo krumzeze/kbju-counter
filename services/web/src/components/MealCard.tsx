@@ -201,6 +201,8 @@ function ItemRow({
 }
 
 export function MealIcon({ source }: { source: Meal["source"] }) {
+  if (source === "voice") return <>🎙️</>;
+  if (source === "barcode") return <>🏷️</>;
   return (
     <Art
       name={source === "photo" ? "meal-photo" : "meal-text"}

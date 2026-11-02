@@ -12,6 +12,14 @@ import { STATUS_LABELS, UserBadges } from "./Users";
 
 const GOALS: Record<string, string> = { lose: "похудеть", maintain: "держать вес", gain: "набрать" };
 
+const SOURCE_ICONS: Record<string, string> = {
+  photo: "📸",
+  text: "✍️",
+  manual: "🍽️",
+  voice: "🎙️",
+  barcode: "🏷️",
+};
+
 export function UserDetail() {
   const id = Number(useParams().id);
   const { data: user, isPending, error, refetch } = useUser(id);
@@ -114,7 +122,7 @@ export function UserDetail() {
                 <li key={m.id}>
                   <div className="hbar-head">
                     <strong>
-                      {m.source === "photo" ? "📸" : m.source === "manual" ? "🍽️" : "✍️"} {m.title}
+                      {SOURCE_ICONS[m.source]} {m.title}
                     </strong>
                     <span>{round(m.totals.kcal)} ккал</span>
                   </div>

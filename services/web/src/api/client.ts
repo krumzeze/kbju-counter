@@ -1,5 +1,6 @@
 import type {
   AdminAction,
+  Barcode,
   Analytics,
   CatalogDetail,
   CatalogItem,
@@ -8,6 +9,7 @@ import type {
   MuscleGroup,
   Plan,
   SetValues,
+  Settings,
   Template,
   TemplateInput,
   Workout,
@@ -115,6 +117,7 @@ export const api = {
   me: () => request<Me>("GET", "/me"),
   saveProfile: (body: ProfileInput) => request<Me>("PUT", "/me/profile", body),
   setLanguage: (language: Lang) => request<Me>("PUT", "/me/language", { language }),
+  updateSettings: (body: Settings) => request<Me>("PATCH", "/me/settings", body),
 
   day: (day?: string) => request<Day>("GET", day ? `/day?day=${day}` : "/day"),
   mealFromText: (text: string) => request<Meal>("POST", "/meals/text", { text }),
@@ -127,6 +130,12 @@ export const api = {
   scaleMeal: (id: number, scale: number) => request<Meal>("PATCH", `/meals/${id}`, { scale }),
   deleteMeal: (id: number) => request<void>("DELETE", `/meals/${id}`),
   mealManual: (body: ManualMealInput) => request<Meal>("POST", "/meals/manual", body),
+  barcode: (code: string) => request<Barcode>("GET", `/barcode/${code}`),
+  barcodeFromPhoto: (photo: Blob) => {
+    const form = new FormData();
+    form.append("photo", photo, "barcode.jpg");
+    return request<Barcode>("POST", "/barcode/photo", form);
+  },
   mealHistory: (sort: "frequent" | "recent") =>
     request<MealHistoryItem[]>("GET", `/meals/history?sort=${sort}`),
   repeatMeal: (id: number) => request<Meal>("POST", `/meals/${id}/repeat`),
@@ -136,6 +145,7 @@ export const api = {
     request<Meal>("DELETE", `/meals/${mealId}/items/${itemId}`),
 
   weights: () => request<WeightPoint[]>("GET", "/weights"),
+  addWater: (delta_ml: number) => request<{ water_ml: number }>("POST", "/water/today", { delta_ml }),
   saveWeight: (weight_kg: number) => request<void>("PUT", "/weights/today", { weight_kg }),
   saveSteps: (steps: number) => request<void>("PUT", "/steps/today", { steps }),
 
@@ -246,6 +256,15 @@ const messages = (): Record<string, string> => ({
   image_too_large: tr("Фото слишком большое", "The photo is too large"),
   unsupported_image: tr("Поддерживаются JPEG, PNG и WebP", "Only JPEG, PNG and WebP are supported"),
   not_found: tr("Не найдено", "Not found"),
+  adaptive_not_ready: tr(
+    "Пока мало данных для расчёта по фактическому расходу",
+    "Not enough data yet to use your real expenditure",
+  ),
+  no_barcode: tr(
+    "Не вижу штрихкод. Сфотографируй его ближе и ровнее или введи цифры",
+    "Can't find a barcode. Take a closer, straighter photo or type the digits",
+  ),
+  invalid_barcode: tr("Штрихкод состоит из 8–14 цифр", "A barcode has 8 to 14 digits"),
   expired: tr("Срок действия промокода истёк", "This promo code has expired"),
   exhausted: tr(
     "Промокод уже использовали максимальное число раз",

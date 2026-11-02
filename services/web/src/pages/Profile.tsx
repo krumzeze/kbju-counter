@@ -10,6 +10,7 @@ import { Avatar } from "../components/Avatar";
 import { PromoCard, ReferralCard } from "../components/Growth";
 import { Icon } from "../components/Icon";
 import { Plans } from "../components/Plans";
+import { ReminderSettings, TargetSettings } from "../components/Settings";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
 
@@ -46,8 +47,8 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           <h1>{tr("Давай знакомиться", "Let's get to know you")}</h1>
           <p className="muted">
             {tr(
-              "Пять вопросов, и я рассчитаю твою норму калорий и БЖУ. Шаги и тренировки будут добавлять к ней калории каждый день.",
-              "Five questions and I'll calculate your daily calorie and macro target. Steps and workouts add calories to it every day.",
+              "Пять вопросов, и я рассчитаю твою норму калорий и БЖУ. Шаги и тренировки будут добавлять к ней калории каждый день, это можно выключить в профиле.",
+              "Five questions and I'll calculate your daily calorie and macro target. Steps and workouts add calories to it every day, you can turn that off in your profile.",
             )}
           </p>
         </>
@@ -148,6 +149,8 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
 
       {!onboarding && (
         <>
+          <TargetSettings me={me} />
+          <ReminderSettings me={me} />
           <ReferralCard />
           <PromoCard />
         </>
@@ -239,3 +242,4 @@ function LanguageCard({ me }: { me: Me }) {
     </div>
   );
 }
+

@@ -153,6 +153,14 @@ export function AddMeal() {
           onChange={(e) => setText(e.target.value)}
         />
       )}
+      {mode === "text" && (
+        <p className="muted small">
+          {tr(
+            "Можно и голосом: отправь боту голосовое сообщение, и он сам всё запишет.",
+            "You can also use your voice: send the bot a voice message and it'll log it for you.",
+          )}
+        </p>
+      )}
 
       {(mode === "photo" || mode === "text") && (
         <>

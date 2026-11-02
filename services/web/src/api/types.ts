@@ -16,11 +16,13 @@ export interface MealItem extends Macros {
   grams: number;
 }
 
+export type MealSource = "photo" | "text" | "manual" | "voice" | "barcode";
+
 export interface Meal {
   id: number;
   day: string;
   created_at: string;
-  source: "photo" | "text" | "manual";
+  source: MealSource;
   title: string;
   scale: number;
   items: MealItem[];
@@ -34,12 +36,23 @@ export interface ManualMealInput {
   protein: number;
   fat: number;
   carbs: number;
+  barcode?: string;
+}
+
+export interface Product extends Macros {
+  name: string;
+  serving_g: number | null;
+}
+
+export interface Barcode {
+  code: string;
+  product: Product | null;
 }
 
 export interface MealHistoryItem {
   meal_id: number;
   title: string;
-  source: "photo" | "text" | "manual";
+  source: MealSource;
   times: number;
   last_eaten: string;
   totals: Macros;
@@ -60,7 +73,11 @@ export interface Day {
   day: string;
   eaten: Macros;
   target: Macros | null;
+  target_source: "formula" | "adaptive" | null;
+  adaptive_paused: boolean;
   steps: number;
+  water_ml: number;
+  water_target_ml: number | null;
   activity_kcal: number;
   weight_kg: number | null;
   meals: Meal[];
@@ -85,8 +102,30 @@ export interface Me {
   status: AccessStatus;
   access_until: string;
   is_admin: boolean;
+  activity_adjust: boolean;
+  adaptive_target: boolean;
+  remind_meals: boolean;
+  remind_weight: boolean;
+  adaptive: Adaptive | null;
   base_target: Macros | null;
 }
+
+export interface Adaptive {
+  ready: boolean;
+  logged_days: number;
+  weigh_ins: number;
+  span_days: number;
+  need_logged_days: number;
+  need_weigh_ins: number;
+  need_span_days: number;
+  window_days: number;
+  tdee: number | null;
+  formula_tdee: number;
+}
+
+export type Settings = Partial<
+  Pick<Me, "activity_adjust" | "adaptive_target" | "remind_meals" | "remind_weight">
+>;
 
 export type AccessStatus = "trial" | "active" | "lifetime" | "expired";
 

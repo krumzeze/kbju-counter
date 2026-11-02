@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { api, errorMessage } from "../api/client";
-import type { Meal, MealHistoryItem } from "../api/types";
+import type { Barcode, Meal, MealHistoryItem } from "../api/types";
 import { round } from "../lib/format";
 import { tr } from "../lib/i18n";
+import { prepareImage } from "../lib/image";
 import { useInvalidate, useMealHistory } from "../lib/queries";
 import { haptic } from "../lib/telegram";
 import { Icon } from "./Icon";
@@ -30,7 +31,23 @@ export function ManualMeal({ onDone }: { onDone: (meal: Meal) => void }) {
   const [title, setTitle] = useState("");
   const [grams, setGrams] = useState("");
   const [per100, setPer100] = useState<Per100>({ kcal: "", protein: "", fat: "", carbs: "" });
+  const [barcode, setBarcode] = useState<string | null>(null);
   const invalidate = useInvalidate();
+
+  function fill(result: Barcode) {
+    setBarcode(result.code);
+    const p = result.product;
+    if (!p) return;
+    const fmt = (v: number) => String(Math.round(v * 10) / 10);
+    setTitle(p.name);
+    setPer100({
+      kcal: fmt(p.kcal),
+      protein: fmt(p.protein),
+      fat: fmt(p.fat),
+      carbs: fmt(p.carbs),
+    });
+    if (p.serving_g) setGrams(fmt(p.serving_g));
+  }
   const save = useMutation({
     mutationFn: () =>
       api.mealManual({
@@ -40,6 +57,7 @@ export function ManualMeal({ onDone }: { onDone: (meal: Meal) => void }) {
         protein: num(per100.protein || "0"),
         fat: num(per100.fat || "0"),
         carbs: num(per100.carbs || "0"),
+        ...(barcode ? { barcode } : {}),
       }),
     onSuccess: async (meal) => {
       haptic("success");
@@ -68,6 +86,7 @@ export function ManualMeal({ onDone }: { onDone: (meal: Meal) => void }) {
         if (valid) save.mutate();
       }}
     >
+      <BarcodeScan onResult={fill} />
       <label className="field">
         <span>{tr("Название", "Name")}</span>
         <input
@@ -126,6 +145,79 @@ export function ManualMeal({ onDone }: { onDone: (meal: Meal) => void }) {
         )}
       </p>
     </form>
+  );
+}
+
+function BarcodeScan({ onResult }: { onResult: (result: Barcode) => void }) {
+  const [digits, setDigits] = useState("");
+  const fileInput = useRef<HTMLInputElement>(null);
+  const scan = useMutation({
+    mutationFn: async (input: File | string) =>
+      typeof input === "string" ? api.barcode(input) : api.barcodeFromPhoto(await prepareImage(input)),
+    onSuccess: (result) => {
+      haptic(result.product ? "success" : "warning");
+      setDigits(result.code);
+      onResult(result);
+    },
+    onError: () => haptic("error"),
+  });
+  const result = scan.data;
+
+  return (
+    <div className="barcode-scan">
+      <button
+        type="button"
+        className="btn btn-block"
+        disabled={scan.isPending}
+        onClick={() => fileInput.current?.click()}
+      >
+        <Icon name="camera" size={20} />
+        {scan.isPending ? tr("Ищу товар…", "Looking it up…") : tr("Сканировать штрихкод", "Scan a barcode")}
+      </button>
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) scan.mutate(file);
+        }}
+      />
+      <div className="inline-form">
+        <input
+          className="input mono"
+          inputMode="numeric"
+          placeholder={tr("или введи цифры под штрихкодом", "or type the digits under it")}
+          maxLength={14}
+          value={digits}
+          onChange={(e) => setDigits(e.target.value.replace(/\D/g, ""))}
+        />
+        <button
+          type="button"
+          className="btn"
+          disabled={digits.length < 8 || scan.isPending}
+          onClick={() => scan.mutate(digits)}
+        >
+          {tr("Найти", "Find")}
+        </button>
+      </div>
+      {scan.isError && <p className="error small">{errorMessage(scan.error)}</p>}
+      {result &&
+        (result.product ? (
+          <p className="success small">
+            {tr("Нашёл. Проверь вес порции и добавляй.", "Found it. Check the portion weight and add.")}
+          </p>
+        ) : (
+          <p className="muted small">
+            {tr(
+              "Этого товара нет в базе. Перепиши КБЖУ с упаковки, и в следующий раз я его узнаю.",
+              "This product isn't in the database. Copy the nutrition facts from the label and I'll know it next time.",
+            )}
+          </p>
+        ))}
+    </div>
   );
 }
 
