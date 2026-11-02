@@ -5,13 +5,11 @@ from aiogram.exceptions import TelegramAPIError
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from belok.api.deps import BotDep, CurrentUser, SessionDep, SettingsDep, TributeDep
-from belok.api.schemas import PlanOut
-from belok.bot.texts import payment_text
+from belok.api.schemas import PlanOut, StarsInvoiceOut
 from belok.i18n import Language
-from belok.services import features
+from belok.services import features, stars
 from belok.services.features import Feature
-from belok.services.notify import notify_admins
-from belok.services.payments import handle_tribute_event
+from belok.services.payments import announce, handle_tribute_event
 from belok.services.tribute import signature_valid
 
 log = logging.getLogger(__name__)
@@ -20,20 +18,54 @@ router = APIRouter(tags=["payments"])
 
 
 @router.get("/payments/plans")
-async def get_plans(user: CurrentUser, session: SessionDep, tribute: TributeDep) -> list[PlanOut]:
-    if not tribute.enabled or not await features.enabled(session, Feature.PAYMENTS):
+async def get_plans(
+    user: CurrentUser, session: SessionDep, settings: SettingsDep, tribute: TributeDep
+) -> list[PlanOut]:
+    if not await features.enabled(session, Feature.PAYMENTS):
         return []
-    return [
+    plans = [
         PlanOut(
+            provider="stars",
             code=p.code,
             days=p.days,
-            link=p.link,
-            web_link=p.web_link,
-            amount=p.amount,
-            currency=p.currency,
+            link=None,
+            web_link=None,
+            amount=p.stars,
+            currency=stars.CURRENCY,
         )
-        for p in await tribute.plans()
+        for p in stars.parse_plans(settings.stars_plans)
     ]
+    if tribute.enabled:
+        plans += [
+            PlanOut(
+                provider="tribute",
+                code=p.code,
+                days=p.days,
+                link=p.link,
+                web_link=p.web_link,
+                amount=p.amount,
+                currency=p.currency,
+            )
+            for p in await tribute.plans()
+        ]
+    return plans
+
+
+@router.post("/payments/stars/{days}")
+async def create_stars_invoice(
+    days: int, user: CurrentUser, session: SessionDep, settings: SettingsDep, bot: BotDep
+) -> StarsInvoiceOut:
+    if not await features.enabled(session, Feature.PAYMENTS):
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "payments_disabled")
+    plan = next((p for p in stars.parse_plans(settings.stars_plans) if p.days == days), None)
+    if plan is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "plan_not_found")
+    try:
+        link = await stars.invoice_link(bot, plan, user.language or Language.RU)
+    except TelegramAPIError as exc:
+        log.warning("failed to create Stars invoice", exc_info=True)
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "invoice_failed") from exc
+    return StarsInvoiceOut(link=link)
 
 
 @router.post("/payments/tribute", include_in_schema=False)
@@ -52,21 +84,6 @@ async def tribute_webhook(
 
     outcome = await handle_tribute_event(session, tribute, event, settings.referral_reward_days)
     await session.commit()
-    if outcome is None:
-        return Response(status_code=status.HTTP_200_OK)
-
-    user, payment = outcome.user, outcome.payment
-    lang = user.language or Language.RU
-    try:
-        await bot.send_message(user.id, payment_text(lang, user, payment, outcome.refunded))
-    except TelegramAPIError:
-        log.warning("failed to notify user %s about payment", user.id, exc_info=True)
-    kind = "Возврат" if outcome.refunded else "Оплата"
-    who = f"@{user.username}" if user.username else str(user.id)
-    await notify_admins(
-        bot,
-        session,
-        "payments",
-        f"💳 {kind}: {who}, {payment.amount / 100:g} {payment.currency}, {payment.days} дн.",
-    )
+    if outcome is not None:
+        await announce(bot, session, outcome)
     return Response(status_code=status.HTTP_200_OK)
