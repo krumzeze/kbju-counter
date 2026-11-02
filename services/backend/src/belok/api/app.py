@@ -3,14 +3,27 @@ from contextlib import asynccontextmanager
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from belok.api.routes import admin, auth, me, meals, payments, support, tracking, workouts
+from belok.api.deps import token_user_id
+from belok.api.routes import (
+    admin,
+    auth,
+    client_errors,
+    me,
+    meals,
+    payments,
+    support,
+    tracking,
+    workouts,
+)
 from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
 from belok.llm.speech import SpeechToText
+from belok.services import errors
 from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 
@@ -47,8 +60,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.tribute = TributeCatalog.from_settings(settings)
-    for module in (admin, auth, me, meals, payments, support, tracking, workouts):
+    for module in (admin, auth, client_errors, me, meals, payments, support, tracking, workouts):
         app.include_router(module.router, prefix="/api")
+
+    @app.exception_handler(Exception)
+    async def unhandled(request: Request, exc: Exception) -> JSONResponse:
+        await errors.capture(
+            request.app.state.sessionmaker,
+            request.app.state.bot,
+            exc,
+            "api",
+            path=f"{request.method} {request.url.path}",
+            user_id=token_user_id(request),
+        )
+        return JSONResponse({"detail": "internal_error"}, status_code=500)
 
     @app.get("/healthz", include_in_schema=False)
     async def healthz() -> dict[str, str]:

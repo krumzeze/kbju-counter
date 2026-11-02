@@ -10,6 +10,7 @@ import { Avatar } from "../components/Avatar";
 import { PromoCard, ReferralCard } from "../components/Growth";
 import { Icon } from "../components/Icon";
 import { ReminderSettings, TargetSettings } from "../components/Settings";
+import { ThemePicker } from "../components/ThemePicker";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
 
@@ -71,6 +72,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
             </Link>
           )}
           <LanguageCard me={me} />
+          <ThemePicker />
           {me.base_target && (
             <div className="card peach">
               <span className="small">{tr("Базовая норма без активности", "Base target before activity")}</span>

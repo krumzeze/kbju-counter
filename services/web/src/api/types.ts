@@ -487,6 +487,18 @@ export interface Health {
   checks: HealthCheck[];
 }
 
+export interface AppError {
+  fingerprint: string;
+  source: "api" | "bot" | "web";
+  message: string;
+  detail: string | null;
+  path: string | null;
+  user_id: number | null;
+  count: number;
+  first_seen: string;
+  last_seen: string;
+}
+
 export interface Prefs {
   new_users: boolean;
   payments: boolean;

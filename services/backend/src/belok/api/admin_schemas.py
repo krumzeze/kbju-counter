@@ -256,3 +256,17 @@ class CheckOut(BaseModel):
 class HealthOut(BaseModel):
     checked_at: datetime
     checks: list[CheckOut]
+
+
+class AppErrorOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    fingerprint: str
+    source: str
+    message: str
+    detail: str | None
+    path: str | None
+    user_id: int | None
+    count: int
+    first_seen: datetime
+    last_seen: datetime
