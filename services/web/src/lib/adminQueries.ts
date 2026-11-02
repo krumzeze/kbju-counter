@@ -50,6 +50,17 @@ export const useActions = (offset: number) =>
     placeholderData: keepPreviousData,
   });
 
+export const useFeatures = () =>
+  useQuery({ queryKey: ["admin", "features"], queryFn: adminApi.features });
+
+export const useHealth = () =>
+  useQuery({
+    queryKey: ["admin", "health"],
+    queryFn: adminApi.health,
+    refetchInterval: 60_000,
+    staleTime: 15_000,
+  });
+
 export const usePrefs = () => useQuery({ queryKey: ["admin", "prefs"], queryFn: adminApi.prefs });
 
 export function useAdminMutation<T, R>(fn: (arg: T) => Promise<R>, ...keys: string[]) {

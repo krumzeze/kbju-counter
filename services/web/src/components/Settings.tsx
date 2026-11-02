@@ -128,6 +128,11 @@ export function ReminderSettings({ me }: { me: Me }) {
   return (
     <section className="card stack">
       <h2>{tr("Напоминания в Telegram", "Telegram reminders")}</h2>
+      {!me.features.reminders && (
+        <p className="muted small">
+          {tr("Напоминания временно приостановлены.", "Reminders are temporarily paused.")}
+        </p>
+      )}
       <div>
         <Toggle
           label={tr("Записать еду", "Log food")}

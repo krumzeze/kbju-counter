@@ -108,6 +108,7 @@ export interface Me {
   remind_weight: boolean;
   adaptive: Adaptive | null;
   base_target: Macros | null;
+  features: Record<FeatureKey, boolean>;
 }
 
 export interface Adaptive {
@@ -453,6 +454,27 @@ export interface Plan {
   web_link: string;
   amount: number | null;
   currency: string | null;
+}
+
+export type FeatureKey = "photo" | "text" | "voice" | "barcode" | "reminders" | "payments";
+
+export interface FeatureFlag {
+  key: FeatureKey;
+  enabled: boolean;
+}
+
+export type CheckStatus = "ok" | "warn" | "fail" | "off";
+
+export interface HealthCheck {
+  key: string;
+  status: CheckStatus;
+  detail: string | null;
+  latency_ms: number | null;
+}
+
+export interface Health {
+  checked_at: string;
+  checks: HealthCheck[];
 }
 
 export interface Prefs {

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { errorMessage } from "../../api/client";
-import type { AdminAction } from "../../api/types";
+import type { AdminAction, FeatureKey } from "../../api/types";
 import { ErrorState, Spinner } from "../../components/States";
 import { useActions } from "../../lib/adminQueries";
 import { dateTime, displayName } from "../../lib/format";
+import { FEATURE_LABELS } from "./System";
 
 const PAGE = 50;
 
@@ -64,6 +65,14 @@ export function ActionText({ action }: { action: AdminAction }) {
     <span>{String(d.username ? `@${d.username}` : action.target_user_id)}</span>
   ) : null;
 
+  if (action.action === "set_feature") {
+    const name = FEATURE_LABELS[String(d.feature) as FeatureKey] ?? String(d.feature);
+    return (
+      <span>
+        {d.new ? "Включил" : "Выключил"} функцию «{name}»
+      </span>
+    );
+  }
   if (action.action.startsWith("set_")) {
     const field = action.action.slice(4);
     return (

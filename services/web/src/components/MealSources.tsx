@@ -27,7 +27,7 @@ type Per100 = Record<"kcal" | "protein" | "fat" | "carbs", string>;
 const num = (v: string) => Number(v.replace(",", "."));
 const clean = (v: string) => v.replace(/[^\d.,]/g, "");
 
-export function ManualMeal({ onDone }: { onDone: (meal: Meal) => void }) {
+export function ManualMeal({ onDone, barcode: scan }: { onDone: (meal: Meal) => void; barcode: boolean }) {
   const [title, setTitle] = useState("");
   const [grams, setGrams] = useState("");
   const [per100, setPer100] = useState<Per100>({ kcal: "", protein: "", fat: "", carbs: "" });
@@ -86,7 +86,7 @@ export function ManualMeal({ onDone }: { onDone: (meal: Meal) => void }) {
         if (valid) save.mutate();
       }}
     >
-      <BarcodeScan onResult={fill} />
+      {scan && <BarcodeScan onResult={fill} />}
       <label className="field">
         <span>{tr("Название", "Name")}</span>
         <input

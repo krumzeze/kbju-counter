@@ -6,6 +6,9 @@ import type {
   CatalogItem,
   Exercise,
   ExerciseRef,
+  FeatureFlag,
+  FeatureKey,
+  Health,
   MuscleGroup,
   Plan,
   SetValues,
@@ -241,6 +244,10 @@ export const adminApi = {
   actions: (offset: number) => request<AdminAction[]>("GET", `/admin/actions?offset=${offset}`),
   prefs: () => request<Prefs>("GET", "/admin/prefs"),
   savePrefs: (body: Partial<Prefs>) => request<Prefs>("PUT", "/admin/prefs", body),
+  features: () => request<FeatureFlag[]>("GET", "/admin/features"),
+  setFeature: (key: FeatureKey, enabled: boolean) =>
+    request<FeatureFlag[]>("PUT", `/admin/features/${key}`, { enabled }),
+  health: () => request<Health>("GET", "/admin/health"),
 };
 
 const messages = (): Record<string, string> => ({
@@ -256,6 +263,10 @@ const messages = (): Record<string, string> => ({
   image_too_large: tr("Фото слишком большое", "The photo is too large"),
   unsupported_image: tr("Поддерживаются JPEG, PNG и WebP", "Only JPEG, PNG and WebP are supported"),
   not_found: tr("Не найдено", "Not found"),
+  feature_disabled: tr(
+    "Эта функция временно недоступна, попробуй позже",
+    "This feature is temporarily unavailable, please try later",
+  ),
   adaptive_not_ready: tr(
     "Пока мало данных для расчёта по фактическому расходу",
     "Not enough data yet to use your real expenditure",
