@@ -1,7 +1,7 @@
 host: belok.hamdcreative.com
 
 image:
-  tag: "ec4e50278476c4f564942fef7444c698229a2f87"
+  tag: "dd3845900c3915f502b6c3de3afc4bf625232e09"
 
 config:
   BOT_USERNAME: "kbjubelokbot"
