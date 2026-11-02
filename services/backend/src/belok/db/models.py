@@ -385,3 +385,27 @@ class Heartbeat(Base):
 
     name: Mapped[str] = mapped_column(String(32), primary_key=True)
     beat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class SupportMessage(Base):
+    __tablename__ = "support_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    from_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    source: Mapped[str] = mapped_column(String(8))
+    text: Mapped[str] = mapped_column(Text)
+
+
+class SupportRelay(Base):
+    """A user's message as delivered to an admin's chat, so a reply finds its way back."""
+
+    __tablename__ = "support_relays"
+
+    admin_chat_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    admin_message_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    message_id: Mapped[int] = mapped_column(
+        ForeignKey("support_messages.id", ondelete="CASCADE"), index=True
+    )
