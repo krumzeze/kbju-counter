@@ -3112,8 +3112,21 @@ span.set-check {
   transition: width 0.25s ease;
 }
 
-.water .row > .grow {
-  flex: 3;
+.water-steps {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.water-steps .btn {
+  padding: 0;
+  background: rgb(255 255 255 / 60%);
+  font-variant-numeric: tabular-nums;
+}
+
+.water-steps .btn.add {
+  background: var(--water);
+  color: #fff;
 }
 
 .barcode-scan {
