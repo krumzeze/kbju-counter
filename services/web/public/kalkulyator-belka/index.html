@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<script>document.documentElement.classList.add("js")</script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Калькулятор белка: сколько белка нужно в день | Белок</title>
+<meta name="description" content="Посчитай норму белка в день по весу, цели и активности. Таблица белка в продуктах, нормы для похудения и набора мышц и бот в Telegram, который считает белок по фото еды." />
+<link rel="canonical" href="https://belok.hamdcreative.com/kalkulyator-belka/" />
+<meta name="theme-color" content="#f6f4ef" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="ru_RU" />
+<meta property="og:site_name" content="Белок" />
+<meta property="og:title" content="Сколько белка нужно тебе в день? Калькулятор за 10 секунд" />
+<meta property="og:description" content="Норма белка по весу, цели и активности, таблица белка в продуктах и бот, который считает белок по фото." />
+<meta property="og:url" content="https://belok.hamdcreative.com/kalkulyator-belka/" />
+<meta property="og:image" content="https://belok.hamdcreative.com/art/og-protein.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://belok.hamdcreative.com/kalkulyator-belka/",
+      "name": "Калькулятор белка: сколько белка нужно в день",
+      "inLanguage": "ru",
+      "description": "Калькулятор суточной нормы белка по весу, цели и уровню активности, таблица белка в продуктах."
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Белок",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Telegram",
+      "url": "https://t.me/kbjubelokbot",
+      "description": "Бот и мини-приложение в Telegram: КБЖУ и белок по фото, голосу и штрихкоду, дневник тренировок и веса.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "RUB" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Сколько белка нужно в день?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Минимум для взрослого без нагрузок 0,8 г на килограмм веса. Если ты регулярно двигаешься, ориентир 1,2–1,6 г/кг, при силовых тренировках 1,6–2,2 г/кг, на дефиците калорий лучше держаться ближе к верхней границе." }
+        },
+        {
+          "@type": "Question",
+          "name": "Сколько белка усваивается за один приём пищи?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Ограничения в 30 г нет: организм усваивает весь съеденный белок, просто дольше. Для мышц удобно делить норму на 3–5 приёмов примерно по 0,4 г/кг каждый." }
+        },
+        {
+          "@type": "Question",
+          "name": "Вредно ли много белка для почек?",
+          "acceptedAnswer": { "@type": "Answer", "text": "У здоровых людей потребление до 2 г/кг и выше в исследованиях не вредит почкам. Если есть болезнь почек, норму белка нужно согласовать с врачом." }
+        },
+        {
+          "@type": "Question",
+          "name": "Как считать белок при лишнем весе?",
+          "acceptedAnswer": { "@type": "Answer", "text": "При ИМТ от 30 норму удобнее считать не от текущего веса, а от веса при ИМТ около 25 или от целевого веса, иначе цифра получится завышенной." }
+        },
+        {
+          "@type": "Question",
+          "name": "Нужен ли протеин, чтобы добрать норму?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Нет, протеин это просто удобный продукт. Норму можно набрать из мяса, рыбы, яиц, творога, сыра и бобовых. Протеиновый коктейль выручает, когда не хватает 20–30 г." }
+        },
+        {
+          "@type": "Question",
+          "name": "Как удобно считать белок каждый день?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Проще всего в Telegram-боте Белок: отправь фото еды, голосовое или штрихкод, и бот посчитает белок, жиры, углеводы и калории и покажет, сколько белка осталось до нормы." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+:root {
+  --ink: #22221f;
+  --bg: #f6f4ef;
+  --surface: #fff;
+  --surface-2: #f1eee7;
+  --muted: #7d796f;
+  --border: #e6e1d7;
+  --peach: #f8cf94;
+  --peach-soft: #fbe7c9;
+  --sage: #d3e4c8;
+  --sage-soft: #e8f0e2;
+  --sage-deep: #8e9e86;
+  --sand: #e2dbd2;
+  --blush: #f2d0bd;
+  --sky: #d5e5ec;
+  --accent: #6f8a66;
+  --accent-dark: #556c4e;
+  --fat: #e3a24f;
+  --carbs: #b98e74;
+  --radius: 28px;
+  --shadow: 0 1px 2px rgb(60 48 24 / 4%), 0 18px 40px rgb(60 48 24 / 8%);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; }
+h1, h2, h3 { margin: 0; letter-spacing: -0.025em; line-height: 1.1; }
+p { margin: 0; }
+.wrap { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+.nav {
+  position: sticky; top: 0; z-index: 10;
+  background: rgb(246 244 239 / 80%);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+}
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 22px; text-decoration: none; letter-spacing: -0.03em; }
+.nav-links { display: flex; gap: 28px; align-items: center; font-size: 15px; font-weight: 500; }
+.nav-links a:not(.btn) { text-decoration: none; color: var(--muted); }
+.nav-links a:not(.btn):hover { color: var(--ink); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px 26px; border-radius: 999px; border: 0;
+  background: var(--ink); color: #fff; font: inherit; font-weight: 600;
+  text-decoration: none; cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgb(34 34 31 / 22%); }
+.btn.small { padding: 10px 18px; font-size: 15px; }
+.btn.tg { background: var(--accent); }
+.btn.tg:hover { background: var(--accent-dark); box-shadow: 0 10px 24px rgb(111 138 102 / 35%); }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+
+.hero { position: relative; padding: 56px 0 40px; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: -20% -10% auto auto; width: 720px; height: 720px;
+  background: radial-gradient(circle, var(--peach-soft), transparent 65%); z-index: -1;
+}
+.hero::after {
+  content: ""; position: absolute; left: -200px; bottom: -260px; width: 620px; height: 620px;
+  background: radial-gradient(circle, var(--sage-soft), transparent 65%); z-index: -1;
+}
+.hero .wrap { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px;
+  border-radius: 999px; background: var(--surface); box-shadow: var(--shadow);
+  font-size: 14px; font-weight: 600; color: var(--accent-dark);
+}
+.eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--sage-soft); }
+.hero h1 { margin: 22px 0 18px; font-size: clamp(40px, 6vw, 72px); font-weight: 800; letter-spacing: -0.04em; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero .lead { font-size: clamp(18px, 2vw, 21px); color: #4a4842; max-width: 540px; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.proof { display: flex; gap: 22px; margin-top: 30px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.proof b { display: block; font-size: 22px; color: var(--ink); letter-spacing: -0.02em; }
+
+.phone-stage { position: relative; display: grid; place-items: center; min-height: 560px; }
+.phone {
+  position: relative; width: 320px; padding: 14px; border-radius: 48px;
+  background: #2a2a27; box-shadow: 0 40px 80px rgb(34 34 31 / 25%), inset 0 0 0 2px #3b3b37;
+  transform: rotate(3deg);
+}
+.screen { border-radius: 36px; overflow: hidden; background: #e7ebe1; height: 560px; display: flex; flex-direction: column; }
+.chat-head { display: flex; align-items: center; gap: 10px; padding: 18px 16px 12px; background: #fff; }
+.chat-head .ava { width: 38px; height: 38px; border-radius: 50%; background: var(--sand); display: grid; place-items: center; }
+.chat-head b { font-size: 15px; display: block; line-height: 1.2; }
+.chat-head small { font-size: 12px; color: var(--muted); }
+.chat { flex: 1; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; justify-content: flex-end; }
+.bubble { max-width: 86%; padding: 9px 12px; border-radius: 18px; font-size: 13.5px; line-height: 1.4; background: #fff; box-shadow: 0 1px 1px rgb(0 0 0 / 6%); opacity: 0; transform: translateY(12px); animation: pop .5s ease forwards; }
+.bubble.me { align-self: flex-end; background: #dff0cf; border-bottom-right-radius: 6px; }
+.bubble.bot { border-bottom-left-radius: 6px; }
+.bubble.photo { padding: 4px; }
+.bubble.photo img { width: 170px; height: 150px; object-fit: cover; border-radius: 14px; background: #f3efe6; }
+.b1 { animation-delay: .3s; } .b2 { animation-delay: 1.1s; } .b3 { animation-delay: 1.9s; }
+@keyframes pop { to { opacity: 1; transform: none; } }
+.macro-row { display: flex; gap: 6px; margin: 8px 0 6px; }
+.macro-row span { flex: 1; text-align: center; padding: 6px 2px; border-radius: 10px; font-size: 11.5px; font-weight: 600; }
+.macro-row span b { display: block; font-size: 15px; }
+.m-p { background: var(--sage-soft); color: var(--accent-dark); }
+.m-f { background: var(--peach-soft); color: #9a6420; }
+.m-c { background: #f1e6dd; color: #7d5a45; }
+.day-bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-top: 6px; }
+.day-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; animation: fill 1.2s 2.4s ease forwards; }
+@keyframes fill { to { width: 74%; } }
+.float {
+  position: absolute; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow);
+  padding: 14px 16px; font-size: 14px; font-weight: 600; display: flex; gap: 12px; align-items: center;
+  animation: bob 5s ease-in-out infinite;
+}
+.float img { width: 56px; height: 56px; }
+.float small { display: block; font-weight: 500; color: var(--muted); font-size: 12.5px; }
+.f1 { left: -70px; top: 232px; }
+.f2 { right: -16px; bottom: 90px; animation-delay: -2.5s; }
+@keyframes bob { 50% { transform: translateY(-10px); } }
+
+section { padding: 72px 0; }
+.sec-head { max-width: 720px; margin-bottom: 40px; }
+.sec-head h2 { font-size: clamp(32px, 4.2vw, 50px); font-weight: 800; letter-spacing: -0.035em; }
+.sec-head p { margin-top: 14px; color: #55524b; font-size: 19px; }
+.kicker { display: block; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 12px; }
+
+.calc { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card { background: var(--surface); border-radius: var(--radius); padding: 32px; box-shadow: var(--shadow); }
+.field { margin-bottom: 22px; }
+.field > label, .field > .label { display: block; font-weight: 600; font-size: 15px; margin-bottom: 10px; }
+.field .hint { font-weight: 400; color: var(--muted); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.input {
+  position: relative; display: flex; align-items: center;
+  background: var(--surface-2); border-radius: 18px; border: 2px solid transparent; transition: border-color .15s;
+}
+.input:focus-within { border-color: var(--accent); background: #fff; }
+.input input { width: 100%; border: 0; background: transparent; font: inherit; font-size: 22px; font-weight: 700; padding: 14px 16px; outline: none; color: var(--ink); -moz-appearance: textfield; }
+.input input::-webkit-outer-spin-button, .input input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.input span { padding-right: 16px; color: var(--muted); font-weight: 600; }
+.seg { display: grid; gap: 8px; }
+.seg.three { grid-template-columns: repeat(3, 1fr); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label {
+  display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 16px; cursor: pointer;
+  background: var(--surface-2); border: 2px solid transparent; font-weight: 600; font-size: 15px; transition: .15s;
+}
+.seg label small { font-weight: 400; color: var(--muted); font-size: 13px; line-height: 1.3; }
+.seg label:hover { background: #ebe7de; }
+.seg input:checked + label { background: var(--sage-soft); border-color: var(--accent); }
+.seg input:focus-visible + label { outline: 2px solid var(--ink); outline-offset: 2px; }
+.check { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+.result { background: var(--ink); color: #fff; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.result::after { content: ""; position: absolute; right: -120px; top: -120px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgb(142 158 134 / 45%), transparent 70%); }
+.result .label { color: #b9b6ad; font-weight: 600; font-size: 15px; }
+.ring-wrap { display: flex; align-items: center; gap: 26px; margin: 18px 0 24px; position: relative; z-index: 1; }
+.ring { position: relative; width: 170px; height: 170px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 14; }
+.ring .track { stroke: #3a3a35; }
+.ring .val { stroke: url(#g); stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+.ring .num { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .num b { font-size: 46px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+.ring .num small { color: #b9b6ad; font-size: 14px; }
+.range-txt { font-size: 15px; color: #d8d5cc; }
+.range-txt b { color: #fff; font-size: 22px; display: block; margin-bottom: 4px; }
+.per-meal { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.per-meal div { background: #2f2f2b; border-radius: 18px; padding: 14px; }
+.per-meal b { display: block; font-size: 22px; }
+.per-meal small { color: #b9b6ad; font-size: 13px; line-height: 1.3; display: block; }
+.note { margin-top: 18px; font-size: 14px; color: #b9b6ad; position: relative; z-index: 1; }
+.result .btn { margin-top: auto; position: relative; z-index: 1; }
+.result .cta-box { margin-top: 24px; padding-top: 22px; border-top: 1px solid #3a3a35; position: relative; z-index: 1; }
+.result .cta-box p { font-size: 15px; color: #d8d5cc; margin-bottom: 14px; }
+
+.features { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
+.feat { border-radius: var(--radius); padding: 28px; position: relative; overflow: hidden; min-height: 250px; display: flex; flex-direction: column; justify-content: space-between; transition: transform .2s ease; }
+.feat:hover { transform: translateY(-4px); }
+.feat h3 { font-size: 24px; font-weight: 700; }
+.feat p { margin-top: 10px; color: #4a4842; font-size: 16px; max-width: 360px; }
+.feat img { width: 150px; align-self: flex-end; margin: -10px -6px -12px 0; }
+.feat.big { grid-column: span 3; min-height: 300px; }
+.feat.big img { width: 190px; }
+.feat.mid { grid-column: span 2; }
+.feat .ico { width: 64px; height: 64px; border-radius: 20px; background: rgb(255 255 255 / 60%); display: grid; place-items: center; align-self: flex-end; }
+.feat .ico svg { width: 32px; height: 32px; }
+.bg-peach { background: var(--peach-soft); }
+.bg-sage { background: var(--sage-soft); }
+.bg-sand { background: #ece6dd; }
+.bg-sky { background: #e2edf1; }
+.bg-blush { background: #f7e1d5; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: s; }
+.step { background: var(--surface); border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow); }
+.step::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--ink); color: #fff; font-weight: 800; font-size: 20px; margin-bottom: 20px; }
+.step h3 { font-size: 21px; margin-bottom: 8px; }
+.step p { color: #55524b; font-size: 16px; }
+
+.norms { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.norm { background: var(--surface); border-radius: 24px; padding: 24px; box-shadow: var(--shadow); }
+.norm b { display: block; font-size: 30px; font-weight: 800; letter-spacing: -0.03em; color: var(--accent-dark); }
+.norm b small { font-size: 15px; font-weight: 600; color: var(--muted); }
+.norm h3 { font-size: 17px; margin: 8px 0 6px; }
+.norm p { font-size: 15px; color: #55524b; }
+
+.article { max-width: 780px; }
+.article h3 { font-size: 24px; margin: 34px 0 10px; }
+.article p { margin-bottom: 12px; color: #3d3b36; }
+.article ul { padding-left: 22px; color: #3d3b36; }
+.article li { margin-bottom: 6px; }
+
+.table-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.chip { padding: 9px 16px; border-radius: 999px; background: var(--surface); border: 0; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.table-card { padding: 8px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+th { text-align: left; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 14px 16px; font-weight: 700; }
+td { padding: 13px 16px; border-top: 1px solid var(--border); }
+td.num { font-weight: 700; white-space: nowrap; }
+.bar { display: flex; align-items: center; gap: 10px; min-width: 150px; white-space: nowrap; }
+.bar i { height: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--sage-deep), var(--accent)); }
+tr[hidden] { display: none; }
+.cat { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--muted); margin-left: 6px; vertical-align: 2px; }
+.small-note { margin-top: 14px; font-size: 14px; color: var(--muted); }
+
+.faq { max-width: 860px; }
+details { background: var(--surface); border-radius: 22px; margin-bottom: 10px; box-shadow: 0 1px 2px rgb(0 0 0 / 4%); }
+summary { cursor: pointer; list-style: none; padding: 22px 60px 22px 26px; font-weight: 600; font-size: 18px; position: relative; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; position: absolute; right: 24px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-size: 20px; transition: transform .2s; }
+details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+details p { padding: 0 26px 22px; color: #4a4842; }
+
+.final { padding: 40px 0 90px; }
+.final .box {
+  background: var(--ink); color: #fff; border-radius: 40px; padding: 60px; display: grid;
+  grid-template-columns: 1.3fr .7fr; gap: 30px; align-items: center; position: relative; overflow: hidden;
+}
+.final .box::before { content: ""; position: absolute; left: -100px; bottom: -200px; width: 500px; height: 500px; background: radial-gradient(circle, rgb(248 207 148 / 30%), transparent 65%); }
+.final h2 { font-size: clamp(32px, 4.5vw, 54px); font-weight: 800; letter-spacing: -0.035em; position: relative; }
+.final p { color: #cfccc3; margin: 16px 0 28px; font-size: 19px; position: relative; }
+.final img { width: 100%; max-width: 320px; justify-self: center; position: relative; }
+.final .btn { position: relative; }
+
+footer { padding: 30px 0 50px; color: var(--muted); font-size: 14px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 26px; }
+
+.js .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+.js .reveal.in { opacity: 1; transform: none; }
+
+@media (max-width: 960px) {
+  .hero .wrap, .calc, .final .box { grid-template-columns: 1fr; }
+  .phone-stage { min-height: 0; padding: 20px 0; }
+  .features { grid-template-columns: 1fr 1fr; }
+  .feat.big, .feat.mid { grid-column: span 1; }
+  .steps, .norms { grid-template-columns: 1fr 1fr; }
+  .nav-links a:not(.btn) { display: none; }
+  .final .box { padding: 40px 28px; }
+  .final img { max-width: 220px; }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  section { padding: 52px 0; }
+  .features, .steps, .norms { grid-template-columns: 1fr; }
+  .card { padding: 22px; }
+  .seg.three { grid-template-columns: 1fr; }
+  .ring-wrap { flex-direction: column; align-items: flex-start; }
+  .phone { width: 280px; }
+  .screen { height: 500px; }
+  .f1 { display: none; }
+  .feat, .feat.big { min-height: 0; gap: 18px; }
+  .f2 { right: -6px; bottom: 40px; }
+  .float img { width: 42px; height: 42px; }
+  td, th { padding: 11px 10px; }
+  .bar { min-width: 90px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .bubble, .reveal { opacity: 1; transform: none; }
+  .day-bar i { width: 74%; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/kalkulyator-belka/">
+      <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="17" fill="none" stroke="#8e9e86" stroke-width="2.5"/><path d="M34.95 15.26A17 17 0 0 1 48.74 34.95M29.05 48.74A17 17 0 0 1 15.26 29.05" fill="none" stroke="#22221f" stroke-width="4.5" stroke-linecap="round"/><circle cx="32" cy="32" r="6" fill="#8e9e86"/></svg>
+      белок
+    </a>
+    <nav class="nav-links">
+      <a href="#calc">Калькулятор</a>
+      <a href="#table">Таблица белка</a>
+      <a href="#bot">Бот</a>
+      <a href="#faq">Вопросы</a>
+      <a class="btn small tg" href="https://t.me/kbjubelokbot?start=seo_protein_nav">Открыть в Telegram</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow"><i></i>Бесплатный калькулятор</span>
+        <h1>Сколько <em>белка</em> нужно тебе в&nbsp;день?</h1>
+        <p class="lead">Посчитай норму белка по весу, цели и активности за 10 секунд. А потом не держи её в голове: сфотографируй тарелку в Telegram, и бот сам посчитает белок, жиры, углеводы и калории.</p>
+        <div class="hero-cta">
+          <a class="btn" href="#calc">Посчитать норму
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          </a>
+          <a class="btn ghost" href="https://t.me/kbjubelokbot?start=seo_protein_hero">Считать белок по фото</a>
+        </div>
+        <div class="proof">
+          <div><b>4 дня</b>Premium бесплатно</div>
+          <div><b>~5 сек</b>на запись приёма пищи</div>
+          <div><b>0 ₽</b>ручной учёт навсегда</div>
+        </div>
+      </div>
+
+      <div class="phone-stage" aria-hidden="true">
+        <div class="phone">
+          <div class="screen">
+            <div class="chat-head">
+              <div class="ava"><svg width="26" height="26" viewBox="0 0 64 64"><circle cx="32" cy="32" r="17" fill="none" stroke="#8e9e86" stroke-width="3"/><path d="M34.95 15.26A17 17 0 0 1 48.74 34.95M29.05 48.74A17 17 0 0 1 15.26 29.05" fill="none" stroke="#22221f" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="32" r="6" fill="#8e9e86"/></svg></div>
+              <div><b>Белок</b><small>бот</small></div>
+            </div>
+            <div class="chat">
+              <div class="bubble me photo b1"><img src="/art/feature-photo.webp" alt="" width="170" height="150" /></div>
+              <div class="bubble bot b2">
+                <b>Курица с булгуром и овощами</b> · 520 ккал
+                <div class="macro-row">
+                  <span class="m-p"><b>42 г</b>белки</span>
+                  <span class="m-f"><b>14 г</b>жиры</span>
+                  <span class="m-c"><b>55 г</b>углев.</span>
+                </div>
+              </div>
+              <div class="bubble bot b3">
+                Белок за день: <b>96 из 130 г</b>
+                <div class="day-bar"><i></i></div>
+                <span style="color:#7d796f;font-size:12px">Осталось 34 г, например 200 г творога</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="float f1"><img src="/art/feature-target.webp" alt="" width="56" height="56" /><div>Норма под тебя<small>учитывает шаги и тренировки</small></div></div>
+        <div class="float f2"><img src="/art/meal-done.webp" alt="" width="56" height="56" /><div>Записано<small>+42 г белка</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="calc">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Калькулятор белка</span>
+        <h2>Твоя норма белка в граммах</h2>
+        <p>Расчёт по рекомендациям для здоровых взрослых: от 0,8 г на кг веса без нагрузок до 2,0–2,4 г/кг при силовых тренировках и похудении.</p>
+      </div>
+      <div class="calc">
+        <form class="card" id="calc-form" novalidate>
+          <div class="row2 field">
+            <div>
+              <label for="weight">Вес</label>
+              <div class="input"><input id="weight" type="number" inputmode="decimal" min="30" max="250" step="0.1" value="70" /><span>кг</span></div>
+            </div>
+            <div>
+              <label for="height">Рост <span class="hint">(необяз.)</span></label>
+              <div class="input"><input id="height" type="number" inputmode="numeric" min="120" max="230" placeholder="175" /><span>см</span></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="label">Цель</span>
+            <div class="seg three" role="radiogroup">
+              <input type="radio" name="goal" id="g-lose" value="lose" checked /><label for="g-lose">Похудеть<small>сохранить мышцы</small></label>
+              <input type="radio" name="goal" id="g-keep" value="maintain" /><label for="g-keep">Держать вес<small>и форму</small></label>
+              <input type="radio" name="goal" id="g-gain" value="gain" /><label for="g-gain">Набрать<small>мышечную массу</small></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="label">Активность</span>
+            <div class="seg" role="radiogroup">
+              <input type="radio" name="act" id="a-low" value="low" /><label for="a-low">Мало движения<small>сидячая работа, без спорта</small></label>
+              <input type="radio" name="act" id="a-mid" value="mid" checked /><label for="a-mid">Умеренная<small>фитнес, бег или много шагов 2–3 раза в неделю</small></label>
+              <input type="radio" name="act" id="a-high" value="high" /><label for="a-high">Силовые тренировки<small>зал 3+ раза в неделю</small></label>
+            </div>
+          </div>
+
+          <label class="check"><input type="checkbox" id="senior" /> Мне 65 лет или больше</label>
+        </form>
+
+        <div class="card result" aria-live="polite">
+          <span class="label">Белка в день</span>
+          <div class="ring-wrap">
+            <div class="ring">
+              <svg viewBox="0 0 170 170" aria-hidden="true">
+                <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d3e4c8"/><stop offset="1" stop-color="#8e9e86"/></linearGradient></defs>
+                <circle class="track" cx="85" cy="85" r="70" />
+                <circle class="val" id="ring-val" cx="85" cy="85" r="70" stroke-dasharray="439.8" stroke-dashoffset="439.8" />
+              </svg>
+              <div class="num"><b id="r-target">125</b><small>грамм</small></div>
+            </div>
+            <div class="range-txt">
+              <b id="r-range">110–140 г</b>
+              <span id="r-perkg">1,6–2,0 г на кг веса</span>
+            </div>
+          </div>
+          <div class="per-meal">
+            <div><b id="r-meal">31 г</b><small>белка на приём при 4 приёмах</small></div>
+            <div><b id="r-chicken">135 г</b><small>куриной грудки на приём</small></div>
+            <div><b id="r-eggs">5</b><small>яиц на тот же белок</small></div>
+          </div>
+          <p class="note" id="r-note"></p>
+          <div class="cta-box">
+            <p>Узнать норму легко, добирать её каждый день сложнее. Бот запомнит цель и после каждого приёма пищи покажет, сколько белка осталось.</p>
+            <a class="btn tg" href="https://t.me/kbjubelokbot?start=seo_protein_calc">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.7.8l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.5 13.2 1.8 11.7c-1-.3-1-1 .2-1.5L20.6 3c.9-.3 1.6.2 1.3 1.3z"/></svg>
+              Следить за белком в Telegram
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="bot">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Бот Белок в Telegram</span>
+        <h2>Считать белок теперь занимает 5 секунд</h2>
+        <p>Без весов на каждый приём и поиска продуктов в таблицах. Пишешь, говоришь или фотографируешь, бот делает остальное.</p>
+      </div>
+      <div class="features">
+        <article class="feat big bg-peach reveal">
+          <div><h3>КБЖУ по фото</h3><p>Сфотографируй тарелку: нейросеть узнает блюда, оценит порцию и посчитает белок, жиры, углеводы и калории. Порцию можно поправить одним касанием.</p></div>
+          <img src="/art/meal-photo.webp" alt="Фото еды для подсчёта КБЖУ" width="400" height="400" loading="lazy" />
+        </article>
+        <article class="feat big bg-sage reveal">
+          <div><h3>Норма, которая подстраивается</h3><p>Шаги и тренировки добавляют калории, цель задаёт дефицит или профицит. Когда накопится история веса и питания, норма считается по твоему реальному расходу.</p></div>
+          <img src="/art/feature-target.webp" alt="Суточная норма белка и калорий" width="400" height="400" loading="lazy" />
+        </article>
+        <article class="feat mid bg-sand reveal">
+          <div><h3>Голосом</h3><p>«Овсянка на молоке и два яйца» в голосовом, и приём записан.</p></div>
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#22221f" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
+        </article>
+        <article class="feat mid bg-sky reveal">
+          <div><h3>По штрихкоду</h3><p>Наведи камеру на упаковку, и КБЖУ подтянется из базы продуктов.</p></div>
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#22221f" stroke-width="1.8" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></div>
+        </article>
+        <article class="feat mid bg-blush reveal">
+          <div><h3>Дневник тренировок</h3><p>Подходы, рабочие веса и прогресс по каждому упражнению рядом с питанием.</p></div>
+          <img src="/art/feature-gym.webp" alt="Дневник тренировок" width="400" height="400" loading="lazy" style="width:120px" />
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Как начать</span>
+        <h2>Три шага до нормы белка каждый день</h2>
+      </div>
+      <div class="steps">
+        <div class="step reveal"><h3>Открой бота</h3><p>Нажми «Старт» в Telegram. Ничего не нужно скачивать и регистрироваться: вход по твоему аккаунту.</p></div>
+        <div class="step reveal"><h3>Укажи вес и цель</h3><p>Бот посчитает норму калорий и белка. Её можно поменять вручную в любой момент.</p></div>
+        <div class="step reveal"><h3>Отправляй еду</h3><p>Фото, голосовое, текст или штрихкод. В конце дня видно, сколько белка съедено и сколько осталось.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Нормы белка</span>
+        <h2>Сколько белка нужно в день: коротко</h2>
+      </div>
+      <div class="norms">
+        <div class="norm reveal"><b>0,8–1,0 <small>г/кг</small></b><h3>Без спорта</h3><p>Минимум, чтобы закрыть базовые потребности взрослого.</p></div>
+        <div class="norm reveal"><b>1,2–1,6 <small>г/кг</small></b><h3>Активный образ жизни</h3><p>Регулярный фитнес, бег, много ходьбы.</p></div>
+        <div class="norm reveal"><b>1,6–2,2 <small>г/кг</small></b><h3>Силовые и набор мышц</h3><p>Больше 2,2 г/кг дополнительного роста мышц почти не даёт.</p></div>
+        <div class="norm reveal"><b>1,8–2,4 <small>г/кг</small></b><h3>Похудение с тренировками</h3><p>На дефиците калорий белок помогает сохранить мышцы и меньше хотеть есть.</p></div>
+      </div>
+
+      <div class="article reveal" style="margin-top:44px">
+        <h3>Как рассчитать норму белка самостоятельно</h3>
+        <p>Умножь свой вес в килограммах на коэффициент для твоей активности. Например, при весе 70 кг и трёх тренировках в зале в неделю: 70 × 1,6 = 112 г и 70 × 2,2 = 154 г. Значит, ориентир от 110 до 155 г белка в день.</p>
+        <p>Если ИМТ больше 30, считай не от текущего веса, а от веса при ИМТ около 25 или от целевого. При весе 110 кг и росте 175 см это 25 × 1,75² ≈ 77 кг, и норма при похудении будет 140–185 г, а не 200–260 г.</p>
+
+        <h3>Белок при похудении</h3>
+        <p>Когда калорий меньше, чем нужно, организм тратит не только жир, но и мышцы. Высокий белок и силовые тренировки уменьшают эти потери. Ещё белок насыщает лучше углеводов и жиров, поэтому на дефиците с ним проще.</p>
+
+        <h3>Белок для набора мышечной массы</h3>
+        <p>Для роста мышц нужны тренировки с нагрузкой, небольшой профицит калорий и 1,6–2,2 г белка на кг. Делить норму удобно на 3–5 приёмов по 25–40 г: так белок равномернее поступает в течение дня.</p>
+
+        <h3>Кому нужно больше или меньше белка</h3>
+        <ul>
+          <li>После 65 лет мышцы хуже отвечают на белок, поэтому нужно не меньше 1,0–1,2 г/кг.</li>
+          <li>При беременности и кормлении потребность выше, норму лучше обсудить с врачом.</li>
+          <li>При болезнях почек количество белка подбирает только врач.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="table">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Таблица белка в продуктах</span>
+        <h2>Где больше всего белка</h2>
+        <p>Содержание белка на 100 г продукта и сколько продукта нужно съесть, чтобы получить 30 г белка, это примерно один хороший приём пищи.</p>
+      </div>
+      <div class="table-tools" role="group" aria-label="Фильтр по категории">
+        <button class="chip" type="button" data-cat="all" aria-pressed="true">Все</button>
+        <button class="chip" type="button" data-cat="meat" aria-pressed="false">Мясо и птица</button>
+        <button class="chip" type="button" data-cat="fish" aria-pressed="false">Рыба</button>
+        <button class="chip" type="button" data-cat="dairy" aria-pressed="false">Молочное и яйца</button>
+        <button class="chip" type="button" data-cat="plant" aria-pressed="false">Растительное</button>
+      </div>
+      <div class="card table-card">
+        <table>
+          <thead><tr><th>Продукт</th><th>Белок на 100 г</th><th>Для 30 г белка</th></tr></thead>
+          <tbody id="protein-table">
+            <tr data-cat="meat"><td>Куриная грудка<span class="cat">сырая</span></td><td class="num" data-p="23">23 г</td><td></td></tr>
+            <tr data-cat="meat"><td>Филе индейки<span class="cat">сырое</span></td><td class="num" data-p="22">22 г</td><td></td></tr>
+            <tr data-cat="meat"><td>Свиная вырезка<span class="cat">сырая</span></td><td class="num" data-p="21">21 г</td><td></td></tr>
+            <tr data-cat="meat"><td>Говядина постная<span class="cat">сырая</span></td><td class="num" data-p="20">20 г</td><td></td></tr>
+            <tr data-cat="meat"><td>Печень говяжья</td><td class="num" data-p="20">20 г</td><td></td></tr>
+            <tr data-cat="fish"><td>Тунец консервированный<span class="cat">в собств. соку</span></td><td class="num" data-p="23">23 г</td><td></td></tr>
+            <tr data-cat="fish"><td>Лосось</td><td class="num" data-p="20">20 г</td><td></td></tr>
+            <tr data-cat="fish"><td>Кальмар</td><td class="num" data-p="18">18 г</td><td></td></tr>
+            <tr data-cat="fish"><td>Минтай</td><td class="num" data-p="16">16 г</td><td></td></tr>
+            <tr data-cat="dairy"><td>Сыр твёрдый</td><td class="num" data-p="24">24 г</td><td></td></tr>
+            <tr data-cat="dairy"><td>Творог 0–2%</td><td class="num" data-p="18">18 г</td><td></td></tr>
+            <tr data-cat="dairy"><td>Творог 5%</td><td class="num" data-p="17">17 г</td><td></td></tr>
+            <tr data-cat="dairy"><td>Яйцо куриное<span class="cat">≈ 6 г в штуке</span></td><td class="num" data-p="13">13 г</td><td></td></tr>
+            <tr data-cat="dairy"><td>Греческий йогурт</td><td class="num" data-p="9">9 г</td><td></td></tr>
+            <tr data-cat="dairy"><td>Кефир, молоко</td><td class="num" data-p="3">3 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Тыквенные семечки</td><td class="num" data-p="30">30 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Арахис</td><td class="num" data-p="26">26 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Чечевица<span class="cat">сухая</span></td><td class="num" data-p="24">24 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Миндаль</td><td class="num" data-p="21">21 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Фасоль<span class="cat">сухая</span></td><td class="num" data-p="21">21 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Нут<span class="cat">сухой</span></td><td class="num" data-p="19">19 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Гречка<span class="cat">сухая</span></td><td class="num" data-p="13">13 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Овсяные хлопья</td><td class="num" data-p="12">12 г</td><td></td></tr>
+            <tr data-cat="plant"><td>Макароны из твёрдых сортов<span class="cat">сухие</span></td><td class="num" data-p="12">12 г</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small-note">Значения средние и зависят от производителя и сорта. При варке крупы и бобовые набирают воду, поэтому на 100 г готового продукта белка в 2–3 раза меньше. Орехи и семечки очень калорийные, как основной источник белка они не подходят.</p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Вопросы</span>
+        <h2>Частые вопросы о белке</h2>
+      </div>
+      <div class="faq">
+        <details open><summary>Сколько белка нужно в день?</summary><p>Минимум для взрослого без нагрузок 0,8 г на килограмм веса. Если ты регулярно двигаешься, ориентир 1,2–1,6 г/кг, при силовых тренировках 1,6–2,2 г/кг, на дефиците калорий лучше держаться ближе к верхней границе.</p></details>
+        <details><summary>Сколько белка усваивается за один приём пищи?</summary><p>Ограничения в 30 г нет: организм усваивает весь съеденный белок, просто дольше. Для мышц удобно делить норму на 3–5 приёмов примерно по 0,4 г/кг каждый.</p></details>
+        <details><summary>Вредно ли много белка для почек?</summary><p>У здоровых людей потребление до 2 г/кг и выше в исследованиях не вредит почкам. Если есть болезнь почек, норму белка нужно согласовать с врачом.</p></details>
+        <details><summary>Как считать белок при лишнем весе?</summary><p>При ИМТ от 30 норму удобнее считать не от текущего веса, а от веса при ИМТ около 25 или от целевого веса, иначе цифра получится завышенной. Калькулятор выше делает это сам, если указать рост.</p></details>
+        <details><summary>Нужен ли протеин, чтобы добрать норму?</summary><p>Нет, протеин это просто удобный продукт. Норму можно набрать из мяса, рыбы, яиц, творога, сыра и бобовых. Протеиновый коктейль выручает, когда не хватает 20–30 г.</p></details>
+        <details><summary>Как удобно считать белок каждый день?</summary><p>Проще всего в Telegram-боте Белок: отправь фото еды, голосовое или штрихкод, и бот посчитает белок, жиры, углеводы и калории и покажет, сколько белка осталось до нормы. Ручной учёт бесплатный, распознавание по фото можно попробовать 4 дня бесплатно.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <div class="box">
+        <div>
+          <h2>Норму ты уже знаешь. Осталось её добирать</h2>
+          <p>Отправь боту фото обеда, и через пару секунд увидишь, сколько белка уже съедено и сколько осталось на сегодня.</p>
+          <a class="btn tg" href="https://t.me/kbjubelokbot?start=seo_protein_final">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.7.8l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.5 13.2 1.8 11.7c-1-.3-1-1 .2-1.5L20.6 3c.9-.3 1.6.2 1.3 1.3z"/></svg>
+            Начать бесплатно в Telegram
+          </a>
+        </div>
+        <img src="/art/onboarding.webp" alt="Здоровая еда, весы и сантиметр" width="400" height="400" loading="lazy" />
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© Белок · <a href="/">Веб-версия</a></span>
+    <span>Информация на странице не заменяет консультацию врача.</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const RANGES = {
+    low: { lose: [1.2, 1.6], maintain: [0.8, 1.0], gain: [1.2, 1.6] },
+    mid: { lose: [1.6, 2.0], maintain: [1.2, 1.6], gain: [1.6, 2.0] },
+    high: { lose: [1.8, 2.4], maintain: [1.6, 2.0], gain: [1.6, 2.2] },
+  };
+  const MEALS = 4;
+  const CIRC = 2 * Math.PI * 70;
+  const $ = (id) => document.getElementById(id);
+  const form = $("calc-form");
+  const fmt = (n) => String(n).replace(".", ",");
+  const round5 = (n) => Math.round(n / 5) * 5;
+
+  function calc() {
+    const weight = parseFloat($("weight").value.replace(",", "."));
+    const heightCm = parseFloat($("height").value);
+    const goal = form.goal.value;
+    const act = form.act.value;
+    if (!(weight >= 30 && weight <= 250)) {
+      $("r-note").textContent = "Введи вес от 30 до 250 кг.";
+      return;
+    }
+    let [lo, hi] = RANGES[act][goal];
+    if ($("senior").checked) { lo = Math.max(lo, 1.0); hi = Math.max(hi, 1.2); }
+
+    let base = weight;
+    let note = "";
+    if (heightCm >= 120 && heightCm <= 230) {
+      const h = heightCm / 100;
+      const bmi = weight / (h * h);
+      if (bmi >= 30) {
+        base = Math.round(25 * h * h);
+        note = `ИМТ ${fmt(bmi.toFixed(1))}, поэтому считаем от ${base} кг (вес при ИМТ 25), а не от текущего веса.`;
+      }
+    }
+    const min = round5(base * lo);
+    const max = round5(base * hi);
+    const target = round5((min + max) / 2);
+    const meal = Math.round(target / MEALS);
+
+    $("r-target").textContent = target;
+    $("r-range").textContent = `${min}–${max} г`;
+    $("r-perkg").textContent = `${fmt(lo.toFixed(1))}–${fmt(hi.toFixed(1))} г на кг веса`;
+    $("r-meal").textContent = `${meal} г`;
+    $("r-chicken").textContent = `${round5(meal / 23 * 100)} г`;
+    $("r-eggs").textContent = Math.max(1, Math.round(meal / 6.3));
+    $("r-note").textContent = note;
+    $("ring-val").style.strokeDashoffset = CIRC * (1 - Math.min(target / 250, 1) * 0.92);
+  }
+  form.addEventListener("input", calc);
+  form.addEventListener("submit", (e) => e.preventDefault());
+  calc();
+
+  document.querySelectorAll("#protein-table tr").forEach((tr) => {
+    const p = Number(tr.querySelector("[data-p]").dataset.p);
+    const cell = tr.lastElementChild;
+    cell.innerHTML = `<div class="bar"><i style="width:${Math.round(p / 30 * 75)}%"></i><span>${Math.round(30 / p * 100)} г</span></div>`;
+  });
+  document.querySelectorAll(".chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const cat = chip.dataset.cat;
+      document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+      document.querySelectorAll("#protein-table tr").forEach((tr) => {
+        tr.hidden = cat !== "all" && tr.dataset.cat !== cat;
+      });
+    });
+  });
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+})();
+</script>
+</body>
+</html>
