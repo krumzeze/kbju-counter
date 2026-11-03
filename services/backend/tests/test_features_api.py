@@ -104,6 +104,7 @@ async def test_water_is_added_and_clamped(client):
 
 async def test_barcode_lookup_is_cached(client, food_db):
     headers = await onboarded(client)
+    await client.put("/api/me/language", json={"language": "ru"}, headers=headers)
     food_db.products["4600000000008"] = ProductInfo("Кефир", 53, 2.9, 2.5, 4, 250)
     for _ in range(2):
         r = await client.get("/api/barcode/4600000000008", headers=headers)
@@ -146,6 +147,24 @@ async def test_manual_meal_with_barcode_is_remembered(client, food_db):
     assert product["name"] == "Сырок"
     assert product["serving_g"] == 40
     assert food_db.lookups == []
+
+
+async def test_stats_sum_each_day(client):
+    headers = await onboarded(client)
+    body = {"title": "Rice", "grams": 200, "kcal": 130, "protein": 2.5, "fat": 0.5, "carbs": 28}
+    await client.post("/api/meals/manual", json=body, headers=headers)
+    await client.post("/api/meals/manual", json=body, headers=headers)
+    await client.put("/api/steps/today", json={"steps": 4000}, headers=headers)
+
+    stats = (await client.get("/api/stats?days=7", headers=headers)).json()
+    assert len(stats["days"]) == 7
+    today = stats["days"][-1]
+    assert today["eaten"]["kcal"] == 520
+    assert (today["steps"], today["water_ml"], today["sets"]) == (4000, 0, 0)
+    assert stats["days"][0]["eaten"]["kcal"] == 0
+    assert stats["target"]["kcal"] > 0
+    assert stats["limited"] is False
+    assert (await client.get("/api/stats?days=0", headers=headers)).status_code == 422
 
 
 def at(hour: int, minute: int = 0) -> datetime:

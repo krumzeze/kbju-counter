@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.db.models import BodyWeight, DailyActivity, LlmUsage, Meal, User, WorkoutSet
+from belok.db.models import BodyWeight, DailyActivity, LlmUsage, Meal, MealItem, User, WorkoutSet
 from belok.domain.nutrition import Macros
 from belok.services.targets import Target, target_on
 
@@ -123,3 +123,62 @@ async def day_summary(session: AsyncSession, user: User, day: date) -> DaySummar
         sets,
         weight,
     )
+
+
+@dataclass(frozen=True, slots=True)
+class DayStats:
+    day: date
+    eaten: Macros
+    steps: int
+    water_ml: int
+    sets: int
+
+
+async def daily_stats(
+    session: AsyncSession, user_id: int, start: date, end: date
+) -> list[DayStats]:
+    meal_rows = await session.execute(
+        select(
+            Meal.day,
+            func.sum(MealItem.kcal * Meal.scale),
+            func.sum(MealItem.protein * Meal.scale),
+            func.sum(MealItem.fat * Meal.scale),
+            func.sum(MealItem.carbs * Meal.scale),
+        )
+        .join(MealItem, MealItem.meal_id == Meal.id)
+        .where(Meal.user_id == user_id, Meal.day.between(start, end))
+        .group_by(Meal.day)
+    )
+    eaten = {day: Macros(*values) for day, *values in meal_rows}
+    activity = {
+        a.day: a
+        for a in await session.scalars(
+            select(DailyActivity).where(
+                DailyActivity.user_id == user_id, DailyActivity.day.between(start, end)
+            )
+        )
+    }
+    sets = dict(
+        (
+            await session.execute(
+                select(WorkoutSet.day, func.count())
+                .where(WorkoutSet.user_id == user_id, WorkoutSet.day.between(start, end))
+                .group_by(WorkoutSet.day)
+            )
+        ).all()
+    )
+    days = []
+    day = start
+    while day <= end:
+        a = activity.get(day)
+        days.append(
+            DayStats(
+                day,
+                eaten.get(day, Macros()),
+                a.steps if a else 0,
+                a.water_ml if a else 0,
+                sets.get(day, 0),
+            )
+        )
+        day += timedelta(days=1)
+    return days

@@ -19,7 +19,7 @@ import { Profile } from "./pages/Profile";
 import { Support } from "./pages/Support";
 import { TemplateEdit } from "./pages/TemplateEdit";
 import { Today } from "./pages/Today";
-import { Weight } from "./pages/Weight";
+import { Stats } from "./pages/Stats";
 import { WorkoutSession } from "./pages/WorkoutSession";
 import { Workouts } from "./pages/Workouts";
 import { AdminLayout } from "./pages/admin/AdminLayout";
@@ -111,7 +111,8 @@ function AuthenticatedApp() {
         <Route path="analytics" element={onboarded(<Analytics />)} />
         <Route path="templates/new" element={onboarded(<TemplateEdit />)} />
         <Route path="templates/:id" element={onboarded(<TemplateEdit />)} />
-        <Route path="weight" element={onboarded(<Weight />)} />
+        <Route path="stats" element={onboarded(<Stats />)} />
+        <Route path="weight" element={<Navigate to="/stats" replace />} />
         <Route path="profile" element={<Profile me={me} />} />
         <Route path="premium" element={onboarded(<Premium me={me} />)} />
         <Route path="support" element={<Support />} />

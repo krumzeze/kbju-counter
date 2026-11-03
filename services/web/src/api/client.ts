@@ -40,6 +40,7 @@ import type {
   UserPage,
   UserPatch,
   UserSort,
+  Stats,
   WeightPoint,
   WorkoutSet,
 } from "./types";
@@ -151,6 +152,7 @@ export const api = {
     request<Meal>("DELETE", `/meals/${mealId}/items/${itemId}`),
 
   weights: () => request<WeightPoint[]>("GET", "/weights"),
+  stats: (days: number) => request<Stats>("GET", `/stats?days=${days}`),
   addWater: (delta_ml: number) => request<{ water_ml: number }>("POST", "/water/today", { delta_ml }),
   saveWeight: (weight_kg: number) => request<void>("PUT", "/weights/today", { weight_kg }),
   saveSteps: (steps: number) => request<void>("PUT", "/steps/today", { steps }),

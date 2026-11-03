@@ -7,7 +7,7 @@ import { Logo } from "./Logo";
 const tabs = (): { to: string; label: string; icon: IconName }[] => [
   { to: "/", label: tr("Главная", "Home"), icon: "home" },
   { to: "/workouts", label: tr("Зал", "Gym"), icon: "gym" },
-  { to: "/weight", label: tr("Вес", "Weight"), icon: "weight" },
+  { to: "/stats", label: tr("Статистика", "Stats"), icon: "chart" },
   { to: "/profile", label: tr("Профиль", "Profile"), icon: "user" },
 ];
 
@@ -15,7 +15,7 @@ export function Layout() {
   useTelegramBackButton();
   const inAdmin = useLocation().pathname.startsWith("/admin");
   const classes = ["app", isMiniApp && "mini", inAdmin && "admin"].filter(Boolean).join(" ");
-  const [home, gym, weight, profile] = tabs();
+  const [home, gym, stats, profile] = tabs();
   return (
     <div className={classes}>
       {!isMiniApp && (
@@ -35,7 +35,7 @@ export function Layout() {
         <NavLink to="/add" className="tab-add" aria-label={tr("Добавить еду", "Add food")}>
           <Icon name="plus" size={26} />
         </NavLink>
-        <Tab {...weight} />
+        <Tab {...stats} />
         <Tab {...profile} />
       </nav>
     </div>
