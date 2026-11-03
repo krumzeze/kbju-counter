@@ -255,7 +255,7 @@ function WeightTile() {
   const points = (data ?? []).slice(-12);
   const last = points.at(-1);
   return (
-    <Link to="/weight" className="tile-card tone-sage">
+    <Link to="/stats" className="tile-card tone-sage">
       <h3>{tr("Вес", "Weight")}</h3>
       {points.length > 1 && <Spark values={points.map((p) => p.weight_kg)} />}
       <div>

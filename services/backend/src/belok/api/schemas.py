@@ -263,6 +263,22 @@ class WeightOut(BaseModel):
     weight_kg: float
 
 
+class StatsDayOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    day: date
+    eaten: MacrosOut
+    steps: int
+    water_ml: int
+    sets: int
+
+
+class StatsOut(BaseModel):
+    days: list[StatsDayOut]
+    target: MacrosOut | None
+    limited: bool
+
+
 class StepsIn(BaseModel):
     steps: int = Field(ge=0, le=100_000)
 

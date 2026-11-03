@@ -3409,3 +3409,9 @@ span.set-check {
 .theme-swatch span:nth-child(3) {
   flex: 1;
 }
+
+.stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

@@ -150,6 +150,20 @@ export interface ProfileInput {
   timezone?: string;
 }
 
+export interface StatsDay {
+  day: string;
+  eaten: Macros;
+  steps: number;
+  water_ml: number;
+  sets: number;
+}
+
+export interface Stats {
+  days: StatsDay[];
+  target: Macros | null;
+  limited: boolean;
+}
+
 export interface WeightPoint {
   day: string;
   weight_kg: number;

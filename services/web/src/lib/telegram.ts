@@ -30,7 +30,7 @@ export function shareLink(url: string, text: string) {
   else window.open(share, "_blank", "noopener");
 }
 
-const ROOT_PATHS = new Set(["/", "/workouts", "/weight", "/profile", "/admin"]);
+const ROOT_PATHS = new Set(["/", "/workouts", "/stats", "/profile", "/admin"]);
 
 export function useTelegramBackButton() {
   const location = useLocation();

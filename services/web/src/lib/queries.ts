@@ -10,6 +10,9 @@ export const useDay = (day: string) =>
 
 export const useWeights = () => useQuery({ queryKey: ["weights"], queryFn: api.weights });
 
+export const useStats = (days: number) =>
+  useQuery({ queryKey: ["stats", days], queryFn: () => api.stats(days), staleTime: 0 });
+
 export const useExercises = () => useQuery({ queryKey: ["exercises"], queryFn: api.exercises });
 
 export const useProgress = (exerciseId: number) =>
@@ -48,7 +51,7 @@ export const useWorkout = (id: number) =>
 export const useTemplates = () => useQuery({ queryKey: ["templates"], queryFn: api.templates });
 
 /** Everything derived from logged sets. */
-export const WORKOUT_KEYS = ["workout", "workouts", "exercises", "progress", "analytics", "day"];
+export const WORKOUT_KEYS = ["workout", "workouts", "exercises", "progress", "analytics", "day", "stats"];
 
 export function useInvalidate() {
   const client = useQueryClient();
