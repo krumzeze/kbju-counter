@@ -11,7 +11,7 @@ RUN wget -qO- "https://github.com/yuhonas/free-exercise-db/archive/${FREE_EXERCI
     | tar -xz -C /tmp "free-exercise-db-${FREE_EXERCISE_DB}/exercises" \
     && mv "/tmp/free-exercise-db-${FREE_EXERCISE_DB}/exercises" /exercise-img
 
-FROM nginxinc/nginx-unprivileged:1.30-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine AS runtime
 USER root
 RUN apk upgrade --no-cache
 COPY nginx.conf /etc/nginx/conf.d/default.conf
