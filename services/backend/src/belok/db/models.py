@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from enum import StrEnum
 
 from sqlalchemy import (
     JSON,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    TypeDecorator,
     UniqueConstraint,
     func,
     text,
@@ -20,6 +22,21 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from belok.domain.nutrition import Goal, Macros, Sex
 from belok.i18n import Language
+
+
+class StrEnumType[E: StrEnum](TypeDecorator[E]):
+    impl = String
+    cache_ok = True
+
+    def __init__(self, enum: type[E], length: int) -> None:
+        super().__init__(length)
+        self.enum = enum
+
+    def process_bind_param(self, value: E | str | None, dialect: object) -> str | None:
+        return None if value is None else self.enum(value).value
+
+    def process_result_value(self, value: str | None, dialect: object) -> E | None:
+        return None if value is None else self.enum(value)
 
 
 class Base(DeclarativeBase):
@@ -38,7 +55,7 @@ class User(Base):
     first_name: Mapped[str | None] = mapped_column(String(128))
     source: Mapped[str | None] = mapped_column(String(64))
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    language: Mapped[Language | None] = mapped_column(String(2))
+    language: Mapped[Language | None] = mapped_column(StrEnumType(Language, 2))
 
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
@@ -54,10 +71,10 @@ class User(Base):
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
 
-    sex: Mapped[Sex | None] = mapped_column(String(1))
+    sex: Mapped[Sex | None] = mapped_column(StrEnumType(Sex, 1))
     birth_year: Mapped[int | None] = mapped_column(Integer)
     height_cm: Mapped[int | None] = mapped_column(Integer)
-    goal: Mapped[Goal | None] = mapped_column(String(16))
+    goal: Mapped[Goal | None] = mapped_column(StrEnumType(Goal, 16))
     activity_adjust: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default=text("true")
     )

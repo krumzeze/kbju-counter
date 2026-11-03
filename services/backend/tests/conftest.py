@@ -105,6 +105,7 @@ class FakeFoodDb:
         pass
 
     async def lookup(self, code: str, language: Language) -> ProductInfo | None:
+        assert isinstance(language, Language)
         self.lookups.append(code)
         return self.products.get(code)
 
