@@ -11,7 +11,7 @@ export function Spinner({ label = tr("Загрузка…", "Loading…") }: { l
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="state">
+    <div className="state" role="alert">
       <p>{message}</p>
       {onRetry && (
         <button className="btn" onClick={onRetry}>
