@@ -1,5 +1,7 @@
 import { locale, tr } from "./i18n";
 
+export const STEP_GOAL = 10_000;
+
 export const round = (n: number) => Math.round(n).toLocaleString(locale());
 
 export function todayIso(): string {
@@ -25,6 +27,14 @@ export function dayLabel(iso: string): string {
 
 export const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString(locale(), { day: "2-digit", month: "2-digit" });
+
+export function readoutDate(iso: string, period: "day" | "week" = "day"): string {
+  const d = new Date(`${iso}T12:00:00Z`).toLocaleDateString(locale(), { day: "numeric", month: "long" });
+  if (period === "week") return tr(`неделя с ${d}`, `week of ${d}`);
+  if (iso === todayIso()) return tr("сегодня", "today");
+  if (iso === shiftDay(todayIso(), -1)) return tr("вчера", "yesterday");
+  return d;
+}
 
 export function daysLeft(isoDateTime: string): number {
   return Math.max(0, Math.ceil((new Date(isoDateTime).getTime() - Date.now()) / 86400000));
@@ -78,6 +88,6 @@ export function displayName(user: { id: number; username: string | null; first_n
 export function niceCeil(value: number): number {
   if (value <= 0) return 1;
   const exp = 10 ** Math.floor(Math.log10(value));
-  const step = [1, 2, 2.5, 5, 10].find((s) => s * exp >= value) ?? 10;
+  const step = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((s) => s * exp >= value) ?? 10;
   return step * exp;
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { niceCeil, shortDate } from "../lib/format";
+import { niceCeil, readoutDate, shortDate } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
 import { useWidth } from "../lib/useWidth";
 
@@ -39,7 +39,7 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
   const path = points.map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p.value)}`).join(" ");
   const area = `${path} L${x(points.length - 1)},${PAD.top + innerH} L${x(0)},${PAD.top + innerH} Z`;
   const ticks = zeroBased ? [hi / 2, hi] : [lo + (hi - lo) * 0.2, (lo + hi) / 2, lo + (hi - lo) * 0.8];
-  const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(3, Math.floor(WIDTH / 90))));
+  const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(innerW / 52))));
   const shown = active ?? points.length - 1;
 
   return (
@@ -48,7 +48,7 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
         <strong>
           {points[shown].value.toLocaleString(locale(), { maximumFractionDigits: 1 })} {unit}
         </strong>
-        <span className="muted">{shortDate(points[shown].day)}</span>
+        <span className="muted">{readoutDate(points[shown].day)}</span>
       </div>
       <svg
         viewBox={`0 0 ${WIDTH} ${height}`}
@@ -83,7 +83,7 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
               onMouseEnter={() => setActive(i)}
               onClick={() => setActive(i)}
             />
-            {i % labelEvery === 0 && (
+            {(points.length - 1 - i) % labelEvery === 0 && (
               <text className="chart-axis" x={x(i)} y={height - 8} textAnchor="middle">
                 {shortDate(p.day)}
               </text>

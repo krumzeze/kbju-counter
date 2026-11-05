@@ -7,7 +7,6 @@ import { daysLeft, daysWord, round } from "../lib/format";
 import { type Lang, locale, tr } from "../lib/i18n";
 import { Art } from "../components/Art";
 import { Avatar } from "../components/Avatar";
-import { PromoCard, ReferralCard } from "../components/Growth";
 import { Icon } from "../components/Icon";
 import { ReminderSettings, TargetSettings } from "../components/Settings";
 import { ThemePicker } from "../components/ThemePicker";
@@ -38,6 +37,13 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
   const weightN = Number(weight.replace(",", "."));
   const valid =
     ageN >= 12 && ageN <= 100 && heightN >= 120 && heightN <= 230 && weightN >= 30 && weightN <= 300;
+  const dirty =
+    onboarding ||
+    sex !== me.sex ||
+    ageN !== me.age ||
+    heightN !== me.height_cm ||
+    weightN !== me.weight_kg ||
+    goal !== me.goal;
 
   return (
     <div className="page">
@@ -71,8 +77,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
               <span aria-hidden>⭐</span>
             </Link>
           )}
-          <LanguageCard me={me} />
-          <ThemePicker />
+          <h2 className="profile-section">{tr("Мои данные и норма", "My details and target")}</h2>
           {me.base_target && (
             <div className="card peach">
               <span className="small">{tr("Базовая норма без активности", "Base target before activity")}</span>
@@ -151,18 +156,26 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           </div>
         </div>
         {save.isError && <p className="error">{errorMessage(save.error)}</p>}
-        {save.isSuccess && !onboarding && <p className="success">{tr("Сохранено", "Saved")}</p>}
-        <button className="btn btn-primary btn-block" disabled={!valid || save.isPending}>
-          {onboarding ? tr("Рассчитать норму", "Calculate my target") : tr("Сохранить", "Save")}
-        </button>
+        {save.isSuccess && !dirty && <p className="success">{tr("Сохранено", "Saved")}</p>}
+        {dirty && (
+          <button className="btn btn-primary btn-block" disabled={!valid || save.isPending}>
+            {onboarding ? tr("Рассчитать норму", "Calculate my target") : tr("Сохранить изменения", "Save changes")}
+          </button>
+        )}
       </form>
 
       {!onboarding && (
         <>
           <TargetSettings me={me} />
+          <h2 className="profile-section">{tr("Уведомления и оформление", "Notifications and look")}</h2>
           <ReminderSettings me={me} />
-          <ReferralCard />
-          <PromoCard />
+          <LanguageCard me={me} />
+          <ThemePicker />
+          <h2 className="profile-section">{tr("Подписка и бонусы", "Subscription and rewards")}</h2>
+          <Link to="/premium" className="card premium-note">
+            <span>{tr("Пригласить друзей или ввести промокод", "Invite friends or redeem a promo code")}</span>
+            <span aria-hidden>🎁</span>
+          </Link>
           <Link to="/support" className="card premium-note">
             <span>{tr("Написать в поддержку", "Contact support")}</span>
             <span aria-hidden>💬</span>

@@ -6,7 +6,7 @@ import { BarChart } from "../components/BarChart";
 import { LineChart } from "../components/LineChart";
 import { ErrorState, Spinner } from "../components/States";
 import { formatSet, kg } from "../lib/catalog";
-import { dayLabel } from "../lib/format";
+import { count, dayLabel } from "../lib/format";
 import { tr } from "../lib/i18n";
 import { useProgress } from "../lib/queries";
 import { PremiumNote } from "../components/PremiumNote";
@@ -82,6 +82,14 @@ export function ExerciseProgress() {
               </div>
             )}
             <ProgressChart points={points} metric={cardio ? "duration" : weighted ? metric : "reps"} />
+            {weighted && metric === "e1rm" && (
+              <p className="muted small">
+                {tr(
+                  "1ПМ: расчётный вес, который ты поднял бы на один повтор. Считается по лучшему подходу тренировки.",
+                  "1RM: the estimated weight you could lift for one rep, based on the best set of the session.",
+                )}
+              </p>
+            )}
           </section>
 
           <section>
@@ -156,6 +164,7 @@ function ProgressChart({ points, metric }: { points: ProgressPoint[]; metric: Me
         <BarChart
           points={points.map((p) => ({ day: p.day, value: p.reps }))}
           format={(n) => `${Math.round(n)}`}
+          unit={(n) => count(n, ["повтор", "повтора", "повторов"], ["rep", "reps"])}
           label={tr("Повторы", "Reps")}
         />
       );

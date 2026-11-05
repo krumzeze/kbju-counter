@@ -8,7 +8,7 @@ import { BarChart } from "../components/BarChart";
 import { LineChart } from "../components/LineChart";
 import { PremiumNote } from "../components/PremiumNote";
 import { ErrorState, Spinner } from "../components/States";
-import { count, round, shiftDay, todayIso } from "../lib/format";
+import { STEP_GOAL, count, round, shiftDay, todayIso } from "../lib/format";
 import { tr } from "../lib/i18n";
 import { useInvalidate, useStats, useWeights } from "../lib/queries";
 import { haptic } from "../lib/telegram";
@@ -176,6 +176,12 @@ function NutritionSection({ stats }: { stats: StatsData }) {
             <BarChart
               points={stats.days.map((d) => ({ day: d.day, value: d.eaten.kcal }))}
               format={(n) => round(n)}
+              unit={tr("ккал", "kcal")}
+              goal={
+                target
+                  ? { value: target.kcal, kind: "limit", label: tr(`норма ${round(target.kcal)}`, `target ${round(target.kcal)}`) }
+                  : undefined
+              }
               label={tr("Калории по дням", "Calories per day")}
             />
             <p className="muted small">
@@ -218,6 +224,8 @@ function ActivitySection({ stats }: { stats: StatsData }) {
           <BarChart
             points={stats.days.map((d) => ({ day: d.day, value: d.steps }))}
             format={(v) => round(v)}
+            unit={(v) => count(v, ["шаг", "шага", "шагов"], ["step", "steps"])}
+            goal={{ value: STEP_GOAL, kind: "target", label: tr(`цель ${round(STEP_GOAL)}`, `goal ${round(STEP_GOAL)}`) }}
             label={tr("Шаги по дням", "Steps per day")}
           />
         </section>

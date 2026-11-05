@@ -97,7 +97,9 @@ function PlanCard({ plan, featured }: { plan: Plan; featured: boolean }) {
           )}
         </span>
         {featured && <span className="plan-badge">{tr("Выгодно", "Best value")}</span>}
-        <span className="plan-price">{plan.amount !== null ? price(plan, plan.amount) : tr("Купить", "Buy")}</span>
+        <span className="plan-price">
+          {plan.amount !== null ? tr(`Купить за ${price(plan, plan.amount)}`, `Buy for ${price(plan, plan.amount)}`) : tr("Купить", "Buy")}
+        </span>
       </button>
       {buy.isError && <p className="error">{errorMessage(buy.error)}</p>}
     </>

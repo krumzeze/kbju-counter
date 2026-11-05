@@ -5,6 +5,7 @@ import { api, errorMessage } from "../api/client";
 import type { ExerciseRef, SetValues, Workout, WorkoutExercise, WorkoutSet } from "../api/types";
 import { ExercisePicker } from "../components/ExercisePicker";
 import { ExerciseThumb } from "../components/ExerciseThumb";
+import { Icon } from "../components/Icon";
 import { RestBar, useRestTimer } from "../components/RestTimer";
 import { ErrorState, Spinner } from "../components/States";
 import { duration, formatSet, kg } from "../lib/catalog";
@@ -282,7 +283,7 @@ function ExerciseBlock({
           aria-label={tr("Прогресс", "Progress")}
           title={tr("Прогресс", "Progress")}
         >
-          ↗
+          <Icon name="chart" size={18} />
         </Link>
         <button className="icon-btn" onClick={onRemove} aria-label={tr("Убрать упражнение", "Remove exercise")}>
           ×
