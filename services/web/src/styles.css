@@ -1813,19 +1813,24 @@ button:disabled {
   opacity: 0.45;
 }
 
-.chart-goal line {
+.chart-goal {
   stroke: var(--ink);
   stroke-width: 1.5;
   stroke-dasharray: 6 4;
 }
 
-.chart-goal text {
-  fill: var(--ink);
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
   font-size: 12px;
-  font-weight: 600;
-  paint-order: stroke;
-  stroke: var(--surface);
-  stroke-width: 4px;
+  color: var(--muted);
+}
+
+.chart-legend-goal {
+  width: 18px;
+  border-top: 1.5px dashed var(--ink);
 }
 
 .chart.series .chart-line {
