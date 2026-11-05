@@ -109,14 +109,15 @@ export function BarChart({ points, format, label, unit, goal, period = "day", he
           strokeDasharray="0"
         />
         {goal && (
-          <g className="chart-goal">
-            <line x1={PAD.left} x2={WIDTH - PAD.right} y1={y(goal.value)} y2={y(goal.value)} />
-            <text x={WIDTH - PAD.right} y={y(goal.value) - 6} textAnchor="end">
-              {goal.label}
-            </text>
-          </g>
+          <line className="chart-goal" x1={PAD.left} x2={WIDTH - PAD.right} y1={y(goal.value)} y2={y(goal.value)} />
         )}
       </svg>
+      {goal && (
+        <div className="chart-legend">
+          <span className="chart-legend-goal" aria-hidden />
+          {goal.label}
+        </div>
+      )}
     </div>
   );
 }

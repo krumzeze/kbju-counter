@@ -18,11 +18,7 @@ const modes = (features: Me["features"]): { value: Mode; label: string }[] =>
   [
     { value: "photo" as const, label: tr("Фото", "Photo"), on: features.photo },
     { value: "text" as const, label: tr("Текст", "Text"), on: features.text },
-    {
-      value: "manual" as const,
-      label: features.barcode ? tr("Штрихкод", "Barcode") : tr("Вручную", "Manual"),
-      on: true,
-    },
+    { value: "manual" as const, label: tr("Вручную", "Manual"), on: true },
     { value: "history" as const, label: tr("История", "History"), on: true },
   ].filter((m) => m.on);
 
