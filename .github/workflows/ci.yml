@@ -52,6 +52,29 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: services/web/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npx vite build
+      - run: npm run e2e
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: services/web/test-results/
+          retention-days: 7
+
   iac:
     runs-on: ubuntu-latest
     steps:
@@ -66,7 +89,7 @@ jobs:
 
   images:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend, web, iac]
+    needs: [backend, web, smoke, iac]
     runs-on: ubuntu-latest
     permissions:
       contents: read

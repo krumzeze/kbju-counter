@@ -22,7 +22,7 @@ export const groupLabel = (g: MuscleGroup) =>
     back: tr("Спина", "Back"),
     legs: tr("Ноги", "Legs"),
     glutes: tr("Ягодицы", "Glutes"),
-    calves: tr("Голени", "Calves"),
+    calves: tr("Икры", "Calves"),
     cardio: tr("Кардио", "Cardio"),
   })[g];
 

@@ -242,7 +242,7 @@ export function MealHistory({ onDone }: { onDone: (meal: Meal) => void }) {
   if (isPending) return <Spinner />;
   if (error) {
     return (
-      <div className="empty">
+      <div className="empty" role="alert">
         <p>{errorMessage(error)}</p>
         <button className="btn" onClick={() => refetch()}>
           {tr("Повторить", "Retry")}

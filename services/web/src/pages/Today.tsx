@@ -10,11 +10,10 @@ import { Icon } from "../components/Icon";
 import { MacroBars } from "../components/MacroBars";
 import { MealCard } from "../components/MealCard";
 import { ErrorState, Spinner } from "../components/States";
-import { count, round, shiftDay, todayIso } from "../lib/format";
+import { STEP_GOAL, count, round, shiftDay, todayIso } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
 import { useDay, useInvalidate, useMe, useWeights } from "../lib/queries";
 
-const STEP_GOAL = 10000;
 
 export function Today() {
   const [day, setDay] = useState(todayIso());
@@ -49,7 +48,42 @@ export function Today() {
       ) : (
         <>
           <div className="dash">
-            <Summary data={data} />
+            <div className="dash-main">
+              <Summary data={data} />
+              <section>
+                <div className="section-head">
+                  <h2>{tr("Приёмы пищи", "Meals")}</h2>
+                  {data.meals.length > 0 && (
+                    <span className="muted small">
+                      {data.meals.length} · {round(data.eaten.kcal)} {tr("ккал", "kcal")}
+                    </span>
+                  )}
+                </div>
+                {data.meals.length === 0 ? (
+                  <div className="empty">
+                    <Art name="empty-meals" />
+                    <p>
+                      {tr(
+                        "Пока пусто. Сфотографируй тарелку или опиши, что съел, а я посчитаю КБЖУ.",
+                        "Nothing yet. Snap your plate or describe what you ate and I'll count the calories and macros.",
+                      )}
+                    </p>
+                    {isToday && (
+                      <Link to="/add" className="btn btn-primary">
+                        <Icon name="plus" size={20} />
+                        {tr("Добавить еду", "Add food")}
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div className="stack meal-list">
+                    {[...data.meals].reverse().map((meal) => (
+                      <MealCard key={meal.id} meal={meal} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
 
             <section className="tiles">
               <WeightTile />
@@ -75,40 +109,6 @@ export function Today() {
               <WaterTile ml={data.water_ml} target={data.water_target_ml} editable={isToday} />
             </section>
           </div>
-
-          <section>
-            <div className="section-head">
-              <h2>{tr("Приёмы пищи", "Meals")}</h2>
-              {data.meals.length > 0 && (
-                <span className="muted small">
-                  {data.meals.length} · {round(data.eaten.kcal)} {tr("ккал", "kcal")}
-                </span>
-              )}
-            </div>
-            {data.meals.length === 0 ? (
-              <div className="empty">
-                <Art name="empty-meals" />
-                <p>
-                  {tr(
-                    "Пока пусто. Сфотографируй тарелку или опиши, что съел, а я посчитаю КБЖУ.",
-                    "Nothing yet. Snap your plate or describe what you ate and I'll count the calories and macros.",
-                  )}
-                </p>
-                {isToday && (
-                  <Link to="/add" className="btn btn-primary">
-                    <Icon name="plus" size={20} />
-                    {tr("Добавить еду", "Add food")}
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <div className="stack meal-list">
-                {[...data.meals].reverse().map((meal) => (
-                  <MealCard key={meal.id} meal={meal} />
-                ))}
-              </div>
-            )}
-          </section>
         </>
       )}
     </div>
@@ -150,7 +150,7 @@ function Summary({ data }: { data: Day }) {
         <div className="summary-head">
           <h2>{tr("Итоги", "Summary")}</h2>
           <Link to="/profile" className="link">
-            {tr("Норма", "Target")}
+            {tr("Изменить норму", "Edit target")}
           </Link>
         </div>
         <div className="summary-top">
@@ -207,17 +207,20 @@ function TargetNote({ data }: { data: Day }) {
   );
 }
 
-const WATER_STEPS = [-250, -100, -50, 50, 100, 250];
+const WATER_STEPS = [100, 250, 500];
 
 function WaterTile({ ml, target, editable }: { ml: number; target: number | null; editable: boolean }) {
   const client = useQueryClient();
+  const [last, setLast] = useState<number | null>(null);
   const add = useMutation({
     mutationFn: (delta: number) => api.addWater(delta),
-    onSuccess: ({ water_ml }) => {
+    onSuccess: ({ water_ml }, delta) => {
+      setLast(delta > 0 ? delta : null);
       client.setQueryData<Day>(["day", todayIso()], (day) => day && { ...day, water_ml });
     },
   });
   const share = target ? Math.min(100, (ml / target) * 100) : 0;
+  const undo = Math.min(last ?? 250, ml);
   return (
     <div className="tile-card tone-sky short wide-tile water">
       <div className="water-head">
@@ -232,16 +235,24 @@ function WaterTile({ ml, target, editable }: { ml: number; target: number | null
       </div>
       {editable && (
         <div className="water-steps">
+          <button
+            className="btn small undo"
+            disabled={add.isPending || ml === 0}
+            onClick={() => add.mutate(-undo)}
+            aria-label={tr(`Убрать ${undo} мл`, `Remove ${undo} ml`)}
+            title={tr(`Убрать ${undo} мл`, `Remove ${undo} ml`)}
+          >
+            −{undo || ""}
+          </button>
           {WATER_STEPS.map((delta) => (
             <button
               key={delta}
-              className={`btn small ${delta > 0 ? "add" : ""}`}
-              disabled={add.isPending || (delta < 0 && ml === 0)}
+              className="btn small add"
+              disabled={add.isPending}
               onClick={() => add.mutate(delta)}
-              aria-label={`${delta > 0 ? "+" : "−"}${Math.abs(delta)} ${tr("мл", "ml")}`}
+              aria-label={`+${delta} ${tr("мл", "ml")}`}
             >
-              {delta > 0 ? "+" : "−"}
-              {Math.abs(delta)}
+              +{delta}
             </button>
           ))}
         </div>

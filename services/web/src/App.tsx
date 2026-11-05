@@ -87,13 +87,21 @@ function AuthenticatedApp() {
 
   const lang = inAdmin ? "ru" : (me.language ?? detectedLang);
   setLang(lang);
-  if (!me.language && !inAdmin) return <LanguagePicker />;
+  if (!me.language && !inAdmin) {
+    return (
+      <main className="content solo">
+        <LanguagePicker />
+      </main>
+    );
+  }
 
   if (!me.profile_complete && !me.is_admin) {
     return (
-      <Routes key={lang}>
-        <Route path="*" element={<Profile me={me} onboarding />} />
-      </Routes>
+      <main className="content solo">
+        <Routes key={lang}>
+          <Route path="*" element={<Profile me={me} onboarding />} />
+        </Routes>
+      </main>
     );
   }
 

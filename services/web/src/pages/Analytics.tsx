@@ -92,6 +92,14 @@ export function Analytics() {
         <BarChart
           points={data.weeks.map((w) => ({ day: w.start, value: value(w) }))}
           format={series === "volume" ? kg : (n) => String(Math.round(n))}
+          unit={
+            series === "workouts"
+              ? (n) => count(n, ["тренировка", "тренировки", "тренировок"], ["workout", "workouts"])
+              : series === "sets"
+                ? (n) => count(n, ["подход", "подхода", "подходов"], ["set", "sets"])
+                : undefined
+          }
+          period="week"
           label={tr("По неделям", "Weekly")}
         />
       </section>
@@ -109,6 +117,13 @@ export function Analytics() {
           </button>
         </div>
         <BodyMap values={heat} className="large" />
+        {Object.keys(muscles).length > 0 && (
+          <div className="heat-legend" aria-hidden>
+            <span>{tr("меньше подходов", "fewer sets")}</span>
+            <span className="heat-scale" />
+            <span>{tr("больше", "more")}</span>
+          </div>
+        )}
         {Object.keys(muscles).length === 0 && (
           <p className="muted small center">{tr("За этот период подходов нет.", "No sets in this period.")}</p>
         )}
@@ -133,28 +148,18 @@ export function Analytics() {
         </section>
       )}
 
-      {data.top.length > 0 && (
-        <section>
-          <h2>{tr("Чаще всего", "Most trained")}</h2>
-          <ExerciseList
-            items={data.top.map((t) => ({
-              ...t.exercise,
-              note:
-                t.best_e1rm > 0
-                  ? `${t.sets} ${count(t.sets, ["подход", "подхода", "подходов"], ["set", "sets"])} · ${tr("1ПМ", "1RM")} ${t.best_e1rm}`
-                  : `${t.sets} ${count(t.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}`,
-            }))}
-          />
-        </section>
-      )}
-
       {exercises.data && exercises.data.some((e) => e.sets > 0) && (
         <section>
-          <h2>{tr("Все мои упражнения", "All my exercises")}</h2>
+          <h2>{tr("Мои упражнения", "My exercises")}</h2>
           <ExerciseList
             items={exercises.data
               .filter((e) => e.sets > 0)
-              .map((e) => ({ ...e, note: `${e.sets} ${count(e.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}` }))}
+              .sort((a, b) => b.sets - a.sets)
+              .map((e) => {
+                const best = data.top.find((t) => t.exercise.id === e.id)?.best_e1rm ?? 0;
+                const sets = `${e.sets} ${count(e.sets, ["подход", "подхода", "подходов"], ["set", "sets"])}`;
+                return { ...e, note: best > 0 ? `${sets} · ${tr("1ПМ", "1RM")} ${best} ${tr("кг", "kg")}` : sets };
+              })}
           />
         </section>
       )}

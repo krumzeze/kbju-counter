@@ -13,7 +13,9 @@ const tabs = (): { to: string; label: string; icon: IconName }[] => [
 
 export function Layout() {
   useTelegramBackButton();
-  const inAdmin = useLocation().pathname.startsWith("/admin");
+  const { pathname } = useLocation();
+  const inAdmin = pathname.startsWith("/admin");
+  const inWorkout = /^\/workouts\/\d+$/.test(pathname);
   const classes = ["app", isMiniApp && "mini", inAdmin && "admin"].filter(Boolean).join(" ");
   const [home, gym, stats, profile] = tabs();
   return (
@@ -32,9 +34,13 @@ export function Layout() {
       <nav className="tabbar" aria-label={tr("Разделы", "Sections")}>
         <Tab {...home} />
         <Tab {...gym} />
-        <NavLink to="/add" className="tab-add" aria-label={tr("Добавить еду", "Add food")}>
-          <Icon name="plus" size={26} />
-        </NavLink>
+        {inWorkout ? (
+          <span />
+        ) : (
+          <NavLink to="/add" className="tab-add" aria-label={tr("Добавить еду", "Add food")}>
+            <Icon name="plus" size={26} />
+          </NavLink>
+        )}
         <Tab {...stats} />
         <Tab {...profile} />
       </nav>

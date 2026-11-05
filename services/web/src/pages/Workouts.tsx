@@ -54,8 +54,6 @@ export function Workouts() {
       )}
       {start.isError && <p className="error">{errorMessage(start.error)}</p>}
 
-      <WeekCard />
-
       <div className="nav-cards">
         <Link to="/catalog" className="card sage nav-card">
           <span className="nav-card-icon" aria-hidden>
@@ -69,7 +67,7 @@ export function Workouts() {
             <Icon name="chart" />
           </span>
           <strong>{tr("Аналитика", "Analytics")}</strong>
-          <span className="muted small">{tr("Прогресс и рекорды", "Progress and records")}</span>
+          <WeekSummary />
         </Link>
       </div>
 
@@ -77,6 +75,14 @@ export function Workouts() {
         disabled={!!active.data || start.isPending}
         onStart={(id) => start.mutate({ template: id })}
       />
+      {active.data && (
+        <p className="muted small center">
+          {tr(
+            "Новую тренировку можно начать после завершения текущей.",
+            "You can start a new workout once the current one is finished.",
+          )}
+        </p>
+      )}
 
       <History
         disabled={!!active.data || start.isPending}
@@ -102,32 +108,17 @@ function ActiveCard({ workout }: { workout: Workout }) {
   );
 }
 
-function WeekCard() {
+function WeekSummary() {
   const { data } = useAnalytics();
-  if (!data) return null;
-  const week = data.weeks[data.weeks.length - 1];
+  const week = data?.weeks[data.weeks.length - 1];
+  if (!data || !week?.workouts) {
+    return <span className="muted small">{tr("Прогресс и рекорды", "Progress and records")}</span>;
+  }
   return (
-    <section className="stats-row three">
-      <div className="card peach stat">
-        <span className="small">{tr("Неделя", "This week")}</span>
-        <strong>{week.workouts}</strong>
-        <span className="muted small">
-          {count(week.workouts, ["тренировка", "тренировки", "тренировок"], ["workout", "workouts"])}
-        </span>
-      </div>
-      <div className="card sage stat">
-        <span className="small">{tr("Тоннаж", "Volume")}</span>
-        <strong>{compact(week.volume_kg)}</strong>
-        <span className="muted small">{tr("кг за неделю", "kg this week")}</span>
-      </div>
-      <div className="card blush stat">
-        <span className="small">{tr("Серия", "Streak")}</span>
-        <strong>{data.streak_weeks}</strong>
-        <span className="muted small">
-          {count(data.streak_weeks, ["неделя", "недели", "недель"], ["week", "weeks"])}
-        </span>
-      </div>
-    </section>
+    <span className="muted small">
+      {week.workouts} {count(week.workouts, ["тренировка", "тренировки", "тренировок"], ["workout", "workouts"])}{" "}
+      {tr("на этой неделе", "this week")} · {compact(week.volume_kg)} {tr("кг", "kg")}
+    </span>
   );
 }
 
