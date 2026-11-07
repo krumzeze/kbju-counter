@@ -154,6 +154,7 @@ export const stats: Stats = {
     sets: i % 2 ? 12 : 0,
   })),
   target,
+  water_target_ml: 2400,
   limited: false,
 };
 

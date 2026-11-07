@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { ProfileInput } from "../api/types";
 import type { Sort } from "../components/SortChips";
@@ -11,7 +11,12 @@ export const useDay = (day: string) =>
 export const useWeights = () => useQuery({ queryKey: ["weights"], queryFn: api.weights });
 
 export const useStats = (days: number) =>
-  useQuery({ queryKey: ["stats", days], queryFn: () => api.stats(days), staleTime: 0 });
+  useQuery({
+    queryKey: ["stats", days],
+    queryFn: () => api.stats(days),
+    staleTime: 0,
+    placeholderData: keepPreviousData,
+  });
 
 export const useExercises = () => useQuery({ queryKey: ["exercises"], queryFn: api.exercises });
 

@@ -161,6 +161,7 @@ export interface StatsDay {
 export interface Stats {
   days: StatsDay[];
   target: Macros | null;
+  water_target_ml: number | null;
   limited: boolean;
 }
 

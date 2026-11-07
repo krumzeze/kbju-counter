@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.config import Settings
 from belok.db.models import LlmUsage, Meal, MealItem, User
-from belok.llm.analyzer import AnalysisError, AnalysisResult
+from belok.llm.analyzer import AnalysisError, AnalysisResult, FoodAnalysis, FoodItem
 from belok.services.access import has_access
 from belok.services.repo import analyses_on
 from belok.timeutil import local_today, utcnow
@@ -42,13 +42,13 @@ async def ensure_within_limit(session: AsyncSession, user: User, settings: Setti
         raise DailyLimitReached(has_access(user, utcnow()))
 
 
-async def analyze_meal(
+async def run_analysis(
     session: AsyncSession,
     user: User,
     kind: str,
     call: Callable[[], Awaitable[AnalysisResult]],
-) -> Meal | None:
-    """Run the analyzer, log usage and store the meal. Returns None when no food was found."""
+) -> FoodAnalysis:
+    """Run the analyzer and log usage."""
     today = local_today(user.timezone)
     # Return the DB connection to the pool while waiting on the LLM, which takes seconds.
     await session.commit()
@@ -82,20 +82,54 @@ async def analyze_meal(
             no_food=not result.analysis.items,
         )
     )
-    if not result.analysis.items:
-        return None
+    return result.analysis
 
+
+async def analyze_meal(
+    session: AsyncSession,
+    user: User,
+    kind: str,
+    call: Callable[[], Awaitable[AnalysisResult]],
+) -> Meal | None:
+    """Analyze and store a new meal. Returns None when no food was found."""
+    analysis = await run_analysis(session, user, kind, call)
+    if not analysis.items:
+        return None
     meal = Meal(
         user_id=user.id,
-        day=today,
+        day=local_today(user.timezone),
         source=kind,
-        title=result.analysis.title,
+        title=analysis.title,
         scale=1.0,
-        items=[MealItem(**item.model_dump()) for item in result.analysis.items],
+        items=[MealItem(**item.model_dump()) for item in analysis.items],
     )
     session.add(meal)
     await session.flush()
     return meal
+
+
+def meal_analysis(meal: Meal) -> FoodAnalysis:
+    """The meal as the analyzer sees it, with the portion scale applied."""
+    return FoodAnalysis(
+        title=meal.title,
+        items=[
+            FoodItem(
+                name=i.name,
+                grams=i.grams * meal.scale,
+                kcal=i.kcal * meal.scale,
+                protein=i.protein * meal.scale,
+                fat=i.fat * meal.scale,
+                carbs=i.carbs * meal.scale,
+            )
+            for i in meal.items
+        ],
+    )
+
+
+def replace_items(meal: Meal, analysis: FoodAnalysis) -> None:
+    meal.title = analysis.title
+    meal.scale = 1.0
+    meal.items = [MealItem(**item.model_dump()) for item in analysis.items]
 
 
 def manual_meal(

@@ -17,6 +17,7 @@ from belok.api.schemas import (
     MealOut,
     MealPatchIn,
     ProductOut,
+    RefineMealIn,
     TextMealIn,
     macros_out,
 )
@@ -34,8 +35,11 @@ from belok.services.meals import (
     copy_meal,
     ensure_within_limit,
     manual_meal,
+    meal_analysis,
     meal_history,
+    replace_items,
     resize_item,
+    run_analysis,
 )
 from belok.services.products import (
     CODE_RE,
@@ -202,6 +206,38 @@ async def patch_meal(
     return MealOut.of(meal)
 
 
+@router.post("/meals/{meal_id}/refine")
+async def refine_meal(
+    meal_id: int,
+    body: RefineMealIn,
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    analyzer: AnalyzerDep,
+) -> MealOut:
+    meal = await get_meal(session, user.id, meal_id)
+    if meal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "meal_not_found")
+    previous = meal_analysis(meal)
+    await _ensure_within_limit(session, user, settings)
+    try:
+        analysis = await run_analysis(
+            session,
+            user,
+            "refine",
+            lambda: analyzer.refine(previous, body.text, _language(user)),
+        )
+    except AnalysisError as exc:
+        await session.commit()
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "analysis_failed") from exc
+    if not analysis.items:
+        await session.commit()
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_food")
+    replace_items(meal, analysis)
+    await session.commit()
+    return MealOut.of(meal)
+
+
 @router.patch("/meals/{meal_id}/items/{item_id}")
 async def patch_meal_item(
     meal_id: int, item_id: int, body: MealItemPatchIn, user: ActiveUser, session: SessionDep
@@ -251,12 +287,7 @@ async def _analyze(
     kind: str,
     call: Callable[[], Awaitable[AnalysisResult]],
 ) -> MealOut:
-    try:
-        await ensure_within_limit(session, user, settings)
-    except DailyLimitReached as exc:
-        if not exc.premium:
-            raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "premium_required") from exc
-        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "daily_limit") from exc
+    await _ensure_within_limit(session, user, settings)
     try:
         meal = await analyze_meal(session, user, kind, call)
     except AnalysisError as exc:
@@ -266,6 +297,15 @@ async def _analyze(
     if meal is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_food")
     return MealOut.of(meal)
+
+
+async def _ensure_within_limit(session: AsyncSession, user: User, settings: Settings) -> None:
+    try:
+        await ensure_within_limit(session, user, settings)
+    except DailyLimitReached as exc:
+        if not exc.premium:
+            raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "premium_required") from exc
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "daily_limit") from exc
 
 
 async def _read_photo(photo: UploadFile) -> bytes:

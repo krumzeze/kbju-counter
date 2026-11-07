@@ -102,6 +102,25 @@ async def test_water_is_added_and_clamped(client):
     assert (day["steps"], day["water_ml"]) == (5000, 500)
 
 
+async def test_steps_and_water_for_past_days(client):
+    headers = await onboarded(client)
+    today = datetime.fromisoformat(
+        (await client.get("/api/day", headers=headers)).json()["day"]
+    ).date()
+    yesterday = (today - timedelta(days=1)).isoformat()
+    r = await client.put(f"/api/steps/today?day={yesterday}", json={"steps": 7000}, headers=headers)
+    assert r.status_code == 204
+    r = await client.post(
+        f"/api/water/today?day={yesterday}", json={"delta_ml": 300}, headers=headers
+    )
+    assert r.json() == {"water_ml": 300}
+    day = (await client.get(f"/api/day?day={yesterday}", headers=headers)).json()
+    assert (day["steps"], day["water_ml"]) == (7000, 300)
+    for bad in (today + timedelta(days=1), today - timedelta(days=7)):
+        r = await client.put(f"/api/steps/today?day={bad}", json={"steps": 1}, headers=headers)
+        assert r.status_code == 422
+
+
 async def test_barcode_lookup_is_cached(client, food_db):
     headers = await onboarded(client)
     await client.put("/api/me/language", json={"language": "ru"}, headers=headers)
@@ -163,6 +182,7 @@ async def test_stats_sum_each_day(client):
     assert (today["steps"], today["water_ml"], today["sets"]) == (4000, 0, 0)
     assert stats["days"][0]["eaten"]["kcal"] == 0
     assert stats["target"]["kcal"] > 0
+    assert stats["water_target_ml"] == 2400
     assert stats["limited"] is False
     assert (await client.get("/api/stats?days=0", headers=headers)).status_code == 422
 

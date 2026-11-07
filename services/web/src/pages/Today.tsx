@@ -87,7 +87,7 @@ export function Today() {
 
             <section className="tiles">
               <WeightTile />
-              <StepsTile steps={data.steps} editable={isToday} />
+              <StepsTile key={day} day={day} steps={data.steps} />
               <Link to="/workouts" className="tile-card tone-blush">
                 <h3>{tr("Тренировка", "Training")}</h3>
                 <div>
@@ -106,7 +106,7 @@ export function Today() {
                 </span>
                 <span className="unit">{tr("фото, текст или штрихкод", "photo, text or barcode")}</span>
               </Link>
-              <WaterTile ml={data.water_ml} target={data.water_target_ml} editable={isToday} />
+              <WaterTile key={day} day={day} ml={data.water_ml} target={data.water_target_ml} />
             </section>
           </div>
         </>
@@ -209,14 +209,14 @@ function TargetNote({ data }: { data: Day }) {
 
 const WATER_STEPS = [100, 250, 500];
 
-function WaterTile({ ml, target, editable }: { ml: number; target: number | null; editable: boolean }) {
+function WaterTile({ day, ml, target }: { day: string; ml: number; target: number | null }) {
   const client = useQueryClient();
   const [last, setLast] = useState<number | null>(null);
   const add = useMutation({
-    mutationFn: (delta: number) => api.addWater(delta),
+    mutationFn: (delta: number) => api.addWater(delta, day),
     onSuccess: ({ water_ml }, delta) => {
       setLast(delta > 0 ? delta : null);
-      client.setQueryData<Day>(["day", todayIso()], (day) => day && { ...day, water_ml });
+      client.setQueryData<Day>(["day", day], (d) => d && { ...d, water_ml });
     },
   });
   const share = target ? Math.min(100, (ml / target) * 100) : 0;
@@ -233,30 +233,28 @@ function WaterTile({ ml, target, editable }: { ml: number; target: number | null
       <div className="progress">
         <span style={{ width: `${share}%` }} />
       </div>
-      {editable && (
-        <div className="water-steps">
+      <div className="water-steps">
+        <button
+          className="btn small undo"
+          disabled={add.isPending || ml === 0}
+          onClick={() => add.mutate(-undo)}
+          aria-label={tr(`Убрать ${undo} мл`, `Remove ${undo} ml`)}
+          title={tr(`Убрать ${undo} мл`, `Remove ${undo} ml`)}
+        >
+          −{undo || ""}
+        </button>
+        {WATER_STEPS.map((delta) => (
           <button
-            className="btn small undo"
-            disabled={add.isPending || ml === 0}
-            onClick={() => add.mutate(-undo)}
-            aria-label={tr(`Убрать ${undo} мл`, `Remove ${undo} ml`)}
-            title={tr(`Убрать ${undo} мл`, `Remove ${undo} ml`)}
+            key={delta}
+            className="btn small add"
+            disabled={add.isPending}
+            onClick={() => add.mutate(delta)}
+            aria-label={`+${delta} ${tr("мл", "ml")}`}
           >
-            −{undo || ""}
+            +{delta}
           </button>
-          {WATER_STEPS.map((delta) => (
-            <button
-              key={delta}
-              className="btn small add"
-              disabled={add.isPending}
-              onClick={() => add.mutate(delta)}
-              aria-label={`+${delta} ${tr("мл", "ml")}`}
-            >
-              +{delta}
-            </button>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
@@ -296,12 +294,12 @@ function Spark({ values }: { values: number[] }) {
   );
 }
 
-function StepsTile({ steps, editable }: { steps: number; editable: boolean }) {
+function StepsTile({ day, steps }: { day: string; steps: number }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(steps || ""));
   const invalidate = useInvalidate();
   const save = useMutation({
-    mutationFn: (n: number) => api.saveSteps(n),
+    mutationFn: (n: number) => api.saveSteps(n, day),
     onSuccess: async () => {
       await invalidate("day");
       setEditing(false);
@@ -318,7 +316,7 @@ function StepsTile({ steps, editable }: { steps: number; editable: boolean }) {
           if (Number.isInteger(n) && n >= 0 && n <= 100000) save.mutate(n);
         }}
       >
-        <h3>{tr("Шаги за день", "Steps today")}</h3>
+        <h3>{day === todayIso() ? tr("Шаги за день", "Steps today") : tr("Шаги за этот день", "Steps that day")}</h3>
         <input
           className="input"
           inputMode="numeric"
@@ -335,7 +333,7 @@ function StepsTile({ steps, editable }: { steps: number; editable: boolean }) {
 
   const filled = Math.min(10, Math.floor((steps / STEP_GOAL) * 10));
   return (
-    <button className="tile-card tone-sand" onClick={() => editable && setEditing(true)} disabled={!editable}>
+    <button className="tile-card tone-sand" onClick={() => setEditing(true)}>
       <h3>{tr("Шаги", "Steps")}</h3>
       <div className="bars-mini" aria-hidden>
         {Array.from({ length: 10 }, (_, i) => (

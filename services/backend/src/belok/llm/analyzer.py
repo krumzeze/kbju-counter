@@ -78,6 +78,16 @@ class FoodAnalyzer:
     async def from_text(self, text: str, language: Language) -> AnalysisResult:
         return await self._complete([{"type": "text", "text": text}], language)
 
+    async def refine(
+        self, previous: FoodAnalysis, correction: str, language: Language
+    ) -> AnalysisResult:
+        text = (
+            f"Your previous estimate of this meal: {previous.model_dump_json()}\n"
+            f"User correction: {correction}\n"
+            "Return the full corrected meal, keeping items the correction does not touch."
+        )
+        return await self._complete([{"type": "text", "text": text}], language)
+
     async def _complete(self, content: list[dict], language: Language) -> AnalysisResult:
         started = time.monotonic()
         try:

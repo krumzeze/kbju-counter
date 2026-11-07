@@ -79,6 +79,7 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
       <p className="meal-hint">
         {tr("Нажми на граммы, чтобы поправить вес позиции", "Tap the grams to correct an item's weight")}
       </p>
+      {meal.source !== "manual" && meal.source !== "barcode" && <RefineForm meal={meal} onChange={updated} />}
 
       <div className="meal-actions">
         <div className="stepper" role="group" aria-label={tr("Размер порции", "Portion size")}>
@@ -109,6 +110,40 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
         </button>
       </div>
     </details>
+  );
+}
+
+function RefineForm({ meal, onChange }: { meal: Meal; onChange: (meal: Meal) => Promise<void> }) {
+  const [text, setText] = useState("");
+  const refine = useMutation({
+    mutationFn: () => api.refineMeal(meal.id, text.trim()),
+    onSuccess: async (m) => {
+      setText("");
+      await onChange(m);
+    },
+  });
+  const valid = text.trim().length >= 2;
+  return (
+    <form
+      className="meal-refine"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (valid) refine.mutate();
+      }}
+    >
+      <input
+        className="input"
+        maxLength={300}
+        placeholder={tr("Уточнить: «это индейка, не курица», «ещё соус 30 г»", "Refine: \"it's turkey, not chicken\", \"plus 30 g sauce\"")}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        aria-label={tr("Уточнить блюдо", "Refine the meal")}
+      />
+      <button className="btn btn-primary small" disabled={!valid || refine.isPending}>
+        {refine.isPending ? tr("Пересчитываю…", "Updating…") : tr("Уточнить", "Refine")}
+      </button>
+      {refine.isError && <p className="error small">{errorMessage(refine.error)}</p>}
+    </form>
   );
 }
 

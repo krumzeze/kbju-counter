@@ -85,6 +85,12 @@ class FakeAnalyzer:
     async def from_text(self, text: str, language: Language) -> AnalysisResult:
         return self._result()
 
+    async def refine(
+        self, previous: FoodAnalysis, correction: str, language: Language
+    ) -> AnalysisResult:
+        self.refined = (previous, correction)
+        return self._result()
+
     def _result(self) -> AnalysisResult:
         return AnalysisResult(
             analysis=FoodAnalysis(title="Обед", items=self.items),
