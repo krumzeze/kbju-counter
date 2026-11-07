@@ -36,6 +36,7 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
     },
   });
   const busy = scale.isPending || remove.isPending;
+  const [photoOk, setPhotoOk] = useState(true);
   const time = new Date(meal.created_at).toLocaleTimeString(locale(), {
     hour: "2-digit",
     minute: "2-digit",
@@ -45,7 +46,11 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
     <details className="card meal" open={defaultOpen}>
       <summary>
         <span className="meal-icon" aria-hidden>
-          <MealIcon source={meal.source} />
+          {photoOk && meal.photo_url ? (
+            <img src={meal.photo_url} alt="" loading="lazy" onError={() => setPhotoOk(false)} />
+          ) : (
+            <MealIcon source={meal.source} />
+          )}
         </span>
         <span className="meal-title">
           <strong>{meal.title}</strong>
@@ -65,6 +70,9 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
         </span>
       </summary>
 
+      {photoOk && meal.photo_url && (
+        <img className="meal-photo" src={meal.photo_url} alt={meal.title} loading="lazy" />
+      )}
       <ul className="meal-items">
         {meal.items.map((item) => (
           <ItemRow

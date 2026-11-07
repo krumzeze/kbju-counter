@@ -92,6 +92,24 @@ resource "cloudflare_r2_bucket" "backups" {
   name       = "${local.name}-backups"
 }
 
+resource "cloudflare_r2_bucket" "photos" {
+  account_id = var.cloudflare_account_id
+  name       = "${local.name}-photos"
+}
+
+resource "cloudflare_r2_bucket_lifecycle" "photos" {
+  account_id  = var.cloudflare_account_id
+  bucket_name = cloudflare_r2_bucket.photos.name
+  rules = [{
+    id         = "expire-meal-photos"
+    enabled    = true
+    conditions = { prefix = "meals/" }
+    delete_objects_transition = {
+      condition = { type = "Age", max_age = var.photo_retention_days * 86400 }
+    }
+  }]
+}
+
 resource "local_file" "ansible_inventory" {
   filename        = "${path.module}/../ansible/inventory/hosts.yml"
   file_permission = "0644"

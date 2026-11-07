@@ -83,6 +83,9 @@ class User(Base):
     )
     remind_meals: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     remind_weight: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    photo_eval_consent: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
 
     @property
     def profile_complete(self) -> bool:
@@ -99,6 +102,7 @@ class Meal(Base):
     source: Mapped[str] = mapped_column(String(8))
     title: Mapped[str] = mapped_column(String(255))
     scale: Mapped[float] = mapped_column(Float, default=1.0)
+    photo_key: Mapped[str | None] = mapped_column(String(64))
 
     items: Mapped[list["MealItem"]] = relationship(
         back_populates="meal", cascade="all, delete-orphan", lazy="selectin"
@@ -129,6 +133,21 @@ class MealItem(Base):
 
     def macros(self) -> Macros:
         return Macros(self.kcal, self.protein, self.fat, self.carbs)
+
+
+class PhotoEval(Base):
+    """A photo whose analysis the user corrected, kept with consent to measure recognition."""
+
+    __tablename__ = "photo_evals"
+
+    meal_id: Mapped[int] = mapped_column(
+        ForeignKey("meals.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    photo_key: Mapped[str] = mapped_column(String(64))
+    # The analysis before the first correction; the corrected version is the meal itself.
+    original: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class BodyWeight(Base):

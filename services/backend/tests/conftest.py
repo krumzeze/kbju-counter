@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
+from botocore.exceptions import ClientError
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -14,6 +15,7 @@ from belok.db.models import Base
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisResult, FoodAnalysis, FoodItem
 from belok.services import features
+from belok.services.photos import PhotoStore
 from belok.services.products import ProductInfo
 from tests.telegram_signing import BOT_TOKEN, sign_init_data
 
@@ -116,6 +118,41 @@ class FakeFoodDb:
         return self.products.get(code)
 
 
+class FakeS3:
+    """The slice of the boto3 S3 client that PhotoStore uses, kept in memory."""
+
+    def __init__(self) -> None:
+        self.objects: dict[str, bytes] = {}
+
+    def put_object(self, Bucket: str, Key: str, Body: bytes, **kwargs) -> None:
+        self.objects[Key] = Body
+
+    def get_object(self, Bucket: str, Key: str) -> dict:
+        if Key not in self.objects:
+            raise ClientError({"Error": {"Code": "NoSuchKey"}}, "GetObject")
+        return {"Body": SimpleNamespace(read=lambda: self.objects[Key])}
+
+    def copy_object(self, Bucket: str, Key: str, CopySource: dict) -> None:
+        if CopySource["Key"] not in self.objects:
+            raise ClientError({"Error": {"Code": "NoSuchKey"}}, "CopyObject")
+        self.objects[Key] = self.objects[CopySource["Key"]]
+
+    def delete_objects(self, Bucket: str, Delete: dict) -> None:
+        for obj in Delete["Objects"]:
+            self.objects.pop(obj["Key"], None)
+
+    def get_paginator(self, name: str) -> SimpleNamespace:
+        def paginate(Bucket: str, Prefix: str) -> list[dict]:
+            return [{"Contents": [{"Key": k} for k in self.objects if k.startswith(Prefix)]}]
+
+        return SimpleNamespace(paginate=paginate)
+
+
+@pytest.fixture
+def s3() -> FakeS3:
+    return FakeS3()
+
+
 @pytest.fixture
 def food_db() -> FakeFoodDb:
     return FakeFoodDb()
@@ -146,7 +183,7 @@ def bot() -> FakeBot:
 
 @pytest.fixture
 async def client(
-    settings: Settings, analyzer: FakeAnalyzer, bot: FakeBot, food_db: FakeFoodDb
+    settings: Settings, analyzer: FakeAnalyzer, bot: FakeBot, food_db: FakeFoodDb, s3: FakeS3
 ) -> AsyncIterator[httpx.AsyncClient]:
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
@@ -161,6 +198,7 @@ async def client(
     app.state.food_db = food_db
     app.state.stt = None
     app.state.bot = bot
+    app.state.photos = PhotoStore(s3, "photos", b"test-photo-secret")
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         c.app = app

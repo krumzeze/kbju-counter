@@ -12,6 +12,12 @@ variable "cloudflare_account_id" {
   type = string
 }
 
+variable "photo_retention_days" {
+  description = "Meal photos older than this are deleted; must match PHOTO_RETENTION_DAYS."
+  type        = number
+  default     = 90
+}
+
 variable "server_type" {
   type    = string
   default = "cx23"

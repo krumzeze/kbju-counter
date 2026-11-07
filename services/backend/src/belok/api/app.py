@@ -16,6 +16,7 @@ from belok.api.routes import (
     me,
     meals,
     payments,
+    photos,
     support,
     tracking,
     workouts,
@@ -24,6 +25,7 @@ from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
 from belok.llm.speech import SpeechToText
 from belok.services import errors
+from belok.services.photos import PhotoStore
 from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 
@@ -60,7 +62,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.tribute = TributeCatalog.from_settings(settings)
-    for module in (admin, auth, client_errors, me, meals, payments, support, tracking, workouts):
+    app.state.photos = PhotoStore.from_settings(settings)
+    modules = (admin, auth, client_errors, me, meals, payments, photos, support, tracking, workouts)
+    for module in modules:
         app.include_router(module.router, prefix="/api")
 
     @app.exception_handler(Exception)

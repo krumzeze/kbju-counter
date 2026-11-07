@@ -8,7 +8,7 @@ import { type Lang, locale, tr } from "../lib/i18n";
 import { Art } from "../components/Art";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
-import { ReminderSettings, TargetSettings } from "../components/Settings";
+import { PhotoSettings, ReminderSettings, TargetSettings } from "../components/Settings";
 import { ThemePicker } from "../components/ThemePicker";
 import { useSaveProfile } from "../lib/queries";
 import { isMiniApp } from "../lib/telegram";
@@ -169,6 +169,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           <TargetSettings me={me} />
           <h2 className="profile-section">{tr("Уведомления и оформление", "Notifications and look")}</h2>
           <ReminderSettings me={me} />
+          <PhotoSettings me={me} />
           <LanguageCard me={me} />
           <ThemePicker />
           <h2 className="profile-section">{tr("Подписка и бонусы", "Subscription and rewards")}</h2>

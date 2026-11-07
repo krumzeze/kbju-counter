@@ -132,6 +132,35 @@ function AdaptiveProgress({ data }: { data: Adaptive }) {
   );
 }
 
+export function PhotoSettings({ me }: { me: Me }) {
+  const save = useUpdateSettings();
+  if (!me.photo_storage) return null;
+  return (
+    <section className="card stack">
+      <h2>{tr("Фото еды", "Food photos")}</h2>
+      <p className="muted small">
+        {tr(
+          "Уменьшенные копии фото хранятся 90 дней, чтобы показывать их в дневнике, потом удаляются.",
+          "Small copies of your photos are kept for 90 days to show in your diary, then deleted.",
+        )}
+      </p>
+      <div>
+        <Toggle
+          label={tr("Помогать улучшать распознавание", "Help improve recognition")}
+          hint={tr(
+            "Если ты исправишь блюдо на фото, я сохраню фото и исправление, чтобы проверять точность. Выключишь, и они удалятся.",
+            "When you correct a photo meal, I'll keep the photo and the fix to check accuracy. Turn off to delete them.",
+          )}
+          checked={me.photo_eval_consent}
+          disabled={save.isPending}
+          onChange={(v) => save.mutate({ photo_eval_consent: v })}
+        />
+      </div>
+      {save.isError && <p className="error small">{errorMessage(save.error)}</p>}
+    </section>
+  );
+}
+
 export function ReminderSettings({ me }: { me: Me }) {
   const save = useUpdateSettings();
   return (
