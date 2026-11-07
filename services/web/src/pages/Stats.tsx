@@ -7,7 +7,7 @@ import { BarChart, type Goal, type LegendItem } from "../components/BarChart";
 import { LineChart } from "../components/LineChart";
 import { PremiumNote } from "../components/PremiumNote";
 import { ErrorState, Spinner } from "../components/States";
-import { STEP_GOAL, count, daysWord, decimal, round, shiftDay, signedDecimal, signedRound, todayIso } from "../lib/format";
+import { STEP_GOAL, count, decimal, round, shiftDay, signedDecimal, todayIso } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
 import { useInvalidate, useMe, useStats, useWeights } from "../lib/queries";
 import { type Point, mean, trailingMean, weekly } from "../lib/series";
@@ -17,7 +17,6 @@ const PERIODS = [7, 30, 90] as const;
 type Period = (typeof PERIODS)[number];
 const WEEKLY_FROM = 90;
 const TOLERANCE = 0.1;
-const KCAL_PER_KG = 7700;
 const TREND_DAYS = 7;
 
 export function Stats() {
@@ -56,17 +55,12 @@ export function Stats() {
       <div className="stats-grid">
         <div className="stats-col">
           <WeightSection points={weights.data} inPeriod={inPeriod} delta={weightDelta} goal={goal} />
+          {stats.data && <ActivitySection stats={stats.data} weeklyMode={weeklyMode} />}
+        </div>
+        <div className="stats-col">
           {statsBody((data) => (
             <NutritionSection stats={data} weeklyMode={weeklyMode} />
           ))}
-        </div>
-        <div className="stats-col">
-          {stats.data && (
-            <>
-              <BalanceSection stats={stats.data} goal={goal} weightDelta={weightDelta} weeklyMode={weeklyMode} />
-              <ActivitySection stats={stats.data} weeklyMode={weeklyMode} />
-            </>
-          )}
         </div>
       </div>
     </div>
@@ -202,101 +196,6 @@ function WeightNowCard({ last }: { last: number | null }) {
         </button>
       }
     />
-  );
-}
-
-/* Calorie balance */
-
-function BalanceSection({
-  stats,
-  goal,
-  weightDelta,
-  weeklyMode,
-}: {
-  stats: StatsData;
-  goal: BodyGoal | null;
-  weightDelta: number | null;
-  weeklyMode: boolean;
-}) {
-  const counted = stats.days.filter((d) => d.eaten.kcal > 0 && d.burned !== null);
-  const countedDays = new Set(counted.map((d) => d.day));
-  const balance = (d: StatsDay) => d.eaten.kcal - (d.burned ?? 0);
-  const total = counted.reduce((s, d) => s + balance(d), 0);
-  const daily: Point[] = stats.days.map((d) => ({ day: d.day, value: countedDays.has(d.day) ? balance(d) : 0 }));
-  const points = weeklyMode ? weekly(daily, (p) => countedDays.has(p.day)) : daily;
-  const tone = (v: number) =>
-    !goal || goal === "maintain" ? (Math.abs(v) <= 250 ? "good" : "bad") : (goal === "lose") === v < 0 ? "good" : "bad";
-  const legend: LegendItem[] =
-    goal === "gain"
-      ? [
-          { cls: "good", label: tr("профицит", "surplus") },
-          { cls: "bad", label: tr("дефицит", "deficit") },
-        ]
-      : goal === "lose"
-        ? [
-            { cls: "good", label: tr("дефицит", "deficit") },
-            { cls: "bad", label: tr("профицит", "surplus") },
-          ]
-        : [
-            { cls: "good", label: tr("около нуля", "near zero") },
-            { cls: "bad", label: tr("заметно в плюс или минус", "far from zero") },
-          ];
-
-  return (
-    <section className="stats-section order-balance">
-      <h2>{tr("Баланс калорий", "Calorie balance")}</h2>
-      {counted.length === 0 ? (
-        <p className="muted">
-          {stats.days.some((d) => d.burned !== null)
-            ? tr("Появится, когда запишешь еду хотя бы за один день.", "Appears once you log food for a day.")
-            : tr("Заполни профиль, чтобы считать расход калорий.", "Fill in your profile to estimate expenditure.")}
-        </p>
-      ) : (
-        <section className="card">
-          <div className="balance-summary">
-            <div>
-              <span className={`balance-total ${tone(total / counted.length)}`}>
-                {signedRound(total)} {tr("ккал", "kcal")}
-              </span>
-              <span className="muted small">
-                {tr(`за ${counted.length} ${daysWord(counted.length)} с записями`, `over ${counted.length} logged ${daysWord(counted.length)}`)}
-              </span>
-            </div>
-            <dl className="balance-kg">
-              <dt>{tr("по балансу", "expected")}</dt>
-              <dd>
-                ≈ {signedDecimal(total / KCAL_PER_KG)} {tr("кг", "kg")}
-              </dd>
-              {weightDelta !== null && (
-                <>
-                  <dt>{tr("на весах", "on the scale")}</dt>
-                  <dd>
-                    {signedDecimal(weightDelta)} {tr("кг", "kg")}
-                  </dd>
-                </>
-              )}
-            </dl>
-          </div>
-          <BarChart
-            key={String(weeklyMode)}
-            tone="balance"
-            points={points}
-            period={weeklyMode ? "week" : "day"}
-            format={(n) => signedRound(n)}
-            unit={weeklyMode ? tr("ккал в день", "kcal a day") : tr("ккал", "kcal")}
-            classify={tone}
-            legend={legend}
-            label={tr("Баланс калорий по дням", "Daily calorie balance")}
-          />
-          <p className="chart-note">
-            {tr(
-              "Съедено минус потрачено за день. Минус означает дефицит, и вес идёт вниз, плюс означает профицит. Около 7 700 ккал дают 1 кг. Дни без записей еды не учитываются.",
-              "Eaten minus burned. Below zero is a deficit and weight goes down, above zero is a surplus. About 7,700 kcal make 1 kg. Days without food logs are skipped.",
-            )}
-          </p>
-        </section>
-      )}
-    </section>
   );
 }
 

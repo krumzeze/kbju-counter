@@ -23,7 +23,6 @@ interface Props {
   period?: "day" | "week";
   height?: number;
   tone?: string;
-  classify?: (value: number) => string | undefined;
   legend?: LegendItem[];
   xLabel?: (point: Point) => string;
   readoutLabel?: (point: Point) => string;
@@ -41,7 +40,6 @@ export function BarChart({
   period = "day",
   height = 200,
   tone,
-  classify,
   legend,
   xLabel = (p) => shortDate(p.day),
   readoutLabel = (p) => readoutDate(p.day, period),
@@ -72,9 +70,7 @@ export function BarChart({
   const shown = active ?? points.length - 1;
   const barClass = (value: number, i: number) => {
     const classes = ["chart-bar"];
-    const extra = classify?.(value);
-    if (extra) classes.push(extra);
-    else if (goal?.kind === "limit" && value > goal.value * 1.1) classes.push("over");
+    if (goal?.kind === "limit" && value > goal.value * 1.1) classes.push("over");
     else if (goal?.kind === "target" && value < goal.value) classes.push("under");
     if (active !== null && i !== active) classes.push("dim");
     return classes.join(" ");

@@ -7,14 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.db.models import BodyWeight, Meal, MealItem, User
 from belok.domain import adaptive
-from belok.domain.nutrition import (
-    Macros,
-    bmr,
-    maintenance_kcal,
-    steps_kcal,
-    strength_kcal,
-    target_for,
-)
+from belok.domain.nutrition import Macros, bmr, maintenance_kcal, target_for
 from belok.services.access import has_access
 from belok.services.workouts import activity_kcal
 from belok.timeutil import utcnow
@@ -84,14 +77,3 @@ async def target_on(session: AsyncSession, user: User, day: date, weight_kg: flo
     floor = bmr(user.sex, weight_kg, user.height_cm, age)
     macros = target_for(tdee, weight_kg, user.goal, floor_kcal=floor)
     return Target(macros, source, shown_activity, estimate)
-
-
-def burned_on(
-    user: User, target: Target, weight_kg: float, day: date, steps: int, sets: int
-) -> float:
-    """Estimated calories spent on a day: measured maintenance if known, else the formula."""
-    if target.source == TargetSource.ADAPTIVE and target.estimate.tdee is not None:
-        return target.estimate.tdee
-    activity = steps_kcal(steps, weight_kg) + strength_kcal(sets, weight_kg)
-    age = day.year - user.birth_year
-    return maintenance_kcal(user.sex, weight_kg, user.height_cm, age, activity)

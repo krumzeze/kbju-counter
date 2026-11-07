@@ -13,8 +13,6 @@ export const signed = (text: string, n: number) => (n > 0 ? `+${text}` : n < 0 ?
 
 export const signedDecimal = (n: number, digits = 1) => signed(decimal(Math.abs(n), digits), Number(n.toFixed(digits)));
 
-export const signedRound = (n: number) => signed(round(Math.abs(n)), Math.round(n));
-
 export function todayIso(): string {
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);

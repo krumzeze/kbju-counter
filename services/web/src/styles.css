@@ -3588,14 +3588,6 @@ span.set-check {
   opacity: 1;
 }
 
-.chart.balance .chart-bar.good {
-  fill: var(--series-1);
-}
-
-.chart.balance .chart-bar.bad {
-  fill: var(--fat);
-}
-
 .chart.act-water .chart-bar {
   fill: var(--water);
 }
@@ -3658,10 +3650,6 @@ span.set-check {
 
 .stats-col > .order-weight {
   order: 1;
-}
-
-.stats-col > .order-balance {
-  order: 2;
 }
 
 .stats-col > .order-activity {
@@ -3828,55 +3816,6 @@ span.set-check {
   margin: -4px 0 0;
   font-size: 12px;
   color: var(--muted);
-}
-
-.balance-summary {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-.balance-summary > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.balance-total {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.balance-total.good {
-  color: var(--accent);
-}
-
-.balance-total.bad {
-  color: var(--danger);
-}
-
-.balance-kg {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 2px 10px;
-  margin: 0;
-  font-size: 13px;
-}
-
-.balance-kg dt {
-  color: var(--muted);
-}
-
-.balance-kg dd {
-  margin: 0;
-  font-weight: 600;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 
 .split {

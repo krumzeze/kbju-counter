@@ -275,7 +275,6 @@ class StatsDayOut(BaseModel):
     steps: int
     water_ml: int
     sets: int
-    burned: float | None = None
 
 
 class StatsOut(BaseModel):

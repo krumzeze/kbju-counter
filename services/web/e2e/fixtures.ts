@@ -152,7 +152,6 @@ export const stats: Stats = {
     steps: 5000 + i * 300,
     water_ml: 1500,
     sets: i % 2 ? 12 : 0,
-    burned: 2400 + i * 20,
   })),
   target,
   water_target_ml: 2400,

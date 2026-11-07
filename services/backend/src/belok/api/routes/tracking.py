@@ -24,7 +24,6 @@ from belok.services.repo import (
     upsert_steps,
     upsert_weight,
 )
-from belok.services.targets import burned_on
 from belok.timeutil import local_today
 
 router = APIRouter(tags=["tracking"])
@@ -67,15 +66,10 @@ async def get_stats(
     if limited:
         start = allowed
     summary = await day_summary(session, user, today)
-    days_out = []
-    for d in await daily_stats(session, user.id, start, today):
-        out = StatsDayOut.model_validate(d)
-        if summary.target and summary.weight_kg:
-            out.burned = burned_on(user, summary.target, summary.weight_kg, d.day, d.steps, d.sets)
-        days_out.append(out)
+    days_out = await daily_stats(session, user.id, start, today)
     weight = summary.weight_kg
     return StatsOut(
-        days=days_out,
+        days=[StatsDayOut.model_validate(d) for d in days_out],
         target=macros_out(summary.target.macros) if summary.target else None,
         water_target_ml=water_target_ml(weight) if weight else None,
         limited=limited,
