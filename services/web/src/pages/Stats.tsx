@@ -25,13 +25,6 @@ export function Stats() {
   return (
     <div className="page">
       <h1>{tr("Статистика", "Stats")}</h1>
-      <div className="segmented compact" role="tablist">
-        {PERIODS.map((p) => (
-          <button key={p} role="tab" aria-selected={period === p} onClick={() => setPeriod(p)}>
-            {p} {count(p, ["день", "дня", "дней"], ["day", "days"])}
-          </button>
-        ))}
-      </div>
       {stats.data?.limited && <PremiumNote />}
 
       <WeightSection points={weights.data} from={shiftDay(todayIso(), 1 - period)} />
@@ -42,7 +35,7 @@ export function Stats() {
         <ErrorState message={errorMessage(stats.error)} onRetry={() => stats.refetch()} />
       ) : (
         <>
-          <NutritionSection stats={stats.data} />
+          <NutritionSection stats={stats.data} period={period} onPeriod={setPeriod} />
           <ActivitySection stats={stats.data} />
         </>
       )}
@@ -134,7 +127,24 @@ function WeightSection({ points, from }: { points: WeightPoint[] | undefined; fr
   );
 }
 
-function NutritionSection({ stats }: { stats: StatsData }) {
+interface PeriodProps {
+  period: Period;
+  onPeriod: (period: Period) => void;
+}
+
+function PeriodChips({ period, onPeriod }: PeriodProps) {
+  return (
+    <div className="chips period-chips" role="group" aria-label={tr("Период", "Period")}>
+      {PERIODS.map((p) => (
+        <button key={p} className="chip" aria-pressed={period === p} onClick={() => onPeriod(p)}>
+          {p} {count(p, ["день", "дня", "дней"], ["day", "days"])}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function NutritionSection({ stats, ...periodProps }: { stats: StatsData } & PeriodProps) {
   const logged = stats.days.filter((d) => d.eaten.kcal > 0);
   const target = stats.target;
   const avg = (pick: (d: StatsData["days"][number]) => number) =>
@@ -148,7 +158,10 @@ function NutritionSection({ stats }: { stats: StatsData }) {
     <section className="stats-section">
       <h2>{tr("Питание", "Nutrition")}</h2>
       {logged.length === 0 ? (
-        <p className="muted">{tr("За этот период еды не записано.", "No food logged in this period.")}</p>
+        <section className="card">
+          <p className="muted">{tr("За этот период еды не записано.", "No food logged in this period.")}</p>
+          <PeriodChips {...periodProps} />
+        </section>
       ) : (
         <>
           <section className="kpis">
@@ -172,7 +185,7 @@ function NutritionSection({ stats }: { stats: StatsData }) {
               }
             />
           </section>
-          <NutritionChart stats={stats} />
+          <NutritionChart stats={stats} {...periodProps} />
         </>
       )}
     </section>
@@ -188,7 +201,7 @@ const METRICS: { key: Metric; label: () => string; title: () => string; kind: Go
   { key: "carbs", label: () => tr("Углеводы", "Carbs"), title: () => tr("Углеводы по дням", "Carbs per day"), kind: "limit" },
 ];
 
-function NutritionChart({ stats }: { stats: StatsData }) {
+function NutritionChart({ stats, ...periodProps }: { stats: StatsData } & PeriodProps) {
   const [metric, setMetric] = useState<Metric>("kcal");
   const m = METRICS.find((x) => x.key === metric)!;
   const unit = metric === "kcal" ? tr("ккал", "kcal") : tr("г", "g");
@@ -220,6 +233,7 @@ function NutritionChart({ stats }: { stats: StatsData }) {
       <p className="muted small">
         {tr("В среднем", "Average")}: {round(avg)} {unit} {tr("в день", "a day")}
       </p>
+      <PeriodChips {...periodProps} />
     </section>
   );
 }
