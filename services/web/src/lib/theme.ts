@@ -15,10 +15,10 @@ export const THEMES: Theme[] = [
   { key: "lavender", ru: "Лаванда", en: "Lavender", swatch: ["#f5f4f8", "#dcd5ef", "#6e60a6"] },
   { key: "terracotta", ru: "Терракота", en: "Terracotta", swatch: ["#f7f2ed", "#f4cdb4", "#a65a3a"] },
   { key: "berry", ru: "Ягоды", en: "Berry", swatch: ["#f8f3f4", "#f1d0da", "#a24c68"] },
-  { key: "black", ru: "Чёрная", en: "Black", swatch: ["#000000", "#202820", "#8fbf86"], dark: true },
-  { key: "graphite", ru: "Графит", en: "Graphite", swatch: ["#161614", "#2f3d2b", "#8fae84"], dark: true },
-  { key: "night-sea", ru: "Ночное море", en: "Night sea", swatch: ["#12171a", "#1f3a3a", "#5fb0c4"], dark: true },
-  { key: "plum", ru: "Слива", en: "Plum", swatch: ["#181316", "#43262f", "#d77c9a"], dark: true },
+  { key: "black", ru: "Чёрная", en: "Black", swatch: ["#000000", "#2c2c2e", "#7ccf8f"], dark: true },
+  { key: "graphite", ru: "Графит", en: "Graphite", swatch: ["#121212", "#2a2a2a", "#9ccc65"], dark: true },
+  { key: "night-sea", ru: "Ночное море", en: "Night sea", swatch: ["#0f1418", "#212b33", "#5fd0d6"], dark: true },
+  { key: "plum", ru: "Слива", en: "Plum", swatch: ["#141014", "#2a232b", "#f28bb0"], dark: true },
 ];
 
 // deepcode ignore HardcodedNonCryptoSecret: localStorage key name, not a secret
