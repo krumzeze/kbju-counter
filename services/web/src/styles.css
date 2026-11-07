@@ -4050,3 +4050,51 @@ span.set-check {
   --body: #3e343a;
   color-scheme: dark;
 }
+
+:root[data-theme="black"] {
+  --tab-add: var(--fat);
+  --on-water: #0f1a20;
+  --ink: #f2f2f2;
+  --ink-rgb: 242 242 242;
+  --on-ink: #000000;
+  --bg: #000000;
+  --surface: #141414;
+  --surface-2: #1f1f1f;
+  --muted: #8e8e8e;
+  --border: #262626;
+  --peach: #2b2620;
+  --peach-soft: #1f1c18;
+  --sage: #202820;
+  --sage-soft: #1a1f1a;
+  --sage-deep: #7a8a78;
+  --sand: #232323;
+  --blush: #2a2220;
+  --sky: #1c2429;
+  --water: #6aa6c4;
+  --accent: #8fbf86;
+  --accent-text: #0b120a;
+  --accent-soft: #1c241b;
+  --protein: #8fbf86;
+  --fat: #e3a24f;
+  --carbs: #c49f86;
+  --danger: #e5775d;
+  --c-protein: #7ea3cf;
+  --c-fat: #e6bd5c;
+  --c-carbs: #b29bd0;
+  --shadow: none;
+  --tabbar: rgb(38 38 38 / 90%);
+  --glow-1: #000000;
+  --glow-2: #000000;
+  --glass-rgb: 0 0 0;
+  --placeholder: #5e5e5e;
+  --series-1: #8fbf86;
+  --series-2: #e3a24f;
+  --series-3: #c49f86;
+  --series-rest: #3a3a3a;
+  --ramp-1: #1f2a1e;
+  --ramp-2: #3b5238;
+  --ramp-3: #648a5e;
+  --ramp-4: #9fd096;
+  --body: #2e2e2e;
+  color-scheme: dark;
+}
