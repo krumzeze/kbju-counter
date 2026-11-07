@@ -22,6 +22,9 @@
   --fat: #e3a24f;
   --carbs: #b98e74;
   --danger: #cf5f45;
+  --c-protein: #5b84b1;
+  --c-fat: #e0b04a;
+  --c-carbs: #9a80b8;
   --radius: 24px;
   --shadow: 0 1px 2px rgb(60 48 24 / 4%), 0 10px 28px rgb(60 48 24 / 5%);
   --tabbar: rgb(116 114 108 / 78%);
@@ -1841,19 +1844,19 @@ button:disabled {
 }
 
 .chart.protein .chart-bar {
-  fill: #5b84b1;
+  fill: var(--c-protein);
 }
 
 .chart.protein .chart-bar.under {
-  fill: #a9c0da;
+  fill: color-mix(in srgb, var(--c-protein) 45%, var(--surface));
 }
 
 .chart.fat .chart-bar {
-  fill: #e0b04a;
+  fill: var(--c-fat);
 }
 
 .chart.carbs .chart-bar {
-  fill: #9a80b8;
+  fill: var(--c-carbs);
 }
 
 .chart.fat .chart-bar.over,
@@ -1873,11 +1876,38 @@ button:disabled {
 
 .chart-legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 12px;
+  gap: 6px 14px;
+  margin-top: 10px;
+  font-size: 13px;
   color: var(--muted);
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart .chart-legend-swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+}
+
+.chart-legend-dot {
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.chart-legend-trend {
+  width: 18px;
+  border-top: 3px solid var(--series-1);
+  border-radius: 2px;
 }
 
 .chart-legend-goal {
@@ -3519,4 +3549,470 @@ span.set-check {
 
 .period-switch {
   margin: 0;
+}
+
+/* Stats page */
+
+.chart-grid.chart-zero {
+  stroke-dasharray: none;
+}
+
+.chart-trend {
+  fill: none;
+  stroke: var(--series-1);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart.with-trend .chart-line {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  opacity: 0.6;
+}
+
+.chart.with-trend .chart-dot {
+  stroke: var(--muted);
+}
+
+.chart.with-trend .chart-dot.active {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+
+.chart.balance .chart-bar.good {
+  fill: var(--series-1);
+}
+
+.chart.balance .chart-bar.bad {
+  fill: var(--fat);
+}
+
+.chart.act-water .chart-bar {
+  fill: var(--water);
+}
+
+.chart.act-water .chart-bar.under {
+  fill: color-mix(in srgb, var(--water) 40%, var(--surface));
+}
+
+.chart-note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.chart-note.top {
+  margin: 0 0 12px;
+}
+
+.card-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.stats-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stats-head h1 {
+  margin: 0;
+}
+
+.period-chips {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.period-chips .chip {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.stats-col {
+  display: contents;
+}
+
+.stats-col > * {
+  order: 3;
+}
+
+.stats-col > .order-weight {
+  order: 1;
+}
+
+.stats-col > .order-balance {
+  order: 2;
+}
+
+.stats-col > .order-calendar {
+  order: 4;
+}
+
+.stats-col > .order-activity {
+  order: 5;
+}
+
+.stats-section h2 {
+  margin: 0;
+}
+
+.kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.kpi-action {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.kpi-unit {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.kpi-value.good {
+  color: var(--accent);
+}
+
+.kpi-value.bad {
+  color: var(--danger);
+}
+
+.kpi-form {
+  gap: 8px;
+}
+
+.kpi-form-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.kpi-form .input {
+  min-height: 40px;
+  min-width: 0;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.metric-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.metric-tiles.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 379px) {
+  .metric-tiles.four {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.metric-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.metric-tile[aria-selected="true"] {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.metric-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--series-1);
+}
+
+.metric-tile.protein .metric-dot {
+  background: var(--c-protein);
+}
+
+.metric-tile.fat .metric-dot {
+  background: var(--c-fat);
+}
+
+.metric-tile.carbs .metric-dot {
+  background: var(--c-carbs);
+}
+
+.metric-tile.act-water .metric-dot {
+  background: var(--water);
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.metric-value.warn {
+  color: var(--danger);
+}
+
+.metric-sub {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tiles-caption {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.balance-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.balance-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.balance-total {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.balance-total.good {
+  color: var(--accent);
+}
+
+.balance-total.bad {
+  color: var(--danger);
+}
+
+.balance-kg {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 10px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.balance-kg dt {
+  color: var(--muted);
+}
+
+.balance-kg dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.split {
+  display: grid;
+  gap: 8px;
+}
+
+.split-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.split-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.split-bar {
+  display: flex;
+  height: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.split-seg {
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.split-seg.protein,
+.split-dot.protein {
+  background: var(--c-protein);
+}
+
+.split-seg.fat,
+.split-dot.fat {
+  background: var(--c-fat);
+}
+
+.split-seg.carbs,
+.split-dot.carbs {
+  background: var(--c-carbs);
+}
+
+.split-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.cal-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 14px;
+}
+
+.cal-stats > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-stats strong {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-stats span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cal {
+  display: grid;
+  gap: 4px;
+  justify-content: start;
+}
+
+.cal-row {
+  display: contents;
+}
+
+.cal-wd {
+  padding-right: 6px;
+  align-self: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cal-cell {
+  display: block;
+  aspect-ratio: 1;
+  min-width: 10px;
+  border-radius: 5px;
+  background: var(--surface-2);
+}
+
+.chart-legend .cal-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.cal-cell.ok {
+  background: var(--series-1);
+}
+
+.cal-cell.under {
+  background: var(--ramp-2);
+}
+
+.cal-cell.over {
+  background: var(--fat);
+}
+
+.cal-cell.pad {
+  background: transparent;
+}
+
+@media (min-width: 960px) {
+  .page.stats-page {
+    max-width: 1080px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 24px;
+  }
+
+  .stats-col {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
 }

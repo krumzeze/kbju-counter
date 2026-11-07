@@ -182,6 +182,8 @@ async def test_stats_sum_each_day(client):
     assert (today["steps"], today["water_ml"], today["sets"]) == (4000, 0, 0)
     assert stats["days"][0]["eaten"]["kcal"] == 0
     assert stats["target"]["kcal"] > 0
+    assert stats["water_target_ml"] == 2400
+    assert today["burned"] > stats["days"][0]["burned"] > 0
     assert stats["limited"] is False
     assert (await client.get("/api/stats?days=0", headers=headers)).status_code == 422
 

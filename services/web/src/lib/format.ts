@@ -4,6 +4,17 @@ export const STEP_GOAL = 10_000;
 
 export const round = (n: number) => Math.round(n).toLocaleString(locale());
 
+export const decimal = (n: number, digits = 1) =>
+  n.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+const MINUS = "\u2212";
+
+export const signed = (text: string, n: number) => (n > 0 ? `+${text}` : n < 0 ? `${MINUS}${text}` : text);
+
+export const signedDecimal = (n: number, digits = 1) => signed(decimal(Math.abs(n), digits), Number(n.toFixed(digits)));
+
+export const signedRound = (n: number) => signed(round(Math.abs(n)), Math.round(n));
+
 export function todayIso(): string {
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);

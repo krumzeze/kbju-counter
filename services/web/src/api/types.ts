@@ -156,11 +156,13 @@ export interface StatsDay {
   steps: number;
   water_ml: number;
   sets: number;
+  burned: number | null;
 }
 
 export interface Stats {
   days: StatsDay[];
   target: Macros | null;
+  water_target_ml: number | null;
   limited: boolean;
 }
 
