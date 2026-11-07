@@ -33,6 +33,7 @@ from belok.config import Settings
 from belok.db.models import Meal, MealItem, User
 from belok.domain.nutrition import water_target_ml
 from belok.i18n import Language
+from belok.images import BadImage, ImageTooLarge, media_type
 from belok.llm.analyzer import AnalysisError, AnalysisResult
 from belok.services.access import has_access
 from belok.services.features import Feature
@@ -117,9 +118,13 @@ async def create_meal_from_photo(
     photo: Annotated[UploadFile, File()],
     note: Annotated[str | None, Form(max_length=200)] = None,
 ) -> MealOut:
-    image = await _read_photo(photo)
+    image, kind = await _read_photo(photo)
     meal = await _analyze(
-        session, settings, user, "photo", lambda: analyzer.from_photo(image, note, _language(user))
+        session,
+        settings,
+        user,
+        "photo",
+        lambda: analyzer.from_photo(image, kind, note, _language(user)),
     )
     if photos is not None:
         await attach_photo(photos, meal, image)
@@ -163,7 +168,7 @@ async def scan_barcode(
     food_db: FoodDbDep,
     photo: Annotated[UploadFile, File()],
 ) -> BarcodeOut:
-    image = await _read_photo(photo)
+    image, _ = await _read_photo(photo)
     code = await decode_barcode(image)
     if code is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_barcode")
@@ -360,13 +365,20 @@ async def _ensure_within_limit(session: AsyncSession, user: User, settings: Sett
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "daily_limit") from exc
 
 
-async def _read_photo(photo: UploadFile) -> bytes:
+async def _read_photo(photo: UploadFile) -> tuple[bytes, str]:
+    """The image and its real type; the client's content type is only a first filter."""
     if photo.content_type not in {"image/jpeg", "image/png", "image/webp"}:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "unsupported_image")
     image = await photo.read(MAX_PHOTO_BYTES + 1)
     if len(image) > MAX_PHOTO_BYTES:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "image_too_large")
-    return image
+    try:
+        kind = media_type(image)
+    except ImageTooLarge as exc:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "image_too_large") from exc
+    except BadImage as exc:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "unsupported_image") from exc
+    return image, kind
 
 
 def _language(user: User) -> Language:

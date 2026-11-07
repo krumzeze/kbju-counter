@@ -1,6 +1,8 @@
+import io
 from datetime import timedelta
 
 import pytest
+from PIL import Image
 from sqlalchemy import update
 
 from belok.db.models import User
@@ -185,16 +187,29 @@ async def test_meal_lifecycle(client):
     assert day["meals"] == []
 
 
-async def test_photo_meal(client):
+async def test_photo_meal(client, analyzer):
     headers = await onboarded(client)
+    png = io.BytesIO()
+    Image.new("RGB", (64, 64)).save(png, "PNG")
     response = await client.post(
         "/api/meals/photo",
-        files={"photo": ("food.jpg", b"\xff\xd8fake", "image/jpeg")},
+        files={"photo": ("food.jpg", png.getvalue(), "image/jpeg")},
         data={"note": "200 г"},
         headers=headers,
     )
     assert response.status_code == 201
     assert response.json()["source"] == "photo"
+    assert analyzer.media_type == "image/png"
+
+
+async def test_script_disguised_as_photo_is_rejected(client):
+    headers = await onboarded(client)
+    response = await client.post(
+        "/api/meals/photo",
+        files={"photo": ("food.jpg", b"#!/bin/sh\necho hi\n", "image/jpeg")},
+        headers=headers,
+    )
+    assert response.status_code == 415
 
 
 async def test_photo_with_wrong_type_is_rejected(client):

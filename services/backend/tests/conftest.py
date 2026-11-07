@@ -77,8 +77,9 @@ class FakeAnalyzer:
         self.items = [FoodItem(name="Гречка", grams=200, kcal=220, protein=8, fat=2, carbs=42)]
 
     async def from_photo(
-        self, image: bytes, caption: str | None, language: Language
+        self, image: bytes, media_type: str, caption: str | None, language: Language
     ) -> AnalysisResult:
+        self.media_type = media_type
         return self._result()
 
     async def ping(self) -> None:

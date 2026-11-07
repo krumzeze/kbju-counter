@@ -70,16 +70,18 @@ async def test_photo_meal_keeps_thumbnail(client, s3):
 
 
 @pytest.mark.db
-async def test_broken_image_still_saves_meal(client, s3):
+async def test_appended_payload_is_not_stored(client, s3):
     headers = await onboarded(client)
+    payload = b"#!/bin/sh\nrm -rf /\n"
     response = await client.post(
         "/api/meals/photo",
-        files={"photo": ("food.jpg", b"\xff\xd8fake", "image/jpeg")},
+        files={"photo": ("food.jpg", jpeg() + payload, "image/jpeg")},
         headers=headers,
     )
     assert response.status_code == 201
-    assert response.json()["photo_url"] is None
-    assert s3.objects == {}
+    (stored,) = s3.objects.values()
+    assert payload not in stored
+    assert stored[:4] == b"RIFF"
 
 
 @pytest.mark.db

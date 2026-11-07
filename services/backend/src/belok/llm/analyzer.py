@@ -59,14 +59,14 @@ class FoodAnalyzer:
         await self._client.models.retrieve(self.model, timeout=10)
 
     async def from_photo(
-        self, image: bytes, caption: str | None, language: Language
+        self, image: bytes, media_type: str, caption: str | None, language: Language
     ) -> AnalysisResult:
         content: list[dict] = [
             {
                 "type": "image",
                 "source": {
                     "type": "base64",
-                    "media_type": "image/jpeg",
+                    "media_type": media_type,
                     "data": base64.standard_b64encode(image).decode(),
                 },
             }

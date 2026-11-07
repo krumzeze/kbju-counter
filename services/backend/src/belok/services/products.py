@@ -3,15 +3,14 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import timedelta
-from io import BytesIO
 
 import aiohttp
 import zxingcpp
-from PIL import Image, ImageOps, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from belok import images
 from belok.db.models import Product
 from belok.i18n import Language
 from belok.timeutil import utcnow
@@ -38,11 +37,9 @@ class ProductInfo:
 
 def _decode(image: bytes) -> str | None:
     try:
-        with Image.open(BytesIO(image)) as raw:
-            img = ImageOps.exif_transpose(raw).convert("L")
-    except (UnidentifiedImageError, OSError):
+        img = images.decode(image, MAX_DECODE_SIDE, mode="L")
+    except images.BadImage:
         return None
-    img.thumbnail((MAX_DECODE_SIDE, MAX_DECODE_SIDE))
     for barcode in zxingcpp.read_barcodes(img, formats=zxingcpp.BarcodeFormat.EANUPC):
         if CODE_RE.match(barcode.text):
             return barcode.text
