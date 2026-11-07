@@ -64,7 +64,6 @@ export function Stats() {
           {stats.data && (
             <>
               <BalanceSection stats={stats.data} goal={goal} weightDelta={weightDelta} weeklyMode={weeklyMode} />
-              <CalendarSection stats={stats.data} />
               <ActivitySection stats={stats.data} weeklyMode={weeklyMode} />
             </>
           )}
@@ -117,7 +116,7 @@ function WeightSection({
             trend={{
               points: trend,
               pointsLabel: tr("взвешивания", "weigh-ins"),
-              label: tr("тренд: среднее за 7 дней", "trend: 7-day average"),
+              label: tr("тренд за 7 дней", "7-day trend"),
             }}
           />
         </section>
@@ -480,92 +479,6 @@ function WeekdayCard({ logged, target }: { logged: StatsDay[]; target: Macros | 
         label={tr("Калории по дням недели", "Calories by weekday")}
         height={170}
       />
-    </section>
-  );
-}
-
-/* Logging calendar */
-
-type DayState = "none" | "ok" | "over" | "under" | "pad";
-
-function CalendarSection({ stats }: { stats: StatsData }) {
-  const target = stats.target?.kcal;
-  const days = stats.days;
-  const state = (d: StatsDay): DayState => {
-    if (d.eaten.kcal <= 0) return "none";
-    if (!target || Math.abs(d.eaten.kcal - target) <= target * TOLERANCE) return "ok";
-    return d.eaten.kcal > target ? "over" : "under";
-  };
-  const first = days[0].day;
-  const lead = weekdayOf(first);
-  const cells: { day: string; state: DayState }[] = [
-    ...Array.from({ length: lead }, (_, i) => ({ day: shiftDay(first, i - lead), state: "pad" as const })),
-    ...days.map((d) => ({ day: d.day, state: state(d) })),
-  ];
-  while (cells.length % 7) cells.push({ day: shiftDay(cells.at(-1)!.day, 1), state: "pad" });
-  const weeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
-
-  const logged = days.filter((d) => d.eaten.kcal > 0).length;
-  const ok = days.filter((d) => state(d) === "ok").length;
-  const todayLogged = days.at(-1)!.eaten.kcal > 0;
-  let streak = 0;
-  for (let i = days.length - (todayLogged ? 1 : 2); i >= 0 && days[i].eaten.kcal > 0; i--) streak++;
-  const label: Record<Exclude<DayState, "pad">, string> = {
-    ok: target ? tr("в норме", "on target") : tr("есть записи", "logged"),
-    under: tr("меньше нормы", "under target"),
-    over: tr("больше нормы", "over target"),
-    none: tr("нет записей", "not logged"),
-  };
-  const legend = target ? (["ok", "under", "over", "none"] as const) : (["ok", "none"] as const);
-
-  return (
-    <section className="stats-section order-calendar">
-      <h2>{tr("Календарь записей", "Logging calendar")}</h2>
-      <section className="card">
-        <div className="cal-stats">
-          <div>
-            <strong>
-              {logged}/{days.length}
-            </strong>
-            <span>{tr("дней с записями", "days logged")}</span>
-          </div>
-          {target && (
-            <div>
-              <strong>{ok}</strong>
-              <span>{tr("в норме", "on target")}</span>
-            </div>
-          )}
-          <div>
-            <strong>{streak}</strong>
-            <span>{tr("дней подряд", "day streak")}</span>
-          </div>
-        </div>
-        <div className="cal" style={{ gridTemplateColumns: `auto repeat(${weeks.length}, minmax(0, 34px))` }}>
-          {Array.from({ length: 7 }, (_, row) => (
-            <div key={row} className="cal-row">
-              <span className="cal-wd">{row % 2 === 0 ? weekdayName(row, "short") : ""}</span>
-              {weeks.map((week) => {
-                const c = week[row];
-                return (
-                  <span
-                    key={c.day}
-                    className={`cal-cell ${c.state}`}
-                    title={c.state === "pad" ? undefined : `${c.day}: ${label[c.state]}`}
-                  />
-                );
-              })}
-            </div>
-          ))}
-        </div>
-        <div className="chart-legend">
-          {legend.map((s) => (
-            <span key={s} className="chart-legend-item">
-              <span className={`cal-cell ${s}`} aria-hidden />
-              {label[s]}
-            </span>
-          ))}
-        </div>
-      </section>
     </section>
   );
 }

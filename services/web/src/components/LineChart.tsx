@@ -23,13 +23,14 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
   const values = [...points, ...(trend?.points ?? [])].map((p) => p.value);
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const pad = (max - min || Math.abs(max) * 0.02 || 1) * 0.1;
-  const scale = zeroBased ? niceTicks(0, max, 2) : niceTicks(min - pad, max + pad, 3);
-  const step = scale.ticks[1] - scale.ticks[0] || 1;
+  const pad = (max - min || Math.abs(max) * 0.02 || 1) * 0.12;
+  const nice = zeroBased ? niceTicks(0, max, 2) : niceTicks(min, max, 3);
+  const scale = zeroBased ? nice : { lo: min - pad, hi: max + pad };
+  const step = nice.ticks[1] - nice.ticks[0] || 1;
   const digits = step < 1 ? 1 : 0;
   const fmt = (v: number, d = digits) =>
     v.toLocaleString(locale(), { minimumFractionDigits: d, maximumFractionDigits: d });
-  const ticks = zeroBased ? scale.ticks.filter((t) => t > 0) : scale.ticks;
+  const ticks = nice.ticks.filter((t) => (zeroBased ? t > 0 : t >= scale.lo && t <= scale.hi));
   const left = Math.max(28, Math.max(...ticks.map((t) => fmt(t).length)) * 7 + 14);
 
   const innerW = WIDTH - left - PAD.right;
@@ -38,8 +39,22 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
   const y = (v: number) => PAD.top + innerH - ((v - scale.lo) / (scale.hi - scale.lo)) * innerH;
   const line = (ps: Point[]) => ps.map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p.value)}`).join(" ");
 
+  const smooth = (ps: Point[]) => {
+    const xy = ps.map((p, i) => [x(i), y(p.value)]);
+    return xy
+      .map(([px, py], i) => {
+        if (i === 0) return `M${px},${py}`;
+        const [x0, y0] = xy[Math.max(0, i - 2)];
+        const [x1, y1] = xy[i - 1];
+        const [x3, y3] = xy[Math.min(xy.length - 1, i + 1)];
+        const c1 = [x1 + (px - x0) / 6, y1 + (py - y0) / 6];
+        const c2 = [px - (x3 - x1) / 6, py - (y3 - y1) / 6];
+        return `C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${px},${py}`;
+      })
+      .join(" ");
+  };
   const path = line(points);
-  const area = `${path} L${x(points.length - 1)},${PAD.top + innerH} L${x(0)},${PAD.top + innerH} Z`;
+  const areaOf = (d: string) => `${d} L${x(points.length - 1)},${PAD.top + innerH} L${x(0)},${PAD.top + innerH} Z`;
   const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(innerW / 52))));
   const shown = active ?? points.length - 1;
   const shownTrend = trend?.points[shown];
@@ -64,16 +79,23 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
             </text>
           </g>
         ))}
-        {zeroBased && <path className="chart-area" d={area} />}
-        <path className="chart-line" d={path} />
-        {trend && <path className="chart-trend" d={line(trend.points)} />}
+        {zeroBased && <path className="chart-area" d={areaOf(path)} />}
+        {trend ? (
+          <>
+            <path className="chart-trend-area" d={areaOf(smooth(trend.points))} />
+            <line className="chart-guide" x1={x(shown)} x2={x(shown)} y1={PAD.top} y2={PAD.top + innerH} />
+            <path className="chart-trend" d={smooth(trend.points)} />
+          </>
+        ) : (
+          <path className="chart-line" d={path} />
+        )}
         {points.map((p, i) => (
           <g key={p.day}>
             <circle
               className={i === shown ? "chart-dot active" : "chart-dot"}
               cx={x(i)}
               cy={y(p.value)}
-              r={i === shown ? 6 : 3.5}
+              r={i === shown ? 5 : trend ? 2.5 : 3.5}
             />
             <rect
               x={x(i) - innerW / points.length / 2}

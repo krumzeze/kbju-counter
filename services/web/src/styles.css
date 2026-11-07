@@ -1897,11 +1897,11 @@ button:disabled {
 }
 
 .chart-legend-dot {
-  width: 9px;
-  height: 9px;
-  border: 2px solid var(--muted);
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--surface);
+  background: var(--muted);
+  opacity: 0.6;
 }
 
 .chart-legend-trend {
@@ -3565,19 +3565,27 @@ span.set-check {
   stroke-linecap: round;
 }
 
-.chart.with-trend .chart-line {
-  stroke: var(--muted);
-  stroke-width: 1.5;
-  opacity: 0.6;
+.chart-trend-area {
+  fill: var(--series-1);
+  opacity: 0.1;
+}
+
+.chart-guide {
+  stroke: var(--border);
+  stroke-width: 1;
 }
 
 .chart.with-trend .chart-dot {
-  stroke: var(--muted);
+  fill: var(--muted);
+  stroke: none;
+  opacity: 0.45;
 }
 
 .chart.with-trend .chart-dot.active {
-  fill: var(--ink);
+  fill: var(--surface);
   stroke: var(--ink);
+  stroke-width: 2.5;
+  opacity: 1;
 }
 
 .chart.balance .chart-bar.good {
@@ -3654,10 +3662,6 @@ span.set-check {
 
 .stats-col > .order-balance {
   order: 2;
-}
-
-.stats-col > .order-calendar {
-  order: 4;
 }
 
 .stats-col > .order-activity {
@@ -3927,75 +3931,6 @@ span.set-check {
   width: 10px;
   height: 10px;
   border-radius: 3px;
-}
-
-.cal-stats {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 14px;
-}
-
-.cal-stats > div {
-  display: flex;
-  flex-direction: column;
-}
-
-.cal-stats strong {
-  font-size: 20px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.cal-stats span {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.cal {
-  display: grid;
-  gap: 4px;
-  justify-content: start;
-}
-
-.cal-row {
-  display: contents;
-}
-
-.cal-wd {
-  padding-right: 6px;
-  align-self: center;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.cal-cell {
-  display: block;
-  aspect-ratio: 1;
-  min-width: 10px;
-  border-radius: 5px;
-  background: var(--surface-2);
-}
-
-.chart-legend .cal-cell {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-}
-
-.cal-cell.ok {
-  background: var(--series-1);
-}
-
-.cal-cell.under {
-  background: var(--ramp-2);
-}
-
-.cal-cell.over {
-  background: var(--fat);
-}
-
-.cal-cell.pad {
-  background: transparent;
 }
 
 @media (min-width: 960px) {
