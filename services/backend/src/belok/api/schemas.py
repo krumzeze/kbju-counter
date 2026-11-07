@@ -42,9 +42,10 @@ class MealOut(BaseModel):
     scale: float
     items: list[MealItemOut]
     totals: MacrosOut
+    photo_url: str | None = None
 
     @classmethod
-    def of(cls, meal: Meal) -> "MealOut":
+    def of(cls, meal: Meal, photo_url: str | None = None) -> "MealOut":
         return cls(
             id=meal.id,
             day=meal.day,
@@ -54,6 +55,7 @@ class MealOut(BaseModel):
             scale=meal.scale,
             items=[MealItemOut.model_validate(i) for i in meal.items],
             totals=MacrosOut.model_validate(meal.totals()),
+            photo_url=photo_url,
         )
 
 
@@ -109,6 +111,8 @@ class MeOut(BaseModel):
     adaptive_target: bool
     remind_meals: bool
     remind_weight: bool
+    photo_eval_consent: bool
+    photo_storage: bool
     adaptive: AdaptiveOut | None
     base_target: MacrosOut | None
     features: dict[str, bool]
@@ -125,6 +129,7 @@ class SettingsIn(BaseModel):
     adaptive_target: bool | None = None
     remind_meals: bool | None = None
     remind_weight: bool | None = None
+    photo_eval_consent: bool | None = None
 
 
 class PlanOut(BaseModel):

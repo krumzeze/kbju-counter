@@ -33,6 +33,17 @@ kubectl create secret generic belok-secrets -n belok --dry-run=client -o yaml \
    Коды товаров из ссылок `web.tribute.tg/p/<код>` и сроки в днях задаёт `TRIBUTE_PLANS`.
 6. Голосовые сообщения работают, только если задан `STT_API_KEY`: ключ любого
    OpenAI-совместимого API распознавания речи, адрес и модель в `STT_BASE_URL` и `STT_MODEL`.
+7. Фото еды хранятся в R2-бакете `belok-photos` (создаёт Terraform), без ключей не сохраняются.
+   В Cloudflare: R2 → Manage API tokens → Object Read & Write только на `belok-photos`, затем:
+
+```bash
+kubectl create secret generic belok-secrets -n belok --dry-run=client -o yaml \
+  --from-literal=R2_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com \
+  --from-literal=R2_ACCESS_KEY_ID=... \
+  --from-literal=R2_SECRET_ACCESS_KEY=... \
+  | kubeseal --controller-namespace kube-system -o yaml \
+    --merge-into deploy/belok-base/belok-secrets.yaml
+```
 
 ## Операции
 

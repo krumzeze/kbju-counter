@@ -1,14 +1,16 @@
+import asyncio
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import date
+from datetime import date, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.config import Settings
-from belok.db.models import LlmUsage, Meal, MealItem, User
+from belok.db.models import LlmUsage, Meal, MealItem, PhotoEval, User
 from belok.llm.analyzer import AnalysisError, AnalysisResult, FoodAnalysis, FoodItem
 from belok.services.access import has_access
+from belok.services.photos import PhotoStore, StorageError, eval_key, make_thumbnail, meal_key
 from belok.services.repo import analyses_on
 from belok.timeutil import local_today, utcnow
 
@@ -186,6 +188,58 @@ def resize_item(meal: Meal, item: MealItem, grams: float) -> None:
     item.protein *= ratio
     item.fat *= ratio
     item.carbs *= ratio
+
+
+async def attach_photo(store: PhotoStore, meal: Meal, image: bytes) -> None:
+    """Keep a thumbnail of the photo; the meal is saved either way."""
+    try:
+        thumb = await asyncio.to_thread(make_thumbnail, image)
+        key = meal_key(meal.user_id)
+        await store.put(key, thumb)
+    except (OSError, ValueError, *StorageError):
+        log.warning("failed to store photo for meal %s", meal.id, exc_info=True)
+        return
+    meal.photo_key = key
+
+
+def photo_url(store: PhotoStore | None, meal: Meal, retention_days: int) -> str | None:
+    if store is None or meal.photo_key is None:
+        return None
+    if utcnow() - meal.created_at > timedelta(days=retention_days):
+        return None
+    return store.url(meal.photo_key)
+
+
+async def keep_for_eval(
+    session: AsyncSession, store: PhotoStore | None, user: User, meal: Meal
+) -> None:
+    """Before the first correction of a photo meal, save the photo and the original analysis."""
+    if store is None or meal.photo_key is None or not user.photo_eval_consent:
+        return
+    if await session.get(PhotoEval, meal.id) is not None:
+        return
+    key = eval_key(user.id, meal.id)
+    try:
+        await store.copy(meal.photo_key, key)
+    except StorageError:
+        log.warning("failed to keep photo of meal %s for eval", meal.id, exc_info=True)
+        return
+    original = meal_analysis(meal).model_dump()
+    session.add(PhotoEval(meal_id=meal.id, user_id=user.id, photo_key=key, original=original))
+
+
+async def meal_photo_keys(session: AsyncSession, meal: Meal) -> list[str]:
+    keys = [meal.photo_key] if meal.photo_key else []
+    sample = await session.get(PhotoEval, meal.id)
+    if sample is not None:
+        keys.append(sample.photo_key)
+    return keys
+
+
+async def drop_eval_photos(session: AsyncSession, store: PhotoStore | None, user: User) -> None:
+    if store is not None:
+        await store.delete_prefix(f"eval/{user.id}/")
+    await session.execute(delete(PhotoEval).where(PhotoEval.user_id == user.id))
 
 
 def clamp_scale(scale: float) -> float:

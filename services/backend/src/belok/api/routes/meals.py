@@ -5,7 +5,15 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.api.deps import ActiveUser, AnalyzerDep, FoodDbDep, SessionDep, SettingsDep, require
+from belok.api.deps import (
+    ActiveUser,
+    AnalyzerDep,
+    FoodDbDep,
+    PhotosDep,
+    SessionDep,
+    SettingsDep,
+    require,
+)
 from belok.api.routes.workouts import set_out
 from belok.api.schemas import (
     BarcodeOut,
@@ -31,16 +39,21 @@ from belok.services.features import Feature
 from belok.services.meals import (
     DailyLimitReached,
     analyze_meal,
+    attach_photo,
     clamp_scale,
     copy_meal,
     ensure_within_limit,
+    keep_for_eval,
     manual_meal,
     meal_analysis,
     meal_history,
+    meal_photo_keys,
+    photo_url,
     replace_items,
     resize_item,
     run_analysis,
 )
+from belok.services.photos import PhotoStore
 from belok.services.products import (
     CODE_RE,
     ProductInfo,
@@ -60,7 +73,11 @@ MAX_PHOTO_BYTES = 10 * 1024 * 1024
 
 @router.get("/day")
 async def get_day(
-    user: ActiveUser, session: SessionDep, day: Annotated[date | None, Query()] = None
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    photos: PhotosDep,
+    day: Annotated[date | None, Query()] = None,
 ) -> DayOut:
     day = day or local_today(user.timezone)
     summary = await day_summary(session, user, day)
@@ -83,7 +100,7 @@ async def get_day(
         water_target_ml=water_target_ml(summary.weight_kg) if summary.weight_kg else None,
         activity_kcal=target.activity_kcal if target else 0.0,
         weight_kg=summary.weight_kg,
-        meals=[MealOut.of(m) for m in meals],
+        meals=[_out(m, photos, settings) for m in meals],
         sets=[set_out(s, e, _language(user)) for s, e in sets],
     )
 
@@ -96,13 +113,18 @@ async def create_meal_from_photo(
     session: SessionDep,
     settings: SettingsDep,
     analyzer: AnalyzerDep,
+    photos: PhotosDep,
     photo: Annotated[UploadFile, File()],
     note: Annotated[str | None, Form(max_length=200)] = None,
 ) -> MealOut:
     image = await _read_photo(photo)
-    return await _analyze(
+    meal = await _analyze(
         session, settings, user, "photo", lambda: analyzer.from_photo(image, note, _language(user))
     )
+    if photos is not None:
+        await attach_photo(photos, meal, image)
+        await session.commit()
+    return _out(meal, photos, settings)
 
 
 @router.post(
@@ -115,9 +137,10 @@ async def create_meal_from_text(
     settings: SettingsDep,
     analyzer: AnalyzerDep,
 ) -> MealOut:
-    return await _analyze(
+    meal = await _analyze(
         session, settings, user, "text", lambda: analyzer.from_text(body.text, _language(user))
     )
+    return MealOut.of(meal)
 
 
 @router.post("/meals/manual", status_code=status.HTTP_201_CREATED)
@@ -196,14 +219,19 @@ async def repeat_meal(meal_id: int, user: ActiveUser, session: SessionDep) -> Me
 
 @router.patch("/meals/{meal_id}")
 async def patch_meal(
-    meal_id: int, body: MealPatchIn, user: ActiveUser, session: SessionDep
+    meal_id: int,
+    body: MealPatchIn,
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    photos: PhotosDep,
 ) -> MealOut:
     meal = await get_meal(session, user.id, meal_id)
     if meal is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "meal_not_found")
     meal.scale = clamp_scale(body.scale)
     await session.commit()
-    return MealOut.of(meal)
+    return _out(meal, photos, settings)
 
 
 @router.post("/meals/{meal_id}/refine")
@@ -214,6 +242,7 @@ async def refine_meal(
     session: SessionDep,
     settings: SettingsDep,
     analyzer: AnalyzerDep,
+    photos: PhotosDep,
 ) -> MealOut:
     meal = await get_meal(session, user.id, meal_id)
     if meal is None:
@@ -233,31 +262,45 @@ async def refine_meal(
     if not analysis.items:
         await session.commit()
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_food")
+    await keep_for_eval(session, photos, user, meal)
     replace_items(meal, analysis)
     await session.commit()
-    return MealOut.of(meal)
+    return _out(meal, photos, settings)
 
 
 @router.patch("/meals/{meal_id}/items/{item_id}")
 async def patch_meal_item(
-    meal_id: int, item_id: int, body: MealItemPatchIn, user: ActiveUser, session: SessionDep
+    meal_id: int,
+    item_id: int,
+    body: MealItemPatchIn,
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    photos: PhotosDep,
 ) -> MealOut:
     meal, item = await _meal_item(session, user, meal_id, item_id)
+    await keep_for_eval(session, photos, user, meal)
     resize_item(meal, item, body.grams)
     await session.commit()
-    return MealOut.of(meal)
+    return _out(meal, photos, settings)
 
 
 @router.delete("/meals/{meal_id}/items/{item_id}")
 async def delete_meal_item(
-    meal_id: int, item_id: int, user: ActiveUser, session: SessionDep
+    meal_id: int,
+    item_id: int,
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    photos: PhotosDep,
 ) -> MealOut:
     meal, item = await _meal_item(session, user, meal_id, item_id)
     if len(meal.items) == 1:
         raise HTTPException(status.HTTP_409_CONFLICT, "last_item")
+    await keep_for_eval(session, photos, user, meal)
     meal.items.remove(item)
     await session.commit()
-    return MealOut.of(meal)
+    return _out(meal, photos, settings)
 
 
 async def _meal_item(
@@ -271,12 +314,17 @@ async def _meal_item(
 
 
 @router.delete("/meals/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_meal(meal_id: int, user: ActiveUser, session: SessionDep) -> Response:
+async def delete_meal(
+    meal_id: int, user: ActiveUser, session: SessionDep, photos: PhotosDep
+) -> Response:
     meal = await get_meal(session, user.id, meal_id)
     if meal is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "meal_not_found")
+    keys = await meal_photo_keys(session, meal)
     await session.delete(meal)
     await session.commit()
+    if photos is not None:
+        await photos.delete_quietly(*keys)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -286,7 +334,7 @@ async def _analyze(
     user: User,
     kind: str,
     call: Callable[[], Awaitable[AnalysisResult]],
-) -> MealOut:
+) -> Meal:
     await _ensure_within_limit(session, user, settings)
     try:
         meal = await analyze_meal(session, user, kind, call)
@@ -296,7 +344,11 @@ async def _analyze(
     await session.commit()
     if meal is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_food")
-    return MealOut.of(meal)
+    return meal
+
+
+def _out(meal: Meal, photos: PhotoStore | None, settings: Settings) -> MealOut:
+    return MealOut.of(meal, photo_url(photos, meal, settings.photo_retention_days))
 
 
 async def _ensure_within_limit(session: AsyncSession, user: User, settings: Settings) -> None:

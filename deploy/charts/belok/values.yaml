@@ -8,7 +8,8 @@ image:
 
 imagePullSecrets: []
 
-# Secret with BOT_TOKEN, LLM_API_KEY, API_SECRET, TRIBUTE_API_KEY and optional STT_API_KEY.
+# Secret with BOT_TOKEN, LLM_API_KEY, API_SECRET, TRIBUTE_API_KEY and optional STT_API_KEY,
+# R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY.
 secretName: belok-secrets
 
 database:
@@ -24,6 +25,8 @@ config:
   FREE_DAILY_ANALYSES: "2"
   STARS_PLANS: "30:150,90:375,365:1250"
   DEFAULT_TIMEZONE: Europe/Moscow
+  R2_BUCKET: belok-photos
+  PHOTO_RETENTION_DAYS: "90"
   LOG_LEVEL: INFO
 
 api:

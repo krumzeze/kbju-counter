@@ -13,3 +13,7 @@ output "app_url" {
 output "backups_bucket" {
   value = cloudflare_r2_bucket.backups.name
 }
+
+output "photos_bucket" {
+  value = cloudflare_r2_bucket.photos.name
+}

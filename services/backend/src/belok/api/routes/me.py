@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.api.deps import CurrentUser, SessionDep, SettingsDep
+from belok.api.deps import CurrentUser, PhotosDep, SessionDep, SettingsDep
 from belok.api.schemas import (
     AdaptiveOut,
     LanguageIn,
@@ -18,7 +18,7 @@ from belok.db.models import User
 from belok.domain.nutrition import daily_target, maintenance_kcal
 from belok.services import features
 from belok.services.access import access_status, access_until, has_access
-from belok.services.meals import analyses_left
+from belok.services.meals import analyses_left, drop_eval_photos
 from belok.services.promos import PromoResult, redeem
 from belok.services.referrals import referral_stats
 from belok.services.repo import latest_weight
@@ -59,7 +59,11 @@ async def put_language(
 
 @router.patch("/me/settings")
 async def patch_settings(
-    body: SettingsIn, user: CurrentUser, session: SessionDep, settings: SettingsDep
+    body: SettingsIn,
+    user: CurrentUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    photos: PhotosDep,
 ) -> MeOut:
     if body.adaptive_target and not user.adaptive_target:
         if not has_access(user, utcnow()):
@@ -67,6 +71,8 @@ async def patch_settings(
         info = await _adaptive(session, user)
         if info is None or not info.ready:
             raise HTTPException(status.HTTP_409_CONFLICT, "adaptive_not_ready")
+    if body.photo_eval_consent is False and user.photo_eval_consent:
+        await drop_eval_photos(session, photos, user)
     for field, value in body.model_dump(exclude_none=True).items():
         setattr(user, field, value)
     await session.commit()
@@ -131,6 +137,8 @@ async def _me(session: AsyncSession, user: User, settings: Settings) -> MeOut:
         adaptive_target=user.adaptive_target,
         remind_meals=user.remind_meals,
         remind_weight=user.remind_weight,
+        photo_eval_consent=user.photo_eval_consent,
+        photo_storage=settings.photos_enabled,
         adaptive=await _adaptive(session, user, weight),
         base_target=macros_out(target),
         features={key.value: on for key, on in (await features.flags(session)).items()},

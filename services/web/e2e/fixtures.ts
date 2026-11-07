@@ -62,6 +62,8 @@ export const me: Me = {
   adaptive_target: false,
   remind_meals: true,
   remind_weight: false,
+  photo_eval_consent: false,
+  photo_storage: true,
   adaptive: {
     ready: false,
     logged_days: 4,
@@ -111,6 +113,7 @@ const meal: Meal = {
     { id: 2, name: "Помидоры", grams: 80, kcal: 14, protein: 1, fat: 0, carbs: 3 },
   ],
   totals: { kcal: 229, protein: 20, fat: 15, carbs: 4 },
+  photo_url: null,
 };
 
 const set = (id: number, workout_id: number, weight_kg: number, reps: number) => ({

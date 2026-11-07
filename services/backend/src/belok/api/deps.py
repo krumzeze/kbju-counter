@@ -13,6 +13,7 @@ from belok.llm.analyzer import FoodAnalyzer
 from belok.llm.speech import SpeechToText
 from belok.services import features
 from belok.services.features import Feature
+from belok.services.photos import PhotoStore
 from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 from belok.services.users import SEEN_RESOLUTION
@@ -42,6 +43,10 @@ def get_stt(request: Request) -> SpeechToText | None:
     return request.app.state.stt
 
 
+def get_photos(request: Request) -> PhotoStore | None:
+    return request.app.state.photos
+
+
 def get_bot(request: Request) -> Bot:
     return request.app.state.bot
 
@@ -55,6 +60,7 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 AnalyzerDep = Annotated[FoodAnalyzer, Depends(get_analyzer)]
 FoodDbDep = Annotated[FoodDatabase, Depends(get_food_db)]
 SttDep = Annotated[SpeechToText | None, Depends(get_stt)]
+PhotosDep = Annotated[PhotoStore | None, Depends(get_photos)]
 BotDep = Annotated[Bot, Depends(get_bot)]
 TributeDep = Annotated[TributeCatalog, Depends(get_tribute)]
 

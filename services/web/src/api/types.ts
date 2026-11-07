@@ -27,6 +27,7 @@ export interface Meal {
   scale: number;
   items: MealItem[];
   totals: Macros;
+  photo_url: string | null;
 }
 
 export interface ManualMealInput {
@@ -106,6 +107,8 @@ export interface Me {
   adaptive_target: boolean;
   remind_meals: boolean;
   remind_weight: boolean;
+  photo_eval_consent: boolean;
+  photo_storage: boolean;
   adaptive: Adaptive | null;
   base_target: Macros | null;
   features: Record<FeatureKey, boolean>;
@@ -127,7 +130,10 @@ export interface Adaptive {
 }
 
 export type Settings = Partial<
-  Pick<Me, "activity_adjust" | "adaptive_target" | "remind_meals" | "remind_weight">
+  Pick<
+    Me,
+    "activity_adjust" | "adaptive_target" | "remind_meals" | "remind_weight" | "photo_eval_consent"
+  >
 >;
 
 export type AccessStatus = "trial" | "active" | "lifetime" | "expired";

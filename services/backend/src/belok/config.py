@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     stt_base_url: str = "https://api.openai.com/v1"
     stt_model: str = "whisper-1"
 
+    # Cloudflare R2 (S3 API) for meal photos; photos are not kept without it.
+    r2_endpoint: str | None = None
+    r2_bucket: str | None = None
+    r2_access_key_id: SecretStr | None = None
+    r2_secret_access_key: SecretStr | None = None
+    # Must match the bucket lifecycle rule in infra/terraform.
+    photo_retention_days: int = 90
+
     api_secret: SecretStr | None = None
     bot_username: str | None = None
     webapp_url: str | None = None
@@ -45,10 +53,28 @@ class Settings(BaseSettings):
     default_timezone: str = "Europe/Moscow"
     log_level: str = "INFO"
 
-    @field_validator("admin_id", "tribute_api_key", "stt_api_key", mode="before")
+    @field_validator(
+        "admin_id",
+        "tribute_api_key",
+        "stt_api_key",
+        "r2_endpoint",
+        "r2_bucket",
+        "r2_access_key_id",
+        "r2_secret_access_key",
+        mode="before",
+    )
     @classmethod
     def empty_as_none(cls, value: object) -> object:
         return None if value == "" else value
+
+    @property
+    def photos_enabled(self) -> bool:
+        return bool(
+            self.r2_endpoint
+            and self.r2_bucket
+            and self.r2_access_key_id
+            and self.r2_secret_access_key
+        )
 
     @field_validator("database_url")
     @classmethod

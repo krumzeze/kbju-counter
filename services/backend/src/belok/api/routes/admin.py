@@ -12,6 +12,7 @@ from belok.api.deps import (
     AnalyzerDep,
     BotDep,
     FoodDbDep,
+    PhotosDep,
     SessionDep,
     SettingsDep,
     SttDep,
@@ -151,10 +152,15 @@ async def message_user(
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: int, admin: AdminUser, session: SessionDep) -> Response:
+async def delete_user(
+    user_id: int, admin: AdminUser, session: SessionDep, photos: PhotosDep
+) -> Response:
     user = await _get_user(session, user_id)
     if user.id == admin.id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "cannot_change_self")
+    if photos is not None:
+        for prefix in ("meals", "eval"):
+            await photos.delete_prefix(f"{prefix}/{user.id}/")
     log_action(session, admin, "delete_user", user.id, username=user.username)
     await session.execute(delete(User).where(User.id == user.id))
     await session.commit()
