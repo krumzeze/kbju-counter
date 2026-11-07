@@ -26,7 +26,12 @@ export function Stats() {
       <h1>{tr("Статистика", "Stats")}</h1>
       {stats.data?.limited && <PremiumNote />}
 
-      <WeightSection points={weights.data} from={shiftDay(todayIso(), 1 - period)} />
+      <WeightSection
+        points={weights.data}
+        from={shiftDay(todayIso(), 1 - period)}
+        period={period}
+        onPeriod={setPeriod}
+      />
 
       {stats.isPending ? (
         <Spinner />
@@ -34,7 +39,7 @@ export function Stats() {
         <ErrorState message={errorMessage(stats.error)} onRetry={() => stats.refetch()} />
       ) : (
         <>
-          <NutritionSection stats={stats.data} period={period} onPeriod={setPeriod} />
+          <NutritionSection stats={stats.data} />
           <ActivitySection stats={stats.data} />
         </>
       )}
@@ -42,7 +47,11 @@ export function Stats() {
   );
 }
 
-function WeightSection({ points, from }: { points: WeightPoint[] | undefined; from: string }) {
+function WeightSection({
+  points,
+  from,
+  ...periodProps
+}: { points: WeightPoint[] | undefined; from: string } & PeriodProps) {
   const [value, setValue] = useState("");
   const invalidate = useInvalidate();
   const save = useMutation({
@@ -87,16 +96,21 @@ function WeightSection({ points, from }: { points: WeightPoint[] | undefined; fr
         )}
       </p>
 
-      {!points ? null : !last ? (
-        <div className="empty">
-          <Art name="empty-weight" />
-          <p>
-            {tr(
-              "Записей пока нет. Запиши первый вес, и здесь появится график.",
-              "No entries yet. Log your first weight and a chart will appear here.",
-            )}
-          </p>
-        </div>
+      {!points ? (
+        <PeriodSwitch {...periodProps} />
+      ) : !last ? (
+        <>
+          <div className="empty">
+            <Art name="empty-weight" />
+            <p>
+              {tr(
+                "Записей пока нет. Запиши первый вес, и здесь появится график.",
+                "No entries yet. Log your first weight and a chart will appear here.",
+              )}
+            </p>
+          </div>
+          <PeriodSwitch {...periodProps} />
+        </>
       ) : (
         <>
           <section className="tiles">
@@ -115,6 +129,7 @@ function WeightSection({ points, from }: { points: WeightPoint[] | undefined; fr
               </div>
             </div>
           </section>
+          <PeriodSwitch {...periodProps} />
           {inPeriod.length > 1 && (
             <section className="card">
               <LineChart points={inPeriod.map((p) => ({ day: p.day, value: p.weight_kg }))} unit={tr("кг", "kg")} />
@@ -131,11 +146,11 @@ interface PeriodProps {
   onPeriod: (period: Period) => void;
 }
 
-function PeriodChips({ period, onPeriod }: PeriodProps) {
+function PeriodSwitch({ period, onPeriod }: PeriodProps) {
   return (
-    <div className="chips period-chips" role="group" aria-label={tr("Период", "Period")}>
+    <div className="segmented compact period-switch" role="tablist" aria-label={tr("Период", "Period")}>
       {PERIODS.map((p) => (
-        <button key={p} className="chip" aria-pressed={period === p} onClick={() => onPeriod(p)}>
+        <button key={p} role="tab" aria-selected={period === p} onClick={() => onPeriod(p)}>
           {p} {count(p, ["день", "дня", "дней"], ["day", "days"])}
         </button>
       ))}
@@ -143,7 +158,7 @@ function PeriodChips({ period, onPeriod }: PeriodProps) {
   );
 }
 
-function NutritionSection({ stats, ...periodProps }: { stats: StatsData } & PeriodProps) {
+function NutritionSection({ stats }: { stats: StatsData }) {
   const logged = stats.days.filter((d) => d.eaten.kcal > 0);
   const target = stats.target;
   const avg = (pick: (d: StatsData["days"][number]) => number) =>
@@ -154,10 +169,7 @@ function NutritionSection({ stats, ...periodProps }: { stats: StatsData } & Peri
     <section className="stats-section">
       <h2>{tr("Питание", "Nutrition")}</h2>
       {logged.length === 0 ? (
-        <section className="card">
-          <p className="muted">{tr("За этот период еды не записано.", "No food logged in this period.")}</p>
-          <PeriodChips {...periodProps} />
-        </section>
+        <p className="muted">{tr("За этот период еды не записано.", "No food logged in this period.")}</p>
       ) : (
         <>
           <section className="kpis">
@@ -172,7 +184,7 @@ function NutritionSection({ stats, ...periodProps }: { stats: StatsData } & Peri
               sub={target ? tr(`цель ${round(target.protein)} г`, `target ${round(target.protein)} g`) : undefined}
             />
           </section>
-          <NutritionChart stats={stats} {...periodProps} />
+          <NutritionChart stats={stats} />
         </>
       )}
     </section>
@@ -188,7 +200,7 @@ const METRICS: { key: Metric; label: () => string; title: () => string; kind: Go
   { key: "carbs", label: () => tr("Углеводы", "Carbs"), title: () => tr("Углеводы по дням", "Carbs per day"), kind: "limit" },
 ];
 
-function NutritionChart({ stats, ...periodProps }: { stats: StatsData } & PeriodProps) {
+function NutritionChart({ stats }: { stats: StatsData }) {
   const [metric, setMetric] = useState<Metric>("kcal");
   const m = METRICS.find((x) => x.key === metric)!;
   const unit = metric === "kcal" ? tr("ккал", "kcal") : tr("г", "g");
@@ -221,7 +233,6 @@ function NutritionChart({ stats, ...periodProps }: { stats: StatsData } & Period
       <p className="muted small">
         {tr("В среднем", "Average")}: {round(avg)} {unit} {tr("в день", "a day")}
       </p>
-      <PeriodChips {...periodProps} />
     </section>
   );
 }

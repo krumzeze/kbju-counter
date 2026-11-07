@@ -3517,12 +3517,6 @@ span.set-check {
   gap: 12px;
 }
 
-.period-chips {
-  justify-content: center;
-  margin-top: 12px;
-}
-
-.period-chips .chip {
-  padding: 6px 12px;
-  font-size: 13px;
+.period-switch {
+  margin: 0;
 }
