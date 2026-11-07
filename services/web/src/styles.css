@@ -1103,6 +1103,23 @@ button:disabled {
   color: rgb(34 34 31 / 55%);
 }
 
+.meal-refine {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 10px 16px 0;
+}
+
+.meal-refine .input {
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.meal-refine .error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .meal-items li + li {
   border-top: 1px solid rgb(34 34 31 / 8%);
 }
@@ -1349,6 +1366,10 @@ button:disabled {
   font-weight: 600;
   color: var(--muted);
   text-align: left;
+}
+
+.table th.num {
+  text-align: right;
 }
 
 .table td {

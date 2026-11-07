@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Stats as StatsData, WeightPoint } from "../api/types";
 import { Art } from "../components/Art";
-import { BarChart } from "../components/BarChart";
+import { BarChart, type Goal } from "../components/BarChart";
 import { LineChart } from "../components/LineChart";
 import { PremiumNote } from "../components/PremiumNote";
 import { ErrorState, Spinner } from "../components/States";
@@ -172,34 +172,61 @@ function NutritionSection({ stats }: { stats: StatsData }) {
               }
             />
           </section>
-          <section className="card">
-            <BarChart
-              points={stats.days.map((d) => ({ day: d.day, value: d.eaten.kcal }))}
-              format={(n) => round(n)}
-              unit={tr("ккал", "kcal")}
-              goal={
-                target
-                  ? { value: target.kcal, kind: "limit", label: tr(`норма ${round(target.kcal)}`, `target ${round(target.kcal)}`) }
-                  : undefined
-              }
-              label={tr("Калории по дням", "Calories per day")}
-            />
-            <p className="muted small">
-              {tr("Средний БЖУ", "Average macros")}: {round(avg((d) => d.eaten.protein))} /{" "}
-              {round(avg((d) => d.eaten.fat))} / {round(avg((d) => d.eaten.carbs))} {tr("г", "g")}
-            </p>
-          </section>
+          <NutritionChart stats={stats} />
         </>
       )}
     </section>
   );
 }
 
+type Metric = "kcal" | "protein" | "fat" | "carbs";
+
+const METRICS: { key: Metric; label: () => string; title: () => string; kind: Goal["kind"] }[] = [
+  { key: "kcal", label: () => tr("Ккал", "Kcal"), title: () => tr("Калории по дням", "Calories per day"), kind: "limit" },
+  { key: "protein", label: () => tr("Белки", "Protein"), title: () => tr("Белки по дням", "Protein per day"), kind: "target" },
+  { key: "fat", label: () => tr("Жиры", "Fat"), title: () => tr("Жиры по дням", "Fat per day"), kind: "limit" },
+  { key: "carbs", label: () => tr("Углеводы", "Carbs"), title: () => tr("Углеводы по дням", "Carbs per day"), kind: "limit" },
+];
+
+function NutritionChart({ stats }: { stats: StatsData }) {
+  const [metric, setMetric] = useState<Metric>("kcal");
+  const m = METRICS.find((x) => x.key === metric)!;
+  const unit = metric === "kcal" ? tr("ккал", "kcal") : tr("г", "g");
+  const goal = stats.target?.[metric];
+  const logged = stats.days.filter((d) => d.eaten.kcal > 0);
+  const avg = logged.length ? logged.reduce((s, d) => s + d.eaten[metric], 0) / logged.length : 0;
+
+  return (
+    <section className="card">
+      <div className="segmented compact" role="tablist">
+        {METRICS.map((x) => (
+          <button key={x.key} role="tab" aria-selected={metric === x.key} onClick={() => setMetric(x.key)}>
+            {x.label()}
+          </button>
+        ))}
+      </div>
+      <BarChart
+        key={metric}
+        points={stats.days.map((d) => ({ day: d.day, value: d.eaten[metric] }))}
+        format={(n) => round(n)}
+        unit={unit}
+        goal={
+          goal
+            ? { value: goal, kind: m.kind, label: tr(`норма ${round(goal)} ${unit}`, `target ${round(goal)} ${unit}`) }
+            : undefined
+        }
+        label={m.title()}
+      />
+      <p className="muted small">
+        {tr("В среднем", "Average")}: {round(avg)} {unit} {tr("в день", "a day")}
+      </p>
+    </section>
+  );
+}
+
 function ActivitySection({ stats }: { stats: StatsData }) {
-  const n = stats.days.length;
   const stepDays = stats.days.filter((d) => d.steps > 0);
   const waterDays = stats.days.filter((d) => d.water_ml > 0);
-  const workoutDays = stats.days.filter((d) => d.sets > 0).length;
   const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
   return (
@@ -213,10 +240,6 @@ function ActivitySection({ stats }: { stats: StatsData }) {
         <Kpi
           label={tr("Воды в день", "Water a day")}
           value={waterDays.length ? `${(mean(waterDays.map((d) => d.water_ml)) / 1000).toFixed(1)} ${tr("л", "L")}` : "—"}
-        />
-        <Kpi
-          label={tr("Дней с тренировкой", "Workout days")}
-          value={`${workoutDays}/${n}`}
         />
       </section>
       {stepDays.length > 0 && (

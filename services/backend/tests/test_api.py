@@ -113,6 +113,28 @@ async def test_edit_and_remove_meal_items(client, analyzer):
     assert missing.status_code == 404
 
 
+async def test_refine_meal_replaces_items(client, analyzer):
+    headers = await onboarded(client)
+    meal = (await client.post("/api/meals/text", json={"text": "обед"}, headers=headers)).json()
+    await client.patch(f"/api/meals/{meal['id']}", json={"scale": 2}, headers=headers)
+    analyzer.items = [FoodItem(name="Рис", grams=150, kcal=180, protein=4, fat=1, carbs=40)]
+
+    r = await client.post(
+        f"/api/meals/{meal['id']}/refine", json={"text": "это рис, 150 г"}, headers=headers
+    )
+    assert r.status_code == 200
+    refined = r.json()
+    assert refined["scale"] == 1
+    assert [i["name"] for i in refined["items"]] == ["Рис"]
+    previous, correction = analyzer.refined
+    assert previous.items[0].grams == pytest.approx(400)
+    assert correction == "это рис, 150 г"
+
+    other = await onboarded(client, 1002)
+    r = await client.post(f"/api/meals/{meal['id']}/refine", json={"text": "рис"}, headers=other)
+    assert r.status_code == 404
+
+
 async def test_manual_meal_history_and_repeat(client):
     headers = await onboarded(client)
     body = {"title": " Сырники ", "grams": 250, "kcal": 220, "protein": 18, "fat": 9, "carbs": 16}

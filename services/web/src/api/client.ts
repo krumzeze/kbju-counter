@@ -135,6 +135,7 @@ export const api = {
     return request<Meal>("POST", "/meals/photo", form);
   },
   scaleMeal: (id: number, scale: number) => request<Meal>("PATCH", `/meals/${id}`, { scale }),
+  refineMeal: (id: number, text: string) => request<Meal>("POST", `/meals/${id}/refine`, { text }),
   deleteMeal: (id: number) => request<void>("DELETE", `/meals/${id}`),
   mealManual: (body: ManualMealInput) => request<Meal>("POST", "/meals/manual", body),
   barcode: (code: string) => request<Barcode>("GET", `/barcode/${code}`),
@@ -153,9 +154,10 @@ export const api = {
 
   weights: () => request<WeightPoint[]>("GET", "/weights"),
   stats: (days: number) => request<Stats>("GET", `/stats?days=${days}`),
-  addWater: (delta_ml: number) => request<{ water_ml: number }>("POST", "/water/today", { delta_ml }),
+  addWater: (delta_ml: number, day: string) =>
+    request<{ water_ml: number }>("POST", `/water/today?day=${day}`, { delta_ml }),
   saveWeight: (weight_kg: number) => request<void>("PUT", "/weights/today", { weight_kg }),
-  saveSteps: (steps: number) => request<void>("PUT", "/steps/today", { steps }),
+  saveSteps: (steps: number, day: string) => request<void>("PUT", `/steps/today?day=${day}`, { steps }),
 
   catalog: () => request<CatalogItem[]>("GET", "/catalog"),
   catalogItem: (id: string) => request<CatalogDetail>("GET", `/catalog/${encodeURIComponent(id)}`),

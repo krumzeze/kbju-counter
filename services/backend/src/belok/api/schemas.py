@@ -201,6 +201,10 @@ class TextMealIn(BaseModel):
     text: str = Field(min_length=2, max_length=500)
 
 
+class RefineMealIn(BaseModel):
+    text: str = Field(min_length=2, max_length=300)
+
+
 class MealPatchIn(BaseModel):
     scale: float = Field(ge=0.25, le=5)
 

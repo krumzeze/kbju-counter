@@ -1,7 +1,7 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from belok.api.deps import ActiveUser, SessionDep, SettingsDep
 from belok.api.schemas import (
@@ -26,6 +26,17 @@ from belok.services.repo import (
 from belok.timeutil import local_today
 
 router = APIRouter(tags=["tracking"])
+
+EDITABLE_DAYS = 7
+
+
+def _editable_day(user: ActiveUser, day: date | None) -> date:
+    today = local_today(user.timezone)
+    if day is None:
+        return today
+    if not today - timedelta(days=EDITABLE_DAYS - 1) <= day <= today:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "day_not_editable")
+    return day
 
 
 @router.get("/weights")
@@ -69,13 +80,23 @@ async def put_weight(body: WeightIn, user: ActiveUser, session: SessionDep) -> N
 
 
 @router.put("/steps/today", status_code=status.HTTP_204_NO_CONTENT)
-async def put_steps(body: StepsIn, user: ActiveUser, session: SessionDep) -> None:
-    await upsert_steps(session, user.id, local_today(user.timezone), body.steps)
+async def put_steps(
+    body: StepsIn,
+    user: ActiveUser,
+    session: SessionDep,
+    day: Annotated[date | None, Query()] = None,
+) -> None:
+    await upsert_steps(session, user.id, _editable_day(user, day), body.steps)
     await session.commit()
 
 
 @router.post("/water/today")
-async def post_water(body: WaterIn, user: ActiveUser, session: SessionDep) -> WaterOut:
-    total = await add_water(session, user.id, local_today(user.timezone), body.delta_ml)
+async def post_water(
+    body: WaterIn,
+    user: ActiveUser,
+    session: SessionDep,
+    day: Annotated[date | None, Query()] = None,
+) -> WaterOut:
+    total = await add_water(session, user.id, _editable_day(user, day), body.delta_ml)
     await session.commit()
     return WaterOut(water_ml=total)
