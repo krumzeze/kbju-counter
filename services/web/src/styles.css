@@ -803,6 +803,16 @@ button:disabled {
   background: var(--ink);
 }
 
+.bar-fill.over,
+.summary .bar-fill.over {
+  background: var(--danger);
+}
+
+.macro.over .macro-value {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 .dash,
 .dash-main {
   display: flex;
@@ -1828,6 +1838,27 @@ button:disabled {
 
 .chart-bar.under {
   fill: var(--ramp-2);
+}
+
+.chart.protein .chart-bar {
+  fill: #5b84b1;
+}
+
+.chart.protein .chart-bar.under {
+  fill: #a9c0da;
+}
+
+.chart.fat .chart-bar {
+  fill: #e0b04a;
+}
+
+.chart.carbs .chart-bar {
+  fill: #9a80b8;
+}
+
+.chart.fat .chart-bar.over,
+.chart.carbs .chart-bar.over {
+  fill: var(--danger);
 }
 
 .chart-bar.dim {

@@ -21,12 +21,13 @@ interface Props {
   goal?: Goal;
   period?: "day" | "week";
   height?: number;
+  tone?: string;
 }
 
 const PAD = { top: 12, right: 8, bottom: 28, left: 44 };
 const GAP = 2;
 
-export function BarChart({ points, format, label, unit, goal, period = "day", height = 200 }: Props) {
+export function BarChart({ points, format, label, unit, goal, period = "day", height = 200, tone }: Props) {
   const [active, setActive] = useState<number | null>(null);
   const [ref, WIDTH] = useWidth<HTMLDivElement>(640);
   if (points.length === 0) return null;
@@ -50,7 +51,7 @@ export function BarChart({ points, format, label, unit, goal, period = "day", he
   };
 
   return (
-    <div ref={ref} className="chart">
+    <div ref={ref} className={tone ? `chart ${tone}` : "chart"}>
       <div className="chart-readout">
         <strong>
           {format(points[shown].value)}

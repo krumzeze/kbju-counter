@@ -15,7 +15,6 @@ import { haptic } from "../lib/telegram";
 
 const PERIODS = [7, 30, 90] as const;
 type Period = (typeof PERIODS)[number];
-const ON_TARGET = 0.1;
 
 export function Stats() {
   const [period, setPeriod] = useState<Period>(30);
@@ -150,9 +149,6 @@ function NutritionSection({ stats, ...periodProps }: { stats: StatsData } & Peri
   const avg = (pick: (d: StatsData["days"][number]) => number) =>
     logged.length ? logged.reduce((s, d) => s + pick(d), 0) / logged.length : 0;
   const kcal = avg((d) => d.eaten.kcal);
-  const onTarget = target
-    ? logged.filter((d) => Math.abs(d.eaten.kcal - target.kcal) <= target.kcal * ON_TARGET).length
-    : null;
 
   return (
     <section className="stats-section">
@@ -174,15 +170,6 @@ function NutritionSection({ stats, ...periodProps }: { stats: StatsData } & Peri
               label={tr("Белка в день", "Protein a day")}
               value={`${round(avg((d) => d.eaten.protein))} ${tr("г", "g")}`}
               sub={target ? tr(`цель ${round(target.protein)} г`, `target ${round(target.protein)} g`) : undefined}
-            />
-            <Kpi
-              label={tr("Дней с записями", "Days logged")}
-              value={`${logged.length}/${stats.days.length}`}
-              sub={
-                onTarget !== null
-                  ? tr(`${onTarget} в пределах цели ±10%`, `${onTarget} within ±10% of target`)
-                  : undefined
-              }
             />
           </section>
           <NutritionChart stats={stats} {...periodProps} />
@@ -220,6 +207,7 @@ function NutritionChart({ stats, ...periodProps }: { stats: StatsData } & Period
       </div>
       <BarChart
         key={metric}
+        tone={metric}
         points={stats.days.map((d) => ({ day: d.day, value: d.eaten[metric] }))}
         format={(n) => round(n)}
         unit={unit}
