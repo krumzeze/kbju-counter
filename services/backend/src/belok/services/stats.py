@@ -11,11 +11,14 @@ from belok.db.models import (
     DailyActivity,
     LlmUsage,
     Meal,
+    Payment,
     PromoRedemption,
     ReferralReward,
     User,
     WorkoutSet,
 )
+
+SOURCE_DAYS = 90
 
 
 @dataclass(slots=True)
@@ -53,7 +56,7 @@ class Dashboard:
     referred_users: int
     referral_rewards: int
     promo_redemptions_30d: int
-    sources: list[tuple[str, int]]
+    sources: list[tuple[str, int, int]]
     series: list[DayPoint] = field(default_factory=list)
 
 
@@ -199,16 +202,19 @@ async def dashboard(session: AsyncSession, now: datetime, tz: str, days: int = 3
         (User.referred_by_id.is_not(None), literal("referral")),
         else_=func.coalesce(User.source, literal("direct")),
     )
+    paid = (
+        select(Payment.id).where(Payment.user_id == User.id, Payment.refunded_at.is_(None)).exists()
+    )
     recent = (
-        select(source.label("source"))
-        .where(User.created_at >= day_start - timedelta(days=29))
+        select(source.label("source"), paid.label("paid"))
+        .where(User.created_at >= day_start - timedelta(days=SOURCE_DAYS - 1))
         .subquery()
     )
     source_rows = await session.execute(
-        select(recent.c.source, func.count())
+        select(recent.c.source, func.count(), func.count().filter(recent.c.paid))
         .group_by(recent.c.source)
         .order_by(func.count().desc())
-        .limit(10)
+        .limit(20)
     )
 
     return Dashboard(
@@ -235,7 +241,7 @@ async def dashboard(session: AsyncSession, now: datetime, tz: str, days: int = 3
         referred_users=users[6],
         referral_rewards=rewards,
         promo_redemptions_30d=redemptions,
-        sources=[(s, n) for s, n in source_rows.all()],
+        sources=[(s, n, p) for s, n, p in source_rows.all()],
         series=await _series(session, since, today, tz, act),
     )
 

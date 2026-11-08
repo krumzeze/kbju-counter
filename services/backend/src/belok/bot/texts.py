@@ -27,10 +27,12 @@ STRINGS: dict[str, dict[Language, str]] = {
     "welcome": {
         RU: "Привет! Я Белок: считаю калории по фото, веду тренировки и вес.\n\n"
         "Всё работает в приложении, открой его кнопкой ниже. А ещё можно просто "
-        "отправить мне голосовое о том, что ты съел.",
+        "отправить мне голосовое о том, что ты съел.\n\n"
+        '<a href="{privacy_url}">Политика конфиденциальности</a>',
         EN: "Hi! I'm Belok: I count calories from photos and track your workouts and weight.\n\n"
         "Everything lives in the app, open it with the button below. You can also just "
-        "send me a voice message about what you ate.",
+        "send me a voice message about what you ate.\n\n"
+        '<a href="{privacy_url}">Privacy policy</a>',
     },
     "remind_nothing_today": {
         RU: "🍽 Сегодня ещё нет ни одной записи. Что было на завтрак и обед?",
@@ -136,6 +138,10 @@ STRINGS: dict[str, dict[Language, str]] = {
     "remind_stopped": {
         RU: "Больше не напоминаю. Включить снова можно в профиле.",
         EN: "Reminders are off. You can turn them back on in your profile.",
+    },
+    "privacy": {
+        RU: "Политика конфиденциальности: {url}",
+        EN: "Privacy policy (in Russian): {url}",
     },
     "app_unavailable": {
         RU: "Приложение скоро будет доступно.",

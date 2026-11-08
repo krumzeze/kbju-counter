@@ -11,7 +11,7 @@ import { Icon } from "../components/Icon";
 import { PhotoSettings, ReminderSettings, TargetSettings } from "../components/Settings";
 import { ThemePicker } from "../components/ThemePicker";
 import { useSaveProfile } from "../lib/queries";
-import { isMiniApp } from "../lib/telegram";
+import { isMiniApp, openExternal } from "../lib/telegram";
 
 const goals = (): { value: Goal; label: string; hint: string }[] => [
   { value: "lose", label: tr("Похудеть", "Lose weight"), hint: tr("дефицит 15%", "15% deficit") },
@@ -181,6 +181,17 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
             <span>{tr("Написать в поддержку", "Contact support")}</span>
             <span aria-hidden>💬</span>
           </Link>
+          <a
+            href="/privacy/"
+            className="card premium-note"
+            onClick={(e) => {
+              e.preventDefault();
+              openExternal(`${window.location.origin}/privacy/`);
+            }}
+          >
+            <span>{tr("Политика конфиденциальности", "Privacy policy")}</span>
+            <span aria-hidden>🔒</span>
+          </a>
         </>
       )}
 

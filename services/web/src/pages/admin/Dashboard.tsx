@@ -119,12 +119,18 @@ export function Dashboard() {
         <section className="card">
           <div className="card-head">
             <h2>Откуда пришли</h2>
-            <span className="muted small">30 дней</span>
+            <span className="muted small">90 дней</span>
           </div>
           {data.sources.length === 0 ? (
             <p className="muted">Пока нет регистраций</p>
           ) : (
-            <HBars items={data.sources.map((s) => ({ label: sourceLabel(s.key), value: s.count }))} />
+            <HBars
+              items={data.sources.map((s) => ({
+                label: sourceLabel(s.key),
+                value: s.count,
+                note: `${round(s.paid)} оплатили`,
+              }))}
+            />
           )}
         </section>
         <section className="card">
@@ -239,7 +245,7 @@ function FunnelCard({ data }: { data: Data }) {
   );
 }
 
-export function HBars({ items }: { items: { label: string; value: number }[] }) {
+export function HBars({ items }: { items: { label: string; value: number; note?: string }[] }) {
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
     <ul className="hbars">
@@ -247,7 +253,10 @@ export function HBars({ items }: { items: { label: string; value: number }[] }) 
         <li key={item.label}>
           <div className="hbar-head">
             <span className="mono">{item.label}</span>
-            <span>{round(item.value)}</span>
+            <span>
+              {round(item.value)}
+              {item.note && <span className="muted"> · {item.note}</span>}
+            </span>
           </div>
           <div className="hbar-track">
             <div className="hbar-fill" style={{ width: `${(item.value / max) * 100}%` }} />
@@ -262,6 +271,7 @@ function sourceLabel(key: string): string {
   if (key === "direct") return "напрямую";
   if (key === "referral") return "приглашения";
   if (key.startsWith("p_")) return `промо ${key.slice(2)}`;
+  if (key.startsWith("catalog_")) return `каталог ${key.slice(8)}`;
   return key;
 }
 

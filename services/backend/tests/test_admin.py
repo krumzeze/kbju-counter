@@ -6,7 +6,7 @@ from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.methods import SendMessage
 from sqlalchemy import select, update
 
-from belok.db.models import Broadcast, User
+from belok.db.models import Broadcast, Payment, User
 from belok.services import broadcasts
 from belok.services.referrals import reward_for_payment
 from belok.timeutil import utcnow
@@ -96,7 +96,7 @@ async def test_dashboard(client):
         "first_meal": 1,
         "active_3_days": 0,
     }
-    assert d["sources"] == [{"key": "direct", "count": 2}]
+    assert d["sources"] == [{"key": "direct", "count": 2, "paid": 0}]
     assert len(d["series"]) == 30
     assert d["series"][-1]["new_users"] == 2
     assert d["series"][-1]["active_users"] == 2
@@ -343,6 +343,32 @@ async def test_referral_attribution_and_rewards(client, settings):
     }
     top = (await client.get("/api/admin/referrals", headers=admin)).json()
     assert top[0]["id"] == ADMIN and top[0]["invited"] == 1
+
+
+async def test_sources_count_paid_users(client):
+    admin = await onboarded(client, ADMIN)
+    await login(client, USER, start_param="catalog_alpha")
+    await login(client, OTHER, start_param="catalog_alpha")
+    async with client.app.state.sessionmaker() as session:
+        for i, refunded in enumerate([None, None, utcnow()]):
+            session.add(
+                Payment(
+                    user_id=USER if i < 2 else OTHER,
+                    provider="stars",
+                    external_ref=f"src-{i}",
+                    product="30",
+                    amount=150,
+                    currency="XTR",
+                    days=30,
+                    refunded_at=refunded,
+                )
+            )
+        await session.commit()
+    sources = (await client.get("/api/admin/dashboard", headers=admin)).json()["sources"]
+    assert {s["key"]: (s["count"], s["paid"]) for s in sources} == {
+        "catalog_alpha": (2, 1),
+        "direct": (1, 0),
+    }
 
 
 async def test_existing_user_cannot_be_reattributed(client):

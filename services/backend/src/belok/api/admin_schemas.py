@@ -25,6 +25,10 @@ class CountOut(BaseModel):
     count: int
 
 
+class SourceOut(CountOut):
+    paid: int
+
+
 class DashboardOut(BaseModel):
     users_total: int
     new_today: int
@@ -49,7 +53,7 @@ class DashboardOut(BaseModel):
     referred_users: int
     referral_rewards: int
     promo_redemptions_30d: int
-    sources: list[CountOut]
+    sources: list[SourceOut]
     series: list[DayPointOut]
 
 

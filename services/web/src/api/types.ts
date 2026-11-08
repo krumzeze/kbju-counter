@@ -301,6 +301,10 @@ export interface Count {
   count: number;
 }
 
+export interface SourceCount extends Count {
+  paid: number;
+}
+
 export interface DayPoint {
   day: string;
   new_users: number;
@@ -334,7 +338,7 @@ export interface Dashboard {
   referred_users: number;
   referral_rewards: number;
   promo_redemptions_30d: number;
-  sources: Count[];
+  sources: SourceCount[];
   series: DayPoint[];
 }
 
