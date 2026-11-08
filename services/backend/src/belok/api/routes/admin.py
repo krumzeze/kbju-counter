@@ -55,7 +55,7 @@ async def dashboard(admin: AdminUser, session: SessionDep, settings: SettingsDep
             if k not in {"funnel", "sources", "series"}
         },
         funnel=[s.CountOut(key=k, count=n) for k, n in d.funnel],
-        sources=[s.CountOut(key=k, count=n) for k, n in d.sources],
+        sources=[s.SourceOut(key=k, count=n, paid=p) for k, n, p in d.sources],
         series=[s.DayPointOut.model_validate(p) for p in d.series],
     )
 

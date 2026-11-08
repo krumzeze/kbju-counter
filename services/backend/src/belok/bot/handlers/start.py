@@ -1,9 +1,10 @@
 from aiogram import Bot, Router
-from aiogram.filters import CommandObject, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    LinkPreviewOptions,
     Message,
     WebAppInfo,
 )
@@ -39,6 +40,14 @@ async def cmd_start(
     await _open_app(message, bot, settings, lang)
 
 
+@router.message(Command("privacy"))
+async def cmd_privacy(message: Message, settings: Settings, lang: Language) -> None:
+    if not settings.webapp_url:
+        await message.answer(t(lang, "app_unavailable"))
+        return
+    await message.answer(t(lang, "privacy", url=_privacy_url(settings.webapp_url)))
+
+
 @router.message()
 async def any_message(message: Message, bot: Bot, settings: Settings, lang: Language) -> None:
     await _open_app(message, bot, settings, lang)
@@ -58,5 +67,11 @@ async def _open_app(message: Message, bot: Bot, settings: Settings, lang: Langua
         text=t(lang, "open_app"), web_app=WebAppInfo(url=settings.webapp_url)
     )
     await message.answer(
-        t(lang, "welcome"), reply_markup=InlineKeyboardMarkup(inline_keyboard=[[button]])
+        t(lang, "welcome", privacy_url=_privacy_url(settings.webapp_url)),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[button]]),
+        link_preview_options=LinkPreviewOptions(is_disabled=True),
     )
+
+
+def _privacy_url(webapp_url: str) -> str:
+    return webapp_url.rstrip("/") + "/privacy/"
