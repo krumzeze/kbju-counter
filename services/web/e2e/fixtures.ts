@@ -307,7 +307,10 @@ export const dashboard: Dashboard = {
   referred_users: 8,
   referral_rewards: 3,
   promo_redemptions_30d: 5,
-  sources: [{ key: "direct", count: 100 }],
+  sources: [
+    { key: "direct", count: 100, paid: 12 },
+    { key: "catalog_alpha", count: 40, paid: 6 },
+  ],
   series: lastDays(14).map((d, i) => ({
     day: d,
     new_users: i % 4,
