@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.config import Settings
 from belok.db.models import LlmUsage, Meal, MealItem, PhotoEval, User
+from belok.images import BadImage
 from belok.llm.analyzer import AnalysisError, AnalysisResult, FoodAnalysis, FoodItem
 from belok.services.access import has_access
 from belok.services.photos import PhotoStore, StorageError, eval_key, make_thumbnail, meal_key
@@ -196,7 +197,7 @@ async def attach_photo(store: PhotoStore, meal: Meal, image: bytes) -> None:
         thumb = await asyncio.to_thread(make_thumbnail, image)
         key = meal_key(meal.user_id)
         await store.put(key, thumb)
-    except (OSError, ValueError, *StorageError):
+    except (BadImage, *StorageError):
         log.warning("failed to store photo for meal %s", meal.id, exc_info=True)
         return
     meal.photo_key = key

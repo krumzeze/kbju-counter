@@ -10,8 +10,8 @@ import uuid
 import boto3
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
-from PIL import Image, ImageOps
 
+from belok import images
 from belok.config import Settings
 
 log = logging.getLogger(__name__)
@@ -26,9 +26,7 @@ StorageError = (BotoCoreError, ClientError)
 
 def make_thumbnail(image: bytes) -> bytes:
     """Downscale to WebP, honoring EXIF rotation and dropping all metadata (GPS included)."""
-    with Image.open(io.BytesIO(image)) as src:
-        img = ImageOps.exif_transpose(src).convert("RGB")
-    img.thumbnail((MAX_SIDE, MAX_SIDE))
+    img = images.decode(image, MAX_SIDE)
     out = io.BytesIO()
     img.save(out, "WEBP", quality=QUALITY, method=4)
     return out.getvalue()
