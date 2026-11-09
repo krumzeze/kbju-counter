@@ -9,17 +9,13 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  sources:
-    - repoURL: https://github.com/krumzeze/kbju-counter.git
-      targetRevision: main
-      path: deploy/charts/belok
-      helm:
-        valueFiles:
-          - ../../environments/stage/values.yaml
-          - $tags/stage.yaml
-    - repoURL: https://github.com/krumzeze/kbju-counter.git
-      targetRevision: deploy
-      ref: tags
+  source:
+    repoURL: https://github.com/krumzeze/kbju-counter.git
+    targetRevision: stage
+    path: deploy/charts/belok
+    helm:
+      valueFiles:
+        - ../../environments/stage/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: belok-stage
