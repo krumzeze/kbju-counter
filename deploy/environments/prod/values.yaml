@@ -1,8 +1,5 @@
 host: belok.hamdcreative.com
 
-image:
-  tag: "2b3a4422fb39daba69a48dfffcef9463773c21c9"
-
 config:
   BOT_USERNAME: "kbjubelokbot"
   ADMIN_ID: "524698780"

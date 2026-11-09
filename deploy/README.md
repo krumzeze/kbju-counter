@@ -1,15 +1,17 @@
 # Deploy
 
 ArgoCD синхронизирует кластер с этой папкой в `main` (app of apps, sync waves).
+Теги образов лежат отдельно, в ветке `deploy` (`prod.yaml`, `stage.yaml`), их обновляет CI.
 
 | | |
 |---|---|
 | `argocd/root.yaml` | корневое приложение, ставится Ansible |
-| `argocd/apps/` | cert-manager, sealed-secrets, cloudnative-pg, platform, belok-base, belok |
+| `argocd/apps/` | cert-manager, sealed-secrets, cloudnative-pg, platform, belok-base, belok, belok-stage-base, belok-stage |
 | `platform/` | ClusterIssuer Let's Encrypt |
-| `belok-base/` | кластер Postgres и SealedSecret приложения |
+| `belok-base/` | кластер Postgres и SealedSecret прода |
+| `belok-stage-base/` | то же для стейджа (namespace `belok-stage`) |
 | `charts/belok/` | api, web, bot, redis, job миграций, ingress |
-| `environments/prod/values.yaml` | значения прода, `image.tag` обновляет CI |
+| `environments/{prod,stage}/values.yaml` | значения окружений |
 
 ## Первый запуск
 
@@ -44,6 +46,25 @@ kubectl create secret generic belok-secrets -n belok --dry-run=client -o yaml \
   | kubeseal --controller-namespace kube-system -o yaml \
     --merge-into deploy/belok-base/belok-secrets.yaml
 ```
+
+## Стейдж и выкатка
+
+Push в `main`: проверки, образы, сразу деплой на `stage.belok.hamdcreative.com`. Прод получает тот же
+SHA только после Approve в GitHub Environment `production` (Settings → Environments → production →
+Required reviewers). Если до Approve пришёл новый push, старый ожидающий деплой отменяется.
+
+На стейдже отдельный бот, своя база и Redis, оплата и фото выключены. Секреты стейджа:
+
+```bash
+kubectl create secret generic belok-secrets -n belok-stage --dry-run=client -o yaml \
+  --from-literal=BOT_TOKEN=<токен стейдж-бота> \
+  --from-literal=LLM_API_KEY=... \
+  --from-literal=API_SECRET=$(openssl rand -hex 32) \
+  | kubeseal --controller-namespace kube-system -o yaml > deploy/belok-stage-base/belok-secrets.yaml
+```
+
+`BOT_USERNAME` стейдж-бота прописать в `environments/stage/values.yaml`, в @BotFather сделать
+`/setdomain` на `stage.belok.hamdcreative.com`.
 
 ## Операции
 

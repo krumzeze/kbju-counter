@@ -125,21 +125,52 @@ jobs:
           exit-code: "1"
       - run: docker push ghcr.io/${{ github.repository_owner }}/belok-${{ matrix.image }}:${{ github.sha }}
 
-  release:
+  stage:
     needs: images
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    environment:
+      name: staging
+      url: https://stage.belok.hamdcreative.com
     concurrency:
-      group: release
+      group: deploy-stage
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: deploy
+      - name: Point stage at the new images
+        run: |
+          printf 'image:\n  tag: "%s"\n' "$GITHUB_SHA" > stage.yaml
+          git diff --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Deploy ${GITHUB_SHA::7} to stage"
+          for _ in 1 2 3; do git push && exit 0; git pull --rebase; done
+          exit 1
+
+  prod:
+    needs: stage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    environment:
+      name: production
+      url: https://belok.hamdcreative.com
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: deploy
       - name: Point prod at the new images
         run: |
-          sed -i "s/^  tag: .*/  tag: \"${GITHUB_SHA}\"/" deploy/environments/prod/values.yaml
+          printf 'image:\n  tag: "%s"\n' "$GITHUB_SHA" > prod.yaml
+          git diff --quiet && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "Deploy ${GITHUB_SHA::7} to prod"
-          git pull --rebase
-          git push
+          for _ in 1 2 3; do git push && exit 0; git pull --rebase; done
+          exit 1

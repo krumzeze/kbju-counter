@@ -1,0 +1,23 @@
+host: stage.belok.hamdcreative.com
+
+config:
+  BOT_USERNAME: ""
+  ADMIN_ID: "524698780"
+  STARS_PLANS: ""
+  R2_BUCKET: ""
+  LOG_LEVEL: DEBUG
+
+api:
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
+
+bot:
+  resources:
+    requests: { cpu: 20m, memory: 96Mi }
+    limits: { memory: 192Mi }
+
+redis:
+  resources:
+    requests: { cpu: 10m, memory: 16Mi }
+    limits: { memory: 64Mi }
