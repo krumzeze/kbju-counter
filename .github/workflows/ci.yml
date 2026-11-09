@@ -138,17 +138,14 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: deploy
       - name: Point stage at the new images
         run: |
-          printf 'image:\n  tag: "%s"\n' "$GITHUB_SHA" > stage.yaml
-          git diff --quiet && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B stage
+          printf '\nimage:\n  tag: "%s"\n' "$GITHUB_SHA" >> deploy/environments/stage/values.yaml
           git commit -am "Deploy ${GITHUB_SHA::7} to stage"
-          for _ in 1 2 3; do git push && exit 0; git pull --rebase; done
-          exit 1
+          git push --force origin stage
 
   prod:
     needs: stage
@@ -163,14 +160,11 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: deploy
       - name: Point prod at the new images
         run: |
-          printf 'image:\n  tag: "%s"\n' "$GITHUB_SHA" > prod.yaml
-          git diff --quiet && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B prod
+          printf '\nimage:\n  tag: "%s"\n' "$GITHUB_SHA" >> deploy/environments/prod/values.yaml
           git commit -am "Deploy ${GITHUB_SHA::7} to prod"
-          for _ in 1 2 3; do git push && exit 0; git pull --rebase; done
-          exit 1
+          git push --force origin prod
