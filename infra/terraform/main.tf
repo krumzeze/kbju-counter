@@ -1,7 +1,7 @@
 locals {
   name     = "belok"
   app_host = "${var.subdomain}.${var.domain}"
-  hosts    = ["", "grafana.", "argocd."]
+  hosts    = ["", "stage.", "grafana.", "argocd."]
 }
 
 resource "hcloud_ssh_key" "admin" {

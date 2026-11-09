@@ -9,13 +9,17 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: https://github.com/krumzeze/kbju-counter.git
-    targetRevision: main
-    path: deploy/charts/belok
-    helm:
-      valueFiles:
-        - ../../environments/prod/values.yaml
+  sources:
+    - repoURL: https://github.com/krumzeze/kbju-counter.git
+      targetRevision: main
+      path: deploy/charts/belok
+      helm:
+        valueFiles:
+          - ../../environments/prod/values.yaml
+          - $tags/prod.yaml
+    - repoURL: https://github.com/krumzeze/kbju-counter.git
+      targetRevision: deploy
+      ref: tags
   destination:
     server: https://kubernetes.default.svc
     namespace: belok
