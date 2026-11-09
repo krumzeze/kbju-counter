@@ -1,7 +1,7 @@
 host: stage.belok.hamdcreative.com
 
 config:
-  BOT_USERNAME: ""
+  BOT_USERNAME: "belogstgbot"
   ADMIN_ID: "524698780"
   STARS_PLANS: ""
   R2_BUCKET: ""
