@@ -1,3 +1,5 @@
+declare const __BUILD_ID__: string;
+
 interface TelegramBackButton {
   show(): void;
   hide(): void;

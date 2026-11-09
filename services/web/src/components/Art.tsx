@@ -15,7 +15,7 @@ export function Art({
   return (
     <img
       className={className}
-      src={`/art/${name}.webp`}
+      src={`/art/${name}.webp?v=${__BUILD_ID__}`}
       alt=""
       loading="lazy"
       onError={() => setMissing(true)}
