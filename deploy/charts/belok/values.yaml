@@ -44,8 +44,8 @@ web:
 bot:
   enabled: true
   resources:
-    requests: { cpu: 50m, memory: 128Mi }
-    limits: { memory: 256Mi }
+    requests: { cpu: 50m, memory: 256Mi }
+    limits: { memory: 384Mi }
 
 redis:
   image: redis:7.4-alpine
