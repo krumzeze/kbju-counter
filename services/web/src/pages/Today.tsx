@@ -87,7 +87,7 @@ export function Today() {
 
             <section className="tiles">
               <WeightTile />
-              <StepsTile key={day} day={day} steps={data.steps} />
+              <StepsTile key={`steps-${day}`} day={day} steps={data.steps} />
               <Link to="/workouts" className="tile-card tone-blush">
                 <h3>{tr("Тренировка", "Training")}</h3>
                 <div>
@@ -106,7 +106,7 @@ export function Today() {
                 </span>
                 <span className="unit">{tr("фото, текст или штрихкод", "photo, text or barcode")}</span>
               </Link>
-              <WaterTile key={day} day={day} ml={data.water_ml} target={data.water_target_ml} />
+              <WaterTile key={`water-${day}`} day={day} ml={data.water_ml} target={data.water_target_ml} />
             </section>
           </div>
         </>
