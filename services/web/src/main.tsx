@@ -6,11 +6,11 @@ import { ApiError } from "./api/client";
 import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { installGlobalHandlers } from "./lib/errorReporting";
-import { applyTheme, savedTheme } from "./lib/theme";
+import { initTheme } from "./lib/theme";
 import "./styles.css";
 
 installGlobalHandlers();
-applyTheme(savedTheme());
+initTheme();
 
 const queryClient = new QueryClient({
   defaultOptions: {

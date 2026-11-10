@@ -3,14 +3,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Day } from "../api/types";
-import { Art } from "../components/Art";
 import { Avatar } from "../components/Avatar";
-import { CalorieRing } from "../components/CalorieRing";
 import { Icon } from "../components/Icon";
 import { MacroBars } from "../components/MacroBars";
 import { MealCard } from "../components/MealCard";
 import { ErrorState, Spinner } from "../components/States";
-import { STEP_GOAL, count, round, shiftDay, todayIso } from "../lib/format";
+import { STEP_GOAL, count, decimal, round, shiftDay, todayIso } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
 import { useDay, useInvalidate, useMe, useWeights } from "../lib/queries";
 
@@ -20,22 +18,21 @@ export function Today() {
   const { data, isPending, error, refetch } = useDay(day);
   const { data: me } = useMe();
   const isToday = day === todayIso();
-  const name = me?.first_name?.split(" ")[0];
+  const title = isToday
+    ? tr("Сегодня", "Today")
+    : day === shiftDay(todayIso(), -1)
+      ? tr("Вчера", "Yesterday")
+      : tr("Итоги дня", "Day summary");
 
   return (
     <div className="page wide">
       <header className="hello">
         <div>
-          <p className="hello-date capitalize">{longDate(day)}</p>
-          <h1>
-            {name ? tr(`Привет, ${name}!`, `Hi, ${name}!`) : tr("Привет!", "Hi there!")}
-            <br />
-            {isToday ? tr("Вот твой день", "Here's your day") : tr("Итоги дня", "Day summary")}
-          </h1>
+          <p className="hello-date eyebrow">{longDate(day)}</p>
+          <h1>{title}</h1>
         </div>
-        <Link to="/profile" className="avatar">
+        <Link to="/profile" className="avatar" aria-label={tr("Профиль", "Profile")}>
           <Avatar name={me?.first_name ?? me?.username ?? null} />
-          {tr("Профиль", "Profile")}
         </Link>
       </header>
 
@@ -46,70 +43,64 @@ export function Today() {
       ) : error ? (
         <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
       ) : (
-        <>
-          <div className="dash">
-            <div className="dash-main">
-              <Summary data={data} />
-              <section>
-                <div className="section-head">
-                  <h2>{tr("Приёмы пищи", "Meals")}</h2>
-                  {data.meals.length > 0 && (
-                    <span className="muted small">
-                      {data.meals.length} · {round(data.eaten.kcal)} {tr("ккал", "kcal")}
-                    </span>
-                  )}
-                </div>
-                {data.meals.length === 0 ? (
-                  <div className="empty">
-                    <Art name="empty-meals" />
-                    <p>
-                      {tr(
-                        "Пока пусто. Сфотографируй тарелку или опиши, что съел, а я посчитаю КБЖУ.",
-                        "Nothing yet. Snap your plate or describe what you ate and I'll count the calories and macros.",
-                      )}
-                    </p>
-                    {isToday && (
-                      <Link to="/add" className="btn btn-primary">
-                        <Icon name="plus" size={20} />
-                        {tr("Добавить еду", "Add food")}
-                      </Link>
-                    )}
-                  </div>
-                ) : (
-                  <div className="stack meal-list">
-                    {[...data.meals].reverse().map((meal) => (
-                      <MealCard key={meal.id} meal={meal} />
-                    ))}
-                  </div>
-                )}
-              </section>
-            </div>
-
-            <section className="tiles">
-              <WeightTile />
-              <StepsTile key={day} day={day} steps={data.steps} />
-              <Link to="/workouts" className="tile-card tone-blush">
-                <h3>{tr("Тренировка", "Training")}</h3>
-                <div>
-                  <strong>{data.sets.length}</strong>
-                  <span className="unit">
-                    {data.sets.length
-                      ? count(data.sets.length, ["подход", "подхода", "подходов"], ["set", "sets"])
-                      : tr("начать в зале", "start at the gym")}
+        <div className="dash">
+          <div className="dash-main">
+            <Summary data={data} />
+            <Link to="/add" className="btn btn-accent btn-cta today-cta">
+              <Icon name="camera" size={22} />
+              {tr("Сфотографировать еду", "Snap your food")}
+            </Link>
+            <section>
+              <div className="section-head rule">
+                <h2>{tr("Еда", "Food")}</h2>
+                {data.meals.length > 0 && (
+                  <span className="muted small">
+                    {data.meals.length} · {round(data.eaten.kcal)} {tr("ккал", "kcal")}
                   </span>
+                )}
+              </div>
+              {data.meals.length === 0 ? (
+                <p className="empty-line muted">
+                  {tr(
+                    "Пока пусто. Сфотографируй тарелку или опиши, что съел, а я посчитаю КБЖУ.",
+                    "Nothing yet. Snap your plate or describe what you ate and I'll count the calories and macros.",
+                  )}
+                </p>
+              ) : (
+                <div className="stack meal-list">
+                  {[...data.meals].reverse().map((meal) => (
+                    <MealCard key={meal.id} meal={meal} />
+                  ))}
                 </div>
-              </Link>
-              <Link to="/add" className="tile-card tone-peach">
-                <h3>{tr("Добавить еду", "Add food")}</h3>
-                <span className="tile-icon">
-                  <Icon name="camera" size={26} />
-                </span>
-                <span className="unit">{tr("фото, текст или штрихкод", "photo, text or barcode")}</span>
-              </Link>
-              <WaterTile key={day} day={day} ml={data.water_ml} target={data.water_target_ml} />
+              )}
             </section>
           </div>
-        </>
+
+          <section className="tiles-section">
+            <h2>{tr("Активность", "Activity")}</h2>
+            <div className="tiles">
+              <WeightTile />
+              <StepsTile key={`steps-${day}`} day={day} steps={data.steps} />
+              <WaterTile key={`water-${day}`} day={day} ml={data.water_ml} target={data.water_target_ml} />
+              <Link to="/workouts" className="tile-card wide-tile tile-row">
+                <div>
+                  <h3>{tr("Зал", "Gym")}</h3>
+                  {data.sets.length > 0 ? (
+                    <div>
+                      <strong>{data.sets.length}</strong>
+                      <span className="unit">
+                        {count(data.sets.length, ["подход", "подхода", "подходов"], ["set", "sets"])}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="unit">{tr("Начать тренировку", "Start a workout")}</span>
+                  )}
+                </div>
+                <Icon name="chevron" />
+              </Link>
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );
@@ -141,34 +132,36 @@ function DateStrip({ value, onChange }: { value: string; onChange: (day: string)
   );
 }
 
+const SEGMENTS = 22;
+
 function Summary({ data }: { data: Day }) {
   const target = data.target;
-  const left = target ? target.kcal - data.eaten.kcal : null;
+  const eaten = data.eaten.kcal;
+  const left = target ? target.kcal - eaten : null;
+  const over = left !== null && left < 0;
+  const share = target ? eaten / target.kcal : 0;
+  const filled = Math.min(SEGMENTS, Math.round(share * SEGMENTS));
   return (
-    <section className="card peach summary">
-      <div>
-        <div className="summary-head">
-          <h2>{tr("Итоги", "Summary")}</h2>
-          <Link to="/profile" className="link">
-            {tr("Изменить норму", "Edit target")}
-          </Link>
-        </div>
-        <div className="summary-top">
-          <dl className="summary-list">
-            <dt>{tr("Съедено", "Eaten")}</dt>
-            <dd>{round(data.eaten.kcal)}</dd>
-            {left !== null && (
-              <>
-                <dt>{left >= 0 ? tr("Осталось", "Left") : tr("Сверх нормы", "Over")}</dt>
-                <dd>{round(Math.abs(left))}</dd>
-                <dt>{tr("Норма", "Target")}</dt>
-                <dd>{round(target!.kcal)}</dd>
-              </>
-            )}
-          </dl>
-          {target && <CalorieRing eaten={data.eaten.kcal} target={target.kcal} />}
-        </div>
+    <section className={over ? "card hero summary over" : "card hero summary"}>
+      <div className="summary-head">
+        <span className="eyebrow">
+          {left === null ? tr("Съедено", "Eaten") : over ? tr("Сверх нормы", "Over target") : tr("Осталось", "Left")}
+        </span>
+        <Link to="/profile" className="summary-target">
+          {target ? `${tr("Норма", "Target")} ${round(target.kcal)}` : tr("Задать норму", "Set target")}
+        </Link>
       </div>
+      <p className="summary-big">{round(left === null ? eaten : Math.abs(left))}</p>
+      <p className="summary-sub">
+        {left === null ? tr("ккал", "kcal") : `${tr("ккал, съедено", "kcal, eaten")} ${round(eaten)}`}
+      </p>
+      {target && (
+        <div className="segments" role="img" aria-label={`${Math.round(share * 100)}%`}>
+          {Array.from({ length: SEGMENTS }, (_, i) => (
+            <i key={i} className={i < filled ? "on" : ""} />
+          ))}
+        </div>
+      )}
       <MacroBars eaten={data.eaten} target={target} />
       {target && <TargetNote data={data} />}
     </section>
@@ -222,7 +215,7 @@ function WaterTile({ day, ml, target }: { day: string; ml: number; target: numbe
   const share = target ? Math.min(100, (ml / target) * 100) : 0;
   const undo = Math.min(last ?? 250, ml);
   return (
-    <div className="tile-card tone-sky short wide-tile water">
+    <div className="tile-card wide-tile water">
       <div className="water-head">
         <h3>{tr("Вода", "Water")}</h3>
         <span className="unit">
@@ -264,13 +257,13 @@ function WeightTile() {
   const points = (data ?? []).slice(-12);
   const last = points.at(-1);
   return (
-    <Link to="/stats" className="tile-card tone-sage">
+    <Link to="/stats" className="tile-card">
       <h3>{tr("Вес", "Weight")}</h3>
-      {points.length > 1 && <Spark values={points.map((p) => p.weight_kg)} />}
       <div>
-        <strong>{last ? last.weight_kg.toFixed(1) : "—"}</strong>
+        <strong>{last ? decimal(last.weight_kg) : "—"}</strong>
         <span className="unit">{last ? tr("кг", "kg") : tr("записать вес", "log weight")}</span>
       </div>
+      {points.length > 1 && <Spark values={points.map((p) => p.weight_kg)} />}
     </Link>
   );
 }
@@ -309,7 +302,7 @@ function StepsTile({ day, steps }: { day: string; steps: number }) {
   if (editing) {
     return (
       <form
-        className="tile-card tone-sand"
+        className="tile-card"
         onSubmit={(e) => {
           e.preventDefault();
           const n = Number(value);
@@ -331,20 +324,17 @@ function StepsTile({ day, steps }: { day: string; steps: number }) {
     );
   }
 
-  const filled = Math.min(10, Math.floor((steps / STEP_GOAL) * 10));
   return (
-    <button className="tile-card tone-sand" onClick={() => setEditing(true)}>
+    <button className="tile-card" onClick={() => setEditing(true)}>
       <h3>{tr("Шаги", "Steps")}</h3>
-      <div className="bars-mini" aria-hidden>
-        {Array.from({ length: 10 }, (_, i) => (
-          <i key={i} className={i < filled ? "on" : ""} style={{ height: `${40 + ((i * 37) % 60)}%` }} />
-        ))}
-      </div>
       <div>
         <strong>{round(steps)}</strong>
         <span className="unit">
-          {steps > 0 ? tr("шагов", "steps") : tr("нажми, чтобы ввести", "tap to enter")}
+          {steps > 0 ? `${tr("из", "of")} ${round(STEP_GOAL)}` : tr("нажми, чтобы ввести", "tap to enter")}
         </span>
+      </div>
+      <div className="bar" aria-hidden>
+        <div className="bar-fill" style={{ width: `${Math.min(100, (steps / STEP_GOAL) * 100)}%` }} />
       </div>
     </button>
   );
