@@ -22,14 +22,20 @@ export function MacroBars({ eaten, target }: { eaten: Macros; target: Macros | n
             <span className="macro-name">{label}</span>
             <span className="macro-value">
               {round(value)}
-              <small>
-                {goal ? ` / ${round(goal)}` : ""} {tr("г", "g")}
-                {over > 0 && ` · +${round(over)}`}
-              </small>
+              {!goal && <small> {tr("г", "g")}</small>}
             </span>
-            <div className="bar">
-              <div className={`bar-fill ${key}${over ? " over" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
+            {goal && (
+              <>
+                <div className="bar">
+                  <div className={`bar-fill ${key}${over ? " over" : ""}`} style={{ width: `${pct}%` }} />
+                </div>
+                <span className="macro-goal">
+                  {over > 0
+                    ? `+${round(over)} ${tr("г сверх", "g over")}`
+                    : `${tr("из", "of")} ${round(goal)} ${tr("г", "g")}`}
+                </span>
+              </>
+            )}
           </div>
         );
       })}

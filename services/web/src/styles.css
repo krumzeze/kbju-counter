@@ -722,6 +722,24 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.macro-value {
+  white-space: nowrap;
+}
+
+.macro-goal {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.card.hero .macro-goal {
+  color: var(--hero-muted);
+}
+
+.macro.over .macro-goal {
+  color: var(--danger);
+}
+
 .macro-value small {
   font-family: var(--font-body);
   font-size: 14px;
