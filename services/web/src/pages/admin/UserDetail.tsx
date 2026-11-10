@@ -12,12 +12,12 @@ import { STATUS_LABELS, UserBadges } from "./Users";
 
 const GOALS: Record<string, string> = { lose: "похудеть", maintain: "держать вес", gain: "набрать" };
 
-const SOURCE_ICONS: Record<string, string> = {
-  photo: "📸",
-  text: "✍️",
-  manual: "🍽️",
-  voice: "🎙️",
-  barcode: "🏷️",
+const SOURCE_LABELS: Record<string, string> = {
+  photo: "фото",
+  text: "текст",
+  manual: "вручную",
+  voice: "голос",
+  barcode: "штрихкод",
 };
 
 export function UserDetail() {
@@ -122,7 +122,7 @@ export function UserDetail() {
                 <li key={m.id}>
                   <div className="hbar-head">
                     <strong>
-                      {SOURCE_ICONS[m.source]} {m.title}
+                      {m.title} <span className="muted small">· {SOURCE_LABELS[m.source]}</span>
                     </strong>
                     <span>{round(m.totals.kcal)} ккал</span>
                   </div>
@@ -143,7 +143,7 @@ export function UserDetail() {
               {user.llm.map((c) => (
                 <li key={c.created_at} className="hbar-head">
                   <span>
-                    {c.ok ? (c.no_food ? "🍽️ нет еды" : "✅") : "❌ ошибка"}{" "}
+                    {c.ok ? (c.no_food ? "нет еды" : "ок") : "ошибка"}{" "}
                     <span className="muted small">
                       {dateTime(c.created_at)} · {c.kind}
                     </span>

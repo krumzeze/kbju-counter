@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Workout, WorkoutSummary } from "../api/types";
-import { Art } from "../components/Art";
 import { type ExerciseCardItem, ExerciseCards } from "../components/ExerciseCards";
 import { Icon } from "../components/Icon";
 import { type Sort, SortChips } from "../components/SortChips";
@@ -55,14 +54,14 @@ export function Workouts() {
       {start.isError && <p className="error">{errorMessage(start.error)}</p>}
 
       <div className="nav-cards">
-        <Link to="/catalog" className="card sage nav-card">
+        <Link to="/catalog" className="card nav-card">
           <span className="nav-card-icon" aria-hidden>
             <Icon name="list" />
           </span>
           <strong>{tr("Упражнения", "Exercises")}</strong>
           <span className="muted small">{tr("Техника и мышцы", "Technique and muscles")}</span>
         </Link>
-        <Link to="/analytics" className="card sand nav-card">
+        <Link to="/analytics" className="card nav-card">
           <span className="nav-card-icon" aria-hidden>
             <Icon name="chart" />
           </span>
@@ -135,7 +134,6 @@ function Templates({ disabled, onStart }: { disabled: boolean; onStart: (id: num
       </div>
       {!data?.length ? (
         <div className="empty small">
-          <Art name="empty-routines" />
           <p>
             {tr(
               "Собери программу, например «Грудь и трицепс», и запускай тренировку в одно касание.",

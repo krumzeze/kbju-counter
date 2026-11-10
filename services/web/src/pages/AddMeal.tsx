@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Me, Meal } from "../api/types";
-import { Art } from "../components/Art";
 import { Icon } from "../components/Icon";
 import { MealCard } from "../components/MealCard";
 import { ManualMeal, MealHistory } from "../components/MealSources";
@@ -70,7 +69,6 @@ export function AddMeal({ me }: { me: Me }) {
     return (
       <div className="page">
         <div className="done-head">
-          <Art name="meal-done" />
           <div className="done-text">
             <h1>{tr("Готово", "Done")}</h1>
             <p className="muted">
@@ -118,19 +116,13 @@ export function AddMeal({ me }: { me: Me }) {
               <img src={preview} alt={tr("Фото блюда", "Meal photo")} />
             ) : (
               <span className="dropzone-empty">
+                <span className="dropzone-icon">
+                  <Icon name="camera" size={30} />
+                </span>
                 <span className="dropzone-text">
                   <strong>{tr("Сфотографируй тарелку", "Take a photo of your plate")}</strong>
                   <span className="muted">{tr("или выбери фото из галереи", "or pick one from your gallery")}</span>
                 </span>
-                <Art
-                  name="add-photo"
-                  className="art add-art"
-                  fallback={
-                    <span className="dropzone-icon">
-                      <Icon name="camera" size={32} />
-                    </span>
-                  }
-                />
               </span>
             )}
           </button>
@@ -181,7 +173,7 @@ export function AddMeal({ me }: { me: Me }) {
           )}
           {!me.has_access && me.analyses_left === 0 ? (
             <Link to="/premium" className="btn btn-primary btn-block">
-              {tr("Больше распознаваний в Premium ⭐", "More recognitions with Premium ⭐")}
+              {tr("Больше распознаваний в Premium", "More recognitions with Premium")}
             </Link>
           ) : (
             <button

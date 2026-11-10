@@ -310,12 +310,6 @@ button:disabled {
   text-align: center;
 }
 
-.empty .art {
-  width: 140px;
-  height: 140px;
-  object-fit: contain;
-}
-
 .section-head {
   display: flex;
   align-items: baseline;
@@ -1228,26 +1222,13 @@ button:disabled {
   background: var(--surface);
 }
 
-.dropzone > span {
+.dropzone-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 20px;
-}
-
-.dropzone .art {
-  width: 160px;
-  height: 160px;
-  object-fit: contain;
-}
-
-.dropzone > .dropzone-empty {
-  align-self: stretch;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 24px 0 0;
+  gap: 14px;
+  padding: 40px 20px;
+  text-align: center;
 }
 
 .dropzone-text {
@@ -1255,20 +1236,6 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 0 20px;
-}
-
-.dropzone-empty .dropzone-icon {
-  margin-bottom: 28px;
-}
-
-.dropzone .add-art {
-  display: block;
-  width: min(100%, 300px);
-  height: auto;
-  aspect-ratio: 1;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
 }
 
 .dropzone-icon {
@@ -1276,7 +1243,6 @@ button:disabled {
   place-items: center;
   width: 64px;
   height: 64px;
-  margin-bottom: 6px;
   border-radius: 16px;
   background: var(--accent);
   color: var(--accent-text);
@@ -1357,12 +1323,6 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.done-head .art {
-  width: 84px;
-  height: 84px;
-  object-fit: contain;
 }
 
 /* Workouts */
@@ -1538,11 +1498,11 @@ button:disabled {
   letter-spacing: -0.03em;
 }
 
-.onboarding-art {
-  align-self: center;
-  width: 220px;
-  height: 220px;
-  object-fit: contain;
+.target-kcal {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 
 .target-line {
@@ -1584,50 +1544,29 @@ button:disabled {
   padding: 24px 20px 48px;
 }
 
+.landing-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 40px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
 .hero {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 18px;
   padding-bottom: 32px;
-  text-align: center;
-}
-
-.hero-mark {
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 300px;
-  aspect-ratio: 1;
-  border-radius: 24px;
-  background: var(--hero);
-  color: var(--on-hero);
-  --logo-accent: var(--accent);
-}
-
-.hero-mark span {
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
-}
-
-.hero-mark > div {
-  display: grid;
-  place-items: center;
-  gap: 10px;
-}
-
-.hero-mark .art {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  object-fit: cover;
 }
 
 .hero h1 {
-  font-size: 30px;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
 }
 
 .lead {
@@ -1640,73 +1579,74 @@ button:disabled {
   min-height: 48px;
 }
 
+.demo {
+  padding: 22px 20px 20px;
+}
+
+.demo .eyebrow {
+  color: var(--accent);
+}
+
+.demo-title {
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.demo .summary-big {
+  margin-top: 4px;
+}
+
+.demo .macros {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hero-line);
+}
+
 .features {
+  margin: 40px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 2px solid var(--ink);
+}
+
+.features li {
   display: grid;
-  gap: 12px;
+  grid-template-columns: 44px 1fr;
+  gap: 8px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.feature {
-  display: grid;
-  grid-template-columns: 1fr 96px;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-}
-
-.feature h3 {
-  margin: 0 0 4px;
-}
-
-.feature p {
+.feature-num {
+  font-family: var(--font-display);
   font-size: 14px;
+  font-weight: 600;
   color: var(--muted);
 }
 
-.feature .art,
-.feature-icon {
-  width: 96px;
-  height: 96px;
-  object-fit: contain;
+.features h3 {
+  margin: 0 0 4px;
 }
 
-.feature-icon {
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  color: var(--ink);
+.features p {
+  font-size: 14px;
+  color: var(--muted);
 }
 
 .paywall {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 12px;
-  padding: 28px 20px;
-  text-align: center;
+  padding: 24px 20px;
 }
 
-.invite-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.paywall .eyebrow {
+  color: var(--accent);
 }
 
-.invite-head h2 {
-  margin: 0;
-}
-
-.invite-head .art {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-}
-
-.paywall .art {
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
+.paywall h1 {
+  font-size: 30px;
 }
 
 .perks {

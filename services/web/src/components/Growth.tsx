@@ -4,7 +4,6 @@ import { ApiError, api, errorMessage } from "../api/client";
 import { daysWord } from "../lib/format";
 import { tr } from "../lib/i18n";
 import { useInvalidate } from "../lib/queries";
-import { Art } from "./Art";
 import { haptic, shareLink } from "../lib/telegram";
 
 export function PromoCard() {
@@ -49,7 +48,7 @@ export function PromoCard() {
       {failure && <p className="error small">{failure}</p>}
       {redeem.data && (
         <p className="success small">
-          +{redeem.data.days} {daysWord(redeem.data.days)} {tr("доступа", "of access")} 🎉
+          +{redeem.data.days} {daysWord(redeem.data.days)} {tr("доступа", "of access")}
         </p>
       )}
     </form>
@@ -63,11 +62,8 @@ export function ReferralCard() {
   const link = data.link;
 
   return (
-    <section className="card sand stack">
-      <div className="invite-head">
-        <h2>{tr("Пригласи друзей", "Invite friends")}</h2>
-        <Art name="invite" />
-      </div>
+    <section className="card stack">
+      <h2>{tr("Пригласи друзей", "Invite friends")}</h2>
       <p className="muted small">
         {tr(
           `Друг получит ${data.trial_days} дней бесплатно, а ты +${data.reward_days} дней доступа за каждую его оплату подписки.`,

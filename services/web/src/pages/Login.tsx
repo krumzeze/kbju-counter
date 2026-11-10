@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../api/client";
-import { Art } from "../components/Art";
 import { Logo } from "../components/Logo";
 import { tr } from "../lib/i18n";
 
@@ -35,13 +34,11 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
 
   return (
     <div className="landing">
+      <header className="landing-top">
+        <Logo size={36} />
+        <span>belok</span>
+      </header>
       <section className="hero">
-        <div className="hero-mark">
-          <div>
-            <Logo size={120} />
-            <span>belok</span>
-          </div>
-        </div>
         <h1>{tr("Калории по фото, тренировки и вес в одном месте", "Calories from a photo, workouts and weight in one place")}</h1>
         <p className="lead">
           {tr(
@@ -61,8 +58,21 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
         </p>
       </section>
 
-      <section className="features">
-        <div className="card peach feature">
+      <section className="card hero demo" aria-label={tr("Пример распознавания", "Recognition example")}>
+        <span className="eyebrow">{tr("Например, по фото", "For example, from a photo")}</span>
+        <p className="demo-title">{tr("Гречка с курицей", "Buckwheat with chicken")}</p>
+        <p className="summary-big">540</p>
+        <p className="summary-sub">{tr("ккал · гречка 200 г, филе 150 г", "kcal · buckwheat 200 g, fillet 150 g")}</p>
+        <div className="macros">
+          <Macro label={tr("Белки", "Protein")} value={42} />
+          <Macro label={tr("Жиры", "Fat")} value={14} />
+          <Macro label={tr("Углеводы", "Carbs")} value={58} />
+        </div>
+      </section>
+
+      <ol className="features">
+        <li>
+          <span className="feature-num">01</span>
           <div>
             <h3>{tr("КБЖУ по фото", "Macros from a photo")}</h3>
             <p>
@@ -72,9 +82,9 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
               )}
             </p>
           </div>
-          <Art name="feature-photo" fallback={<span className="feature-icon">📸</span>} />
-        </div>
-        <div className="card sage feature">
+        </li>
+        <li>
+          <span className="feature-num">02</span>
           <div>
             <h3>{tr("Дневник тренировок", "Workout log")}</h3>
             <p>
@@ -84,9 +94,9 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
               )}
             </p>
           </div>
-          <Art name="feature-gym" fallback={<span className="feature-icon">🏋️</span>} />
-        </div>
-        <div className="card sand feature">
+        </li>
+        <li>
+          <span className="feature-num">03</span>
           <div>
             <h3>{tr("Живая норма", "Adaptive target")}</h3>
             <p>
@@ -96,9 +106,20 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
               )}
             </p>
           </div>
-          <Art name="feature-target" fallback={<span className="feature-icon">📈</span>} />
-        </div>
-      </section>
+        </li>
+      </ol>
+    </div>
+  );
+}
+
+function Macro({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="macro">
+      <span className="macro-name">{label}</span>
+      <span className="macro-value">
+        {value}
+        <small> {tr("г", "g")}</small>
+      </span>
     </div>
   );
 }
