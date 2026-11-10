@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { tr } from "../lib/i18n";
 import { useMe } from "../lib/queries";
+import { Icon } from "./Icon";
 
 export function PremiumNote({ text }: { text?: string }) {
   const { data: me } = useMe();
@@ -14,7 +15,7 @@ export function PremiumNote({ text }: { text?: string }) {
             `Showing the last ${me.free_history_days} days. Full history with Premium`,
           )}
       </span>
-      <span aria-hidden>⭐</span>
+      <Icon name="chevron" />
     </Link>
   );
 }

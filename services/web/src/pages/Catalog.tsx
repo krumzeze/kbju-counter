@@ -129,7 +129,6 @@ export function Catalog() {
         <>
           {results.length === 0 ? (
             <div className="empty">
-              <Art name="empty-search" />
               <p>{tr("Ничего не нашлось.", "Nothing found.")}</p>
             </div>
           ) : (

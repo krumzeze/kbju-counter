@@ -5,7 +5,6 @@ import { api, errorMessage, setToken } from "../api/client";
 import type { Goal, Me, Sex } from "../api/types";
 import { daysLeft, daysWord, round } from "../lib/format";
 import { type Lang, locale, tr } from "../lib/i18n";
-import { Art } from "../components/Art";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { PhotoSettings, ReminderSettings, TargetSettings } from "../components/Settings";
@@ -49,7 +48,6 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
     <div className="page">
       {onboarding ? (
         <>
-          <Art name="onboarding" className="art onboarding-art" />
           <h1>{tr("Давай знакомиться", "Let's get to know you")}</h1>
           <p className="muted">
             {tr(
@@ -60,7 +58,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
         </>
       ) : (
         <>
-          <section className="card sage profile-head">
+          <section className="card hero profile-head">
             <Avatar name={me.first_name ?? me.username} />
             <div>
               <strong>{me.first_name ?? (me.username ? `@${me.username}` : tr("Профиль", "Profile"))}</strong>
@@ -74,19 +72,20 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
                   ? tr("Продлить Premium", "Extend Premium")
                   : tr("Premium: фото, адаптивная норма и вся история", "Premium: photos, adaptive target and full history")}
               </span>
-              <span aria-hidden>⭐</span>
+              <Icon name="chevron" />
             </Link>
           )}
           <h2 className="profile-section">{tr("Мои данные и норма", "My details and target")}</h2>
           {me.base_target && (
-            <div className="card peach">
-              <span className="small">{tr("Базовая норма без активности", "Base target before activity")}</span>
+            <div className="card">
+              <span className="eyebrow">{tr("Базовая норма без активности", "Base target before activity")}</span>
               <p className="target-line">
-                <strong>
-                  {round(me.base_target.kcal)} {tr("ккал", "kcal")}
-                </strong>{" "}
-                · {tr("Б", "P")} {round(me.base_target.protein)} · {tr("Ж", "F")}{" "}
-                {round(me.base_target.fat)} · {tr("У", "C")} {round(me.base_target.carbs)}
+                <strong className="target-kcal">{round(me.base_target.kcal)}</strong>{" "}
+                <span className="muted">{tr("ккал", "kcal")}</span>
+              </p>
+              <p className="muted small">
+                {tr("Б", "P")} {round(me.base_target.protein)} · {tr("Ж", "F")} {round(me.base_target.fat)} ·{" "}
+                {tr("У", "C")} {round(me.base_target.carbs)}
               </p>
             </div>
           )}
@@ -175,11 +174,11 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           <h2 className="profile-section">{tr("Подписка и бонусы", "Subscription and rewards")}</h2>
           <Link to="/premium" className="card premium-note">
             <span>{tr("Пригласить друзей или ввести промокод", "Invite friends or redeem a promo code")}</span>
-            <span aria-hidden>🎁</span>
+            <Icon name="chevron" />
           </Link>
           <Link to="/support" className="card premium-note">
             <span>{tr("Написать в поддержку", "Contact support")}</span>
-            <span aria-hidden>💬</span>
+            <Icon name="chevron" />
           </Link>
           <a
             href="/privacy/"
@@ -190,7 +189,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
             }}
           >
             <span>{tr("Политика конфиденциальности", "Privacy policy")}</span>
-            <span aria-hidden>🔒</span>
+            <Icon name="chevron" />
           </a>
         </>
       )}

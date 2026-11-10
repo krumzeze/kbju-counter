@@ -6,7 +6,6 @@ import { round } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
 import { useInvalidate } from "../lib/queries";
 import { confirmAction } from "../lib/telegram";
-import { Art } from "./Art";
 import { Icon } from "./Icon";
 
 const STEP = 0.25;
@@ -244,12 +243,6 @@ function ItemRow({
 }
 
 export function MealIcon({ source }: { source: Meal["source"] }) {
-  if (source === "voice") return <>🎙️</>;
-  if (source === "barcode") return <>🏷️</>;
-  return (
-    <Art
-      name={source === "photo" ? "meal-photo" : "meal-text"}
-      fallback={source === "photo" ? "🥗" : "🍳"}
-    />
-  );
+  const name = source === "photo" ? "camera" : source === "voice" ? "mic" : source === "barcode" ? "barcode" : "pen";
+  return <Icon name={name} size={22} />;
 }

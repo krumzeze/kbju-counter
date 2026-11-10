@@ -102,7 +102,7 @@ export function WorkoutSession() {
   const active = data.finished_at === null;
   const onLogged = async (record: boolean) => {
     haptic(record ? "success" : "warning");
-    if (record) setToast(tr("Новый рекорд! 🏆", "New personal record! 🏆"));
+    if (record) setToast(tr("Новый рекорд!", "New personal record!"));
     if (active) timer.start();
     await invalidate(...WORKOUT_KEYS);
   };

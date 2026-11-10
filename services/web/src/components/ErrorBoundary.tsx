@@ -1,6 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { tr } from "../lib/i18n";
-import { Art } from "./Art";
 import { report } from "../lib/errorReporting";
 
 export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -18,7 +17,6 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     if (!this.state.failed) return this.props.children;
     return (
       <div className="state crash">
-        <Art name="empty-search" />
         <h2>{tr("Что-то сломалось", "Something broke")}</h2>
         <p className="muted">
           {tr("Мы уже получили отчёт об ошибке. Попробуйте открыть заново.", "We've received an error report. Please try reloading.")}

@@ -10,6 +10,8 @@ interface TelegramBackButton {
 interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: { user?: { language_code?: string; photo_url?: string } };
+  colorScheme?: "light" | "dark";
+  onEvent?(event: "themeChanged", cb: () => void): void;
   setHeaderColor?(color: string): void;
   setBackgroundColor?(color: string): void;
   ready(): void;

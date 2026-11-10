@@ -1,53 +1,116 @@
 import { webApp } from "./telegram";
 
-export interface Theme {
+export type Scheme = "auto" | "light" | "dark";
+
+export interface Accent {
   key: string;
   ru: string;
   en: string;
-  /** Base, tile and accent colors in 60/30/10 proportion. */
-  swatch: [string, string, string];
-  dark?: boolean;
+  color: string;
 }
 
-export const THEMES: Theme[] = [
-  { key: "sage", ru: "Шалфей", en: "Sage", swatch: ["#f6f4ef", "#d3e4c8", "#6f8a66"] },
-  { key: "sea", ru: "Море", en: "Sea", swatch: ["#f2f5f5", "#cde5e3", "#33768f"] },
-  { key: "lavender", ru: "Лаванда", en: "Lavender", swatch: ["#f5f4f8", "#dcd5ef", "#6e60a6"] },
-  { key: "terracotta", ru: "Терракота", en: "Terracotta", swatch: ["#f7f2ed", "#f4cdb4", "#a65a3a"] },
-  { key: "berry", ru: "Ягоды", en: "Berry", swatch: ["#f8f3f4", "#f1d0da", "#a24c68"] },
-  { key: "black", ru: "Чёрная", en: "Black", swatch: ["#000000", "#2c2c2e", "#7ccf8f"], dark: true },
-  { key: "graphite", ru: "Графит", en: "Graphite", swatch: ["#121212", "#2a2a2a", "#9ccc65"], dark: true },
-  { key: "night-sea", ru: "Ночное море", en: "Night sea", swatch: ["#0f1418", "#212b33", "#5fd0d6"], dark: true },
-  { key: "plum", ru: "Слива", en: "Plum", swatch: ["#141014", "#2a232b", "#f28bb0"], dark: true },
+export const ACCENTS: Accent[] = [
+  { key: "lime", ru: "Лайм", en: "Lime", color: "#d4f25a" },
+  { key: "orange", ru: "Апельсин", en: "Orange", color: "#ff8a3d" },
+  { key: "blue", ru: "Небо", en: "Sky", color: "#7cc4ff" },
+  { key: "pink", ru: "Малина", en: "Raspberry", color: "#ff9ec4" },
 ];
 
-// deepcode ignore HardcodedNonCryptoSecret: localStorage key name, not a secret
-const STORAGE_KEY = "belok.theme";
+export const SCHEMES: { key: Scheme; ru: string; en: string }[] = [
+  { key: "auto", ru: "Как в системе", en: "System" },
+  { key: "light", ru: "Светлая", en: "Light" },
+  { key: "dark", ru: "Тёмная", en: "Dark" },
+];
 
-export function savedTheme(): string {
+const BG = { light: "#efeee9", dark: "#0d0d0c" };
+
+// deepcode ignore HardcodedNonCryptoSecret: localStorage key names, not secrets
+const SCHEME_KEY = "belok.scheme";
+const ACCENT_KEY = "belok.accent";
+const LEGACY_KEY = "belok.theme";
+
+const LEGACY: Record<string, [Scheme, string]> = {
+  sea: ["light", "blue"],
+  lavender: ["light", "blue"],
+  terracotta: ["light", "orange"],
+  berry: ["light", "pink"],
+  black: ["dark", "lime"],
+  graphite: ["dark", "lime"],
+  "night-sea": ["dark", "blue"],
+  plum: ["dark", "pink"],
+};
+
+function read(key: string): string | null {
   try {
-    const key = localStorage.getItem(STORAGE_KEY);
-    if (THEMES.some((t) => t.key === key)) return key!;
+    return localStorage.getItem(key);
   } catch {
-    // storage can be unavailable in private mode
+    return null;
   }
-  return THEMES[0].key;
 }
 
-export function applyTheme(key: string) {
-  const theme = THEMES.find((t) => t.key === key) ?? THEMES[0];
-  if (theme.key === THEMES[0].key) delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = theme.key;
-  webApp?.setHeaderColor?.(theme.swatch[0]);
-  webApp?.setBackgroundColor?.(theme.swatch[0]);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.swatch[0]);
+function write(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // the choice still applies for this session
+  }
 }
 
-export function saveTheme(key: string) {
+function migrate() {
+  const legacy = read(LEGACY_KEY);
+  if (!legacy) return;
+  const [scheme, accent] = LEGACY[legacy] ?? ["auto", "lime"];
+  if (!read(SCHEME_KEY)) write(SCHEME_KEY, scheme);
+  if (!read(ACCENT_KEY)) write(ACCENT_KEY, accent);
   try {
-    localStorage.setItem(STORAGE_KEY, key);
+    localStorage.removeItem(LEGACY_KEY);
   } catch {
-    // the theme still applies for this session
+    // nothing to clean up
   }
-  applyTheme(key);
+}
+
+export function savedScheme(): Scheme {
+  const value = read(SCHEME_KEY);
+  return SCHEMES.some((s) => s.key === value) ? (value as Scheme) : "auto";
+}
+
+export function savedAccent(): string {
+  const value = read(ACCENT_KEY);
+  return ACCENTS.some((a) => a.key === value) ? value! : ACCENTS[0].key;
+}
+
+const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+
+function systemDark(): boolean {
+  if (webApp?.colorScheme) return webApp.colorScheme === "dark";
+  return media?.matches ?? false;
+}
+
+export function applyTheme() {
+  const scheme = savedScheme();
+  const dark = scheme === "dark" || (scheme === "auto" && systemDark());
+  const root = document.documentElement;
+  root.dataset.scheme = dark ? "dark" : "light";
+  root.dataset.accent = savedAccent();
+  const bg = dark ? BG.dark : BG.light;
+  webApp?.setHeaderColor?.(bg);
+  webApp?.setBackgroundColor?.(bg);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
+}
+
+export function initTheme() {
+  migrate();
+  applyTheme();
+  media?.addEventListener?.("change", applyTheme);
+  webApp?.onEvent?.("themeChanged", applyTheme);
+}
+
+export function saveScheme(scheme: Scheme) {
+  write(SCHEME_KEY, scheme);
+  applyTheme();
+}
+
+export function saveAccent(key: string) {
+  write(ACCENT_KEY, key);
+  applyTheme();
 }

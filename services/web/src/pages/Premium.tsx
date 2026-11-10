@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import type { Me } from "../api/types";
-import { Art } from "../components/Art";
 import { PromoCard, ReferralCard } from "../components/Growth";
 import { Plans } from "../components/Plans";
 import { tr } from "../lib/i18n";
+import { Icon } from "../components/Icon";
 
 const PERKS = () => [
   tr("Распознавание еды по фото и описанию", "Food recognition from photos and text"),
@@ -15,8 +15,8 @@ const PERKS = () => [
 export function Premium({ me }: { me: Me }) {
   return (
     <div className="page">
-      <div className="card peach paywall">
-        <Art name="paywall" fallback={<span className="feature-icon">⭐</span>} />
+      <div className="card hero paywall">
+        <span className="eyebrow">belok premium</span>
         <h1>{me.has_access ? tr("Premium", "Premium") : tr("Открой Premium", "Get Premium")}</h1>
         {!me.has_access && (
           <p className="muted">
@@ -37,7 +37,7 @@ export function Premium({ me }: { me: Me }) {
       <ReferralCard />
       <Link to="/support" className="card premium-note">
         <span>{tr("Проблема с оплатой? Напиши нам", "Payment issue? Contact us")}</span>
-        <span aria-hidden>💬</span>
+        <Icon name="chevron" />
       </Link>
     </div>
   );

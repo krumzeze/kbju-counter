@@ -6,25 +6,28 @@
 <title>Политика конфиденциальности | Белок</title>
 <meta name="description" content="Какие данные собирает бот и приложение «Белок», зачем, где они хранятся и как их удалить." />
 <link rel="canonical" href="https://belok.hamdcreative.com/privacy/" />
-<meta name="theme-color" content="#f6f4ef" />
+<meta name="theme-color" content="#efeee9" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600&family=Unbounded:wght@600&display=swap" rel="stylesheet" />
 <style>
 :root {
-  --ink: #22221f;
-  --bg: #f6f4ef;
-  --surface: #fff;
-  --muted: #7d796f;
-  --border: #e6e1d7;
-  --accent: #6f8a66;
+  --ink: #121212;
+  --bg: #efeee9;
+  --surface: #f8f7f3;
+  --muted: #5e5d57;
+  --border: #d9d7cf;
+  --accent: #3f6b12;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --ink: #ecebe6;
-    --bg: #171715;
-    --surface: #211f1d;
-    --muted: #a19d93;
-    --border: #34322e;
-    --accent: #9fb995;
+    --ink: #f2f1ec;
+    --bg: #0d0d0c;
+    --surface: #171715;
+    --muted: #9d9c95;
+    --border: #2e2e2a;
+    --accent: #d4f25a;
   }
 }
 * { box-sizing: border-box; }
@@ -32,15 +35,16 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.6 "Geologica", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 main {
   max-width: 720px;
   margin: 0 auto;
-  padding: 32px 16px 64px;
+  padding: 40px 16px 64px;
 }
-h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
-h2 { font-size: 20px; margin: 32px 0 8px; }
+h1, h2 { font-family: "Unbounded", "Geologica", sans-serif; font-weight: 600; letter-spacing: -0.03em; }
+h1 { font-size: 30px; line-height: 1.1; margin: 0 0 12px; }
+h2 { font-size: 18px; margin: 36px 0 10px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
 p, li { margin: 0 0 10px; }
 ul { padding-left: 22px; }
 a { color: var(--accent); }
@@ -48,7 +52,7 @@ a { color: var(--accent); }
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 16px 20px;
   margin: 20px 0;
 }

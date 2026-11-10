@@ -449,7 +449,7 @@ function ActivitySection({ stats, weeklyMode }: { stats: StatsData; weeklyMode: 
           </p>
         )}
       </section>
-      <Link to="/analytics" className="card nav-card sand">
+      <Link to="/analytics" className="card nav-card">
         <strong>{tr("Аналитика тренировок", "Workout analytics")}</strong>
         <span className="muted small">{tr("Объём, рекорды, нагрузка на мышцы", "Volume, records, muscle load")}</span>
       </Link>
