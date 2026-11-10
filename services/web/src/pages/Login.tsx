@@ -38,7 +38,7 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
         <Logo size={36} />
         <span>belok</span>
       </header>
-      <section className="hero">
+      <section className="landing-hero">
         <h1>{tr("Калории по фото, тренировки и вес в одном месте", "Calories from a photo, workouts and weight in one place")}</h1>
         <p className="lead">
           {tr(
