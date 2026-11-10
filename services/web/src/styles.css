@@ -882,23 +882,6 @@ button:disabled {
   flex: 1;
 }
 
-.bars-mini {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 28px;
-}
-
-.bars-mini i {
-  flex: 1;
-  border-radius: 2px;
-  background: var(--surface-2);
-}
-
-.bars-mini i.on {
-  background: var(--ink);
-}
-
 .spark {
   width: 100%;
   height: 28px;
@@ -915,7 +898,6 @@ button:disabled {
 .spark circle {
   fill: var(--ink);
 }
-
 
 .stats-row {
   display: grid;
@@ -1327,47 +1309,10 @@ button:disabled {
 
 /* Workouts */
 
-.sets-grid {
-  display: grid;
-  grid-template-columns: 28px 1fr 1fr 36px;
-  align-items: center;
-  gap: 8px;
-}
-
 .set-index {
   font-weight: 600;
   color: var(--muted);
   text-align: center;
-}
-
-.set-title {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.set-title::first-letter {
-  text-transform: uppercase;
-}
-
-.set-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.set-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-top: 1px solid var(--border);
-}
-
-.set-list .icon-btn {
-  width: 28px;
-  height: 28px;
-  font-size: 16px;
 }
 
 .table {
@@ -3400,10 +3345,6 @@ span.set-check {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.period-switch {
-  margin: 0;
 }
 
 /* Stats page */
