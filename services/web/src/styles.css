@@ -196,7 +196,7 @@ button:disabled {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 .page.center {
@@ -266,7 +266,7 @@ button:disabled {
 
 .card {
   display: block;
-  padding: 18px;
+  padding: 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -324,7 +324,7 @@ button:disabled {
 
 .section-head.rule {
   margin-bottom: 0;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
   border-bottom: 2px solid var(--ink);
 }
 
@@ -625,7 +625,7 @@ button:disabled {
 .summary {
   display: flex;
   flex-direction: column;
-  padding: 24px 22px 22px;
+  padding: 28px 24px 26px;
 }
 
 .summary-head {
@@ -668,7 +668,7 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(22, 1fr);
   gap: 3px;
-  margin-top: 18px;
+  margin-top: 22px;
 }
 
 .segments i {
@@ -686,8 +686,8 @@ button:disabled {
 }
 
 .summary .macros {
-  margin-top: 22px;
-  padding-top: 18px;
+  margin-top: 26px;
+  padding-top: 22px;
   border-top: 1px solid var(--hero-line);
 }
 
@@ -779,7 +779,7 @@ button:disabled {
 }
 
 .today-cta {
-  margin-top: -4px;
+  margin-top: -18px;
 }
 
 .empty-line {
@@ -791,7 +791,7 @@ button:disabled {
 .dash-main {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 32px;
 }
 
 .tiles {
@@ -808,16 +808,16 @@ button:disabled {
 
 .tiles-section h2 {
   margin: 0;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
 }
 
 .tile-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
-  padding: 18px 0;
+  padding: 22px 0;
   border: 0;
   border-bottom: 1px solid var(--border);
   border-radius: 0;
@@ -826,12 +826,12 @@ button:disabled {
 }
 
 .tiles > .tile-card:not(.wide-tile):nth-child(odd) {
-  padding-right: 16px;
+  padding-right: 20px;
   border-right: 1px solid var(--border);
 }
 
 .tiles > .tile-card:not(.wide-tile):nth-child(even) {
-  padding-left: 16px;
+  padding-left: 20px;
 }
 
 .tile-card:disabled {
@@ -959,7 +959,7 @@ button:disabled {
 }
 
 .meal-list > .meal summary {
-  padding: 12px 0;
+  padding: 16px 0;
 }
 
 .meal-list > .meal .meal-items,
