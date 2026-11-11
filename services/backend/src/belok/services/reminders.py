@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from collections.abc import Awaitable, Callable
-from datetime import datetime, time, timedelta
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from datetime import date, datetime, time, timedelta
 from enum import StrEnum
 from zoneinfo import ZoneInfo
 
@@ -9,7 +9,7 @@ from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError, TelegramForbiddenError, TelegramRetryAfter
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from redis.asyncio import Redis
-from sqlalchemy import func, or_, select
+from sqlalchemy import Date, case, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from belok.bot.texts import t
@@ -42,15 +42,72 @@ SCHEDULE = {
 # A meal logged after this local time counts as the one the reminder asks about.
 MEAL_SINCE = {Reminder.LUNCH: time(11, 0), Reminder.DINNER: time(17, 0)}
 
+# Meal reminders follow the user's usual meal time once there is enough history.
+LEARN_DAYS = 28
+MIN_DAYS = 5
+GRACE = timedelta(minutes=45)
+MEAL_BOUNDS = {
+    Reminder.LUNCH: (time(12, 30), time(16, 0)),
+    Reminder.DINNER: (time(18, 0), time(22, 30)),
+}
+
 Claim = Callable[[str], Awaitable[bool]]
 
 
-def due(local_now: datetime) -> list[Reminder]:
+def due(local_now: datetime, schedule: Mapping[Reminder, time] = SCHEDULE) -> list[Reminder]:
     result = []
-    for kind, at in SCHEDULE.items():
+    for kind, at in schedule.items():
         start = local_now.replace(hour=at.hour, minute=at.minute, second=0, microsecond=0)
         if start <= local_now < start + SEND_WINDOW:
             result.append(kind)
+    return result
+
+
+def personal_schedule(usual: Mapping[Reminder, float]) -> dict[Reminder, time]:
+    """Fixed schedule with meal slots moved to the usual meal minute plus a grace period."""
+    schedule = dict(SCHEDULE)
+    for kind, minute in usual.items():
+        low, high = MEAL_BOUNDS[kind]
+        at = round((minute + GRACE.total_seconds() / 60) / 5) * 5
+        at = min(max(at, low.hour * 60 + low.minute), high.hour * 60 + high.minute)
+        schedule[kind] = time(at // 60, at % 60)
+    return schedule
+
+
+async def usual_meal_minutes(
+    session: AsyncSession, user_ids: Sequence[int], today: date
+) -> dict[int, dict[Reminder, float]]:
+    """Median local minute of the first lunch and dinner log per user, given enough days."""
+    if not user_ids:
+        return {}
+    local = func.timezone(User.timezone, Meal.created_at)
+    minute = func.extract("hour", local) * 60 + func.extract("minute", local)
+    lunch, dinner = (t.hour * 60 + t.minute for t in MEAL_SINCE.values())
+    slot = case((minute >= dinner, Reminder.DINNER.value), (minute >= lunch, Reminder.LUNCH.value))
+    first = (
+        select(Meal.user_id, slot.label("slot"), func.min(minute).label("minute"))
+        .join(User, User.id == Meal.user_id)
+        .where(
+            Meal.user_id.in_(user_ids),
+            Meal.day >= today - timedelta(days=LEARN_DAYS),
+            cast(local, Date) == Meal.day,
+            slot.is_not(None),
+        )
+        .group_by(Meal.user_id, Meal.day, slot)
+        .subquery()
+    )
+    rows = await session.execute(
+        select(
+            first.c.user_id,
+            first.c.slot,
+            func.percentile_cont(0.5).within_group(first.c.minute),
+        )
+        .group_by(first.c.user_id, first.c.slot)
+        .having(func.count() >= MIN_DAYS)
+    )
+    result: dict[int, dict[Reminder, float]] = {}
+    for user_id, kind, median in rows:
+        result.setdefault(user_id, {})[Reminder(kind)] = float(median)
     return result
 
 
@@ -80,7 +137,7 @@ async def run_reminders(
 async def send_due(
     bot: Bot, session: AsyncSession, claim: Claim, webapp_url: str | None, now: datetime
 ) -> int:
-    users = await session.scalars(
+    candidates = await session.scalars(
         select(User).where(
             or_(User.remind_meals.is_(True), User.remind_weight.is_(True)),
             User.bot_blocked.is_(False),
@@ -92,10 +149,12 @@ async def send_due(
             User.goal.is_not(None),
         )
     )
+    users = candidates.all()
+    usual = await usual_meal_minutes(session, [u.id for u in users if u.remind_meals], now.date())
     sent = 0
-    for user in users.all():
+    for user in users:
         local = now.astimezone(ZoneInfo(user.timezone))
-        for kind in due(local):
+        for kind in due(local, personal_schedule(usual.get(user.id, {}))):
             if not enabled(user, kind):
                 continue
             key = await _message_key(session, user, kind, local)
