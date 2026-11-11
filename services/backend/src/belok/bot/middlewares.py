@@ -50,7 +50,10 @@ class UserMiddleware(BaseMiddleware):
 
     async def __call__(self, handler: Handler, event: TelegramObject, data: dict[str, Any]) -> Any:
         tg_user = data.get("event_from_user")
-        if tg_user is None or tg_user.is_bot:
+        if tg_user is not None and tg_user.is_bot:
+            # e.g. the service message Telegram sends when the bot pins the day card
+            return None
+        if tg_user is None:
             return await handler(event, data)
 
         session: AsyncSession = data["session"]

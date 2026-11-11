@@ -6,7 +6,7 @@ import pytest
 from aiogram.types import Update
 from sqlalchemy import func, select
 
-from belok.bot.middlewares import WidgetQueryMiddleware
+from belok.bot.middlewares import UserMiddleware, WidgetQueryMiddleware
 from belok.db.models import BodyWeight, DailyActivity, Meal, MealItem, User
 from belok.services import widgets
 from belok.timeutil import local_today
@@ -202,3 +202,28 @@ async def test_usual_meals_follow_the_time_slot(client):
         await session.commit()
         meals = await widgets.usual_meals(session, user, time(11), time(17), today)
     assert [m.title for m in meals] == ["Суп", "Салат"]
+
+
+async def test_bot_own_service_messages_are_ignored(settings):
+    pinned = Update.model_validate(
+        {
+            "update_id": 2,
+            "message": {
+                "message_id": 3,
+                "date": 0,
+                "chat": {"id": 1001, "type": "private"},
+                "from": {"id": 42, "is_bot": True, "first_name": "Belok"},
+                "pinned_message": {
+                    "message_id": 2,
+                    "date": 0,
+                    "chat": {"id": 1001, "type": "private"},
+                },
+            },
+        }
+    )
+
+    async def handler(event, data):
+        raise AssertionError("the bot must not handle its own messages")
+
+    data = {"event_from_user": pinned.message.from_user}
+    assert await UserMiddleware(settings)(handler, pinned, data) is None
