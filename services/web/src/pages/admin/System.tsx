@@ -14,6 +14,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   barcode: "Штрихкоды",
   reminders: "Напоминания",
   payments: "Оплата",
+  widgets: "Виджеты в чате",
 };
 
 const FEATURE_HINTS: Record<FeatureKey, string> = {
@@ -23,6 +24,7 @@ const FEATURE_HINTS: Record<FeatureKey, string> = {
   barcode: "сканер и поиск в Open Food Facts, ручной ввод остаётся",
   reminders: "рассылка напоминаний ботом",
   payments: "тарифы в профиле; оплаты, которые уже прошли, всё равно зачислятся",
+  widgets: "карточка дня, правка граммов и напоминания виджетами; без них бот шлёт текст",
 };
 
 const DEPENDS_ON: Record<FeatureKey, string[]> = {
@@ -32,6 +34,7 @@ const DEPENDS_ON: Record<FeatureKey, string[]> = {
   barcode: ["food_db"],
   reminders: ["worker:reminders", "telegram"],
   payments: ["tribute"],
+  widgets: ["telegram"],
 };
 
 const CHECK_LABELS: Record<string, string> = {

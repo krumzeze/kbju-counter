@@ -17,6 +17,7 @@ from belok.config import Settings
 from belok.db.models import User
 from belok.i18n import Language
 from belok.services.promos import PROMO_PREFIX, PromoResult, redeem
+from belok.services.widgets import send_day_card
 
 router = Router(name="start")
 
@@ -46,6 +47,21 @@ async def cmd_privacy(message: Message, settings: Settings, lang: Language) -> N
         await message.answer(t(lang, "app_unavailable"))
         return
     await message.answer(t(lang, "privacy", url=_privacy_url(settings.webapp_url)))
+
+
+@router.message(Command("day"))
+async def cmd_day(
+    message: Message,
+    bot: Bot,
+    session: AsyncSession,
+    user: User,
+    settings: Settings,
+    lang: Language,
+) -> None:
+    if not user.profile_complete or not await send_day_card(
+        bot, session, user, settings.webapp_url
+    ):
+        await message.answer(t(lang, "day_card_unavailable"))
 
 
 @router.message()

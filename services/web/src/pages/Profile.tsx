@@ -6,6 +6,7 @@ import type { Goal, Me, Sex } from "../api/types";
 import { daysLeft, daysWord, round } from "../lib/format";
 import { type Lang, locale, tr } from "../lib/i18n";
 import { Avatar } from "../components/Avatar";
+import { DayCardLink } from "../components/DayCard";
 import { HomeScreenLink } from "../components/HomeScreen";
 import { Icon } from "../components/Icon";
 import { PhotoSettings, ReminderSettings, TargetSettings } from "../components/Settings";
@@ -173,6 +174,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           <LanguageCard me={me} />
           <ThemePicker />
           <HomeScreenLink />
+          <DayCardLink />
           <h2 className="profile-section">{tr("Подписка и бонусы", "Subscription and rewards")}</h2>
           <Link to="/premium" className="card premium-note">
             <span>{tr("Пригласить друзей или ввести промокод", "Invite friends or redeem a promo code")}</span>

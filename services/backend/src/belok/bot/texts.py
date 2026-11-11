@@ -132,6 +132,22 @@ STRINGS: dict[str, dict[Language, str]] = {
         RU: "Поправить порцию можно в приложении.",
         EN: "You can adjust the portion in the app.",
     },
+    "voice_widget_caption": {
+        RU: "🎙 <i>«{heard}»</i>\n<b>{title}</b>: {kcal:.0f} ккал. "
+        "Граммы можно поправить прямо здесь.",
+        EN: "🎙 <i>“{heard}”</i>\n<b>{title}</b>: {kcal:.0f} kcal. "
+        "You can adjust the grams right here.",
+    },
+    "day_card_caption": {
+        RU: "📊 Твой день: калории, БЖУ, вода и шаги. "
+        "Карточка обновляется сама после каждой записи.",
+        EN: "📊 Your day: calories, macros, water and steps. "
+        "The card updates itself after every entry.",
+    },
+    "day_card_unavailable": {
+        RU: "Карточка дня сейчас недоступна, загляни в приложение.",
+        EN: "The day card is unavailable right now, check the app.",
+    },
     "log_meal": {RU: "Записать еду", EN: "Log food"},
     "log_weight": {RU: "Записать вес", EN: "Log weight"},
     "remind_stop": {RU: "Не напоминать", EN: "Stop reminding"},

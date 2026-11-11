@@ -1,8 +1,9 @@
+import logging
 from collections.abc import AsyncIterator
 from typing import Annotated
 
 from aiogram import Bot
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +18,10 @@ from belok.services.photos import PhotoStore
 from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 from belok.services.users import SEEN_RESOLUTION
+from belok.services.widgets import refresh_day_card
 from belok.timeutil import utcnow
+
+log = logging.getLogger(__name__)
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -125,3 +129,19 @@ def require(feature: Feature):
             raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "feature_disabled")
 
     return Depends(check)
+
+
+async def _refresh_day_card(app: FastAPI, user_id: int) -> None:
+    try:
+        async with app.state.sessionmaker() as session:
+            user = await session.get(User, user_id)
+            if user is not None:
+                await refresh_day_card(app.state.bot, session, user)
+    except Exception:
+        log.exception("day card refresh for %s failed", user_id)
+
+
+def refresh_day_card_later(request: Request, user: CurrentUser, tasks: BackgroundTasks) -> None:
+    """After a successful change, update the user's day card in the bot chat."""
+    if request.method != "GET" and user.day_card_message_id is not None:
+        tasks.add_task(_refresh_day_card, request.app, user.id)

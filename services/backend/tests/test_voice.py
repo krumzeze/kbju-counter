@@ -2,6 +2,7 @@ from io import BytesIO
 from types import SimpleNamespace
 
 import pytest
+from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy import select
 
 from belok.bot.handlers.voice import voice_meal
@@ -23,6 +24,11 @@ class FakeMessage:
 
 
 class FakeVoiceBot:
+    """Without widget support, like a Bot API server older than 10.4."""
+
+    async def __call__(self, method) -> None:
+        raise TelegramBadRequest(method, "Bad Request: method not found")
+
     async def send_chat_action(self, chat_id: int, action: str) -> None:
         pass
 
@@ -38,11 +44,11 @@ class FakeStt:
         return self.text
 
 
-async def run_voice(client, settings, analyzer, stt, message: FakeMessage) -> None:
+async def run_voice(client, settings, analyzer, stt, message: FakeMessage, bot=None) -> None:
     async with client.app.state.sessionmaker() as session:
         user = await session.get(User, 1001)
         await voice_meal(
-            message, FakeVoiceBot(), session, user, settings, Language.RU, analyzer, stt
+            message, bot or FakeVoiceBot(), session, user, settings, Language.RU, analyzer, stt
         )
         await session.commit()
 

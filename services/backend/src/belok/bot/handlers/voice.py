@@ -15,6 +15,7 @@ from belok.services import features
 from belok.services.features import Feature
 from belok.services.meals import DailyLimitReached, analyze_meal, ensure_within_limit
 from belok.services.repo import day_summary
+from belok.services.widgets import refresh_day_card, send_meal
 from belok.timeutil import local_today, utcnow
 
 router = Router(name="voice")
@@ -71,6 +72,16 @@ async def voice_meal(
         return
     user.last_seen_at = utcnow()
     await session.commit()
+    await refresh_day_card(bot, session, user)
+    caption = t(
+        lang,
+        "voice_widget_caption",
+        heard=escape(text[:300]),
+        title=escape(meal.title),
+        kcal=meal.totals().kcal,
+    )
+    if await send_meal(bot, session, user, meal, caption, settings.webapp_url):
+        return
     summary = await day_summary(session, user, local_today(user.timezone))
     target = summary.target.macros.kcal if summary.target else None
     await message.answer(

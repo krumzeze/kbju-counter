@@ -12,6 +12,8 @@ from belok.db.models import User
 from belok.i18n import guess_language
 from belok.services.notify import notify_admins
 from belok.services.users import get_or_create_user
+from belok.services.widgets import answer_query
+from belok.widgets.api import WidgetQuery
 
 Handler = Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]]
 
@@ -26,6 +28,20 @@ class DbSessionMiddleware(BaseMiddleware):
             result = await handler(event, data)
             await session.commit()
             return result
+
+
+class WidgetQueryMiddleware(BaseMiddleware):
+    """Handles widget_query updates, which aiogram does not route to handlers yet."""
+
+    async def __call__(self, handler: Handler, event: TelegramObject, data: dict[str, Any]) -> Any:
+        raw = (event.model_extra or {}).get("widget_query") if isinstance(event, Update) else None
+        if not isinstance(raw, dict):
+            return await handler(event, data)
+        query = WidgetQuery.parse(raw)
+        session: AsyncSession = data["session"]
+        user = await session.get(User, query.from_user.id)
+        await answer_query(data["bot"], session, user, query)
+        return None
 
 
 class UserMiddleware(BaseMiddleware):

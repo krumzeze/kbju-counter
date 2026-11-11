@@ -1,0 +1,35 @@
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:15px system-ui,sans-serif;color:var(--tg-theme-text-color);padding:12px 12px 18px}
+h3{font-size:16px;margin-bottom:6px}
+.r{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h{display:block;color:var(--tg-theme-hint-color);font-size:13px}
+button{font:inherit;border:0;border-radius:10px;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);height:34px;padding:0 14px;font-weight:600}
+.ok{color:var(--tg-theme-button-color);font-weight:600}
+.f{margin-top:8px}
+</style>
+<div id="a"></div>
+<script>
+const W=window.TelegramWidget,A=document.getElementById('a');
+let S=null,done=[],busy='',msg='';
+const T=(r,e)=>S&&S.l==='en'?e:r;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hap=t=>{try{W.HapticFeedback.notificationOccurred(t)}catch(e){}};
+function load(){try{S=JSON.parse(W.chatData)}catch(e){S=null}
+try{done=JSON.parse(localStorage.getItem('done')||'[]')}catch(e){done=[]}}
+function draw(){
+if(!S){A.innerHTML='';return}
+let h='<h3>'+T('Твоё обычное','Your usual')+'</h3>';
+S.q.forEach(m=>{h+='<div class="r"><div class="n">'+esc(m[1])+'<span class="h">'+Math.round(m[2])+' '+T('ккал','kcal')+'</span></div>'+
+(done.includes(m[0])?'<span class="ok">✓ '+T('Записано','Logged')+'</span>':'<button data-id="'+m[0]+'">'+(busy===m[0]?'…':T('Записать','Log'))+'</button>')+'</div>'});
+h+='<span class="h f">'+(msg||T('Или расскажи голосовым, что было','Or tell me in a voice message'))+'</span>';
+A.innerHTML=h}
+A.addEventListener('click',ev=>{
+const b=ev.target.closest('button');if(!b||busy)return;
+const id=+b.dataset.id;busy=id;msg='';draw();
+W.request('r:'+id).then(r=>{busy='';
+if(r.result==='ok'){done.push(id);try{localStorage.setItem('done',JSON.stringify(done))}catch(e){}hap('success')}else{msg=T('Не получилось','Could not log it');hap('error')}draw()},
+()=>{busy='';msg=T('Не получилось, попробуй ещё раз','Could not log it, try again');hap('error');draw()})});
+load();draw();
+</script>

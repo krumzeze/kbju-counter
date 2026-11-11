@@ -1,9 +1,9 @@
 from datetime import date, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from belok.api.deps import ActiveUser, SessionDep, SettingsDep
+from belok.api.deps import ActiveUser, SessionDep, SettingsDep, refresh_day_card_later
 from belok.api.schemas import (
     StatsDayOut,
     StatsOut,
@@ -26,7 +26,7 @@ from belok.services.repo import (
 )
 from belok.timeutil import local_today
 
-router = APIRouter(tags=["tracking"])
+router = APIRouter(tags=["tracking"], dependencies=[Depends(refresh_day_card_later)])
 
 EDITABLE_DAYS = 7
 
