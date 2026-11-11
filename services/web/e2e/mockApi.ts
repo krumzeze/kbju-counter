@@ -18,6 +18,7 @@ const routes: [string, RegExp, Handler][] = [
   ["GET", /^\/analytics$/, () => f.analytics],
   ["GET", /^\/workouts$/, (url) => (url.searchParams.has("before_id") ? [] : f.workouts)],
   ["GET", /^\/workouts\/active$/, () => f.activeWorkout],
+  ["GET", /^\/workouts\/2$/, () => f.finishedWorkout],
   ["GET", /^\/workouts\/\d+$/, () => f.activeWorkout],
   ["GET", /^\/templates$/, () => f.templates],
   ["GET", /^\/payments\/plans$/, () => f.plans],

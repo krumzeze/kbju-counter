@@ -2,10 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../api/client";
 import type { ExerciseRef, MuscleGroup } from "../api/types";
-import { GROUPS, equipmentLabel, groupLabel, searchCatalog, sortCatalog } from "../lib/catalog";
+import { GROUPS, GROUP_MUSCLES, equipmentLabel, groupLabel, searchCatalog, sortCatalog } from "../lib/catalog";
 import { tr } from "../lib/i18n";
 import { useCatalog, useExercises, useInvalidate } from "../lib/queries";
 import { type ExerciseCardItem, ExerciseCards } from "./ExerciseCards";
+import { type MuscleChoice, MuscleEditor } from "./MuscleEditor";
 import { Spinner } from "./States";
 
 interface Row extends Omit<ExerciseCardItem, "to" | "onPick"> {
@@ -37,8 +38,16 @@ export function ExercisePicker({
     };
   }, [onClose]);
 
+  const [draft, setDraft] = useState<(MuscleChoice & { cardio: boolean }) | null>(null);
   const create = useMutation({
-    mutationFn: () => api.createExercise(query.trim(), group, group === "cardio"),
+    mutationFn: (d: MuscleChoice & { cardio: boolean }) =>
+      api.createExercise({
+        name: query.trim(),
+        group: d.cardio ? "cardio" : null,
+        cardio: d.cardio,
+        primary: d.cardio ? [] : d.primary,
+        secondary: d.cardio ? [] : d.secondary,
+      }),
     onSuccess: async (e) => {
       await invalidate("exercises");
       onPick({ exercise_id: e.id });
@@ -87,58 +96,94 @@ export function ExercisePicker({
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
-          <h2>{title}</h2>
+          <h2 className="capitalize">{draft ? query.trim() : title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label={tr("Закрыть", "Close")}>
             ×
           </button>
         </div>
-        <input
-          className="input"
-          type="search"
-          autoFocus
-          placeholder={tr("Поиск: жим, присед, бицепс…", "Search: press, squat, biceps…")}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="chips scroll-x">
-          {GROUPS.map((g) => (
-            <button
-              key={g}
-              className="chip"
-              aria-pressed={group === g}
-              onClick={() => setGroup(group === g ? null : g)}
-            >
-              {groupLabel(g)}
-            </button>
-          ))}
-        </div>
-
-        <div className="sheet-body">
-          {catalog.isPending ? (
-            <Spinner />
-          ) : (
-            <>
-              {recent.length > 0 && (
+        {draft ? (
+          <>
+            <div className="sheet-body stack">
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  checked={draft.cardio}
+                  onChange={(e) => setDraft({ ...draft, cardio: e.target.checked })}
+                />
+                {tr("Кардио: записывать минуты, а не вес", "Cardio: log minutes instead of weight")}
+              </label>
+              {!draft.cardio && (
                 <>
-                  <h3 className="muted small">{tr("Недавние", "Recent")}</h3>
-                  <ExerciseCards items={recent} />
-                  <h3 className="muted small">{tr("Все упражнения", "All exercises")}</h3>
+                  <h3>{tr("Какие мышцы работают?", "Which muscles does it work?")}</h3>
+                  <MuscleEditor value={draft} onChange={(v) => setDraft({ ...draft, ...v })} />
                 </>
               )}
-              <ExerciseCards items={rows} />
-              {query.trim() && (
-                <button
-                  className="btn btn-block"
-                  disabled={create.isPending}
-                  onClick={() => create.mutate()}
-                >
-                  ＋ {tr(`Создать «${query.trim()}»`, `Create "${query.trim()}"`)}
-                </button>
-              )}
               {create.isError && <p className="error">{errorMessage(create.error)}</p>}
-            </>
-          )}
-        </div>
+            </div>
+            <div className="sheet-actions">
+              <button className="btn" onClick={() => setDraft(null)}>
+                {tr("Назад", "Back")}
+              </button>
+              <button className="btn btn-primary" disabled={create.isPending} onClick={() => create.mutate(draft)}>
+                {tr("Создать упражнение", "Create exercise")}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <input
+              className="input"
+              type="search"
+              autoFocus
+              placeholder={tr("Поиск: жим, присед, бицепс…", "Search: press, squat, biceps…")}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="chips scroll-x">
+              {GROUPS.map((g) => (
+                <button
+                  key={g}
+                  className="chip"
+                  aria-pressed={group === g}
+                  onClick={() => setGroup(group === g ? null : g)}
+                >
+                  {groupLabel(g)}
+                </button>
+              ))}
+            </div>
+
+            <div className="sheet-body">
+              {catalog.isPending ? (
+                <Spinner />
+              ) : (
+                <>
+                  {recent.length > 0 && (
+                    <>
+                      <h3 className="muted small">{tr("Недавние", "Recent")}</h3>
+                      <ExerciseCards items={recent} />
+                      <h3 className="muted small">{tr("Все упражнения", "All exercises")}</h3>
+                    </>
+                  )}
+                  <ExerciseCards items={rows} />
+                  {query.trim() && (
+                    <button
+                      className="btn btn-block"
+                      onClick={() =>
+                        setDraft({
+                          cardio: group === "cardio",
+                          primary: group && group !== "cardio" ? GROUP_MUSCLES[group] : [],
+                          secondary: [],
+                        })
+                      }
+                    >
+                      ＋ {tr(`Создать «${query.trim()}»`, `Create "${query.trim()}"`)}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

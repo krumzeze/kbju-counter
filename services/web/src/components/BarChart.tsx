@@ -100,7 +100,7 @@ export function BarChart({
           const h = p.value === 0 ? 0 : Math.max(2, Math.abs(zero - y(p.value)));
           const r = Math.min(4, barW / 2, h);
           return (
-            <g key={p.day}>
+            <g key={i}>
               {h > 0 && (
                 <path
                   className={barClass(p.value, i)}

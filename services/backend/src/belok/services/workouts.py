@@ -37,6 +37,8 @@ def muscles(exercise: Exercise) -> tuple[list[str], list[str]]:
     item = catalog().get(exercise.catalog_id) if exercise.catalog_id else None
     if item:
         return item.primary, item.secondary
+    if exercise.primary_muscles or exercise.secondary_muscles:
+        return exercise.primary_muscles or [], exercise.secondary_muscles or []
     if exercise.group:
         return [m for m, g in MUSCLE_GROUP.items() if g == exercise.group], []
     return [], []
@@ -90,6 +92,13 @@ async def custom_exercise(
             Exercise.user_id == user_id, Exercise.name == name, Exercise.catalog_id.is_(None)
         )
     )
+
+
+def set_muscles(exercise: Exercise, primary: list[str], secondary: list[str]) -> None:
+    exercise.primary_muscles = primary or None
+    exercise.secondary_muscles = secondary or None
+    if primary and not exercise.cardio:
+        exercise.group = MUSCLE_GROUP[primary[0]]
 
 
 async def find_exercise(session: AsyncSession, user_id: int, name: str) -> Exercise | None:
@@ -336,6 +345,87 @@ async def previous_sets(
 
 
 @dataclass(slots=True)
+class Bests:
+    e1rm: float
+    weight_kg: float
+    reps: int
+
+
+async def earlier_bests(
+    session: AsyncSession, user_id: int, workout: Workout, exercise_ids: set[int]
+) -> dict[int, Bests]:
+    """Best strength results per exercise in the workouts before this one."""
+    if not exercise_ids:
+        return {}
+    rows = await session.execute(
+        select(
+            WorkoutSet.exercise_id,
+            func.max(E1RM_SQL),
+            func.max(WorkoutSet.weight_kg),
+            func.max(WorkoutSet.reps),
+        )
+        .where(
+            WorkoutSet.user_id == user_id,
+            WorkoutSet.exercise_id.in_(exercise_ids),
+            WorkoutSet.workout_id < workout.id,
+            WorkoutSet.reps.isnot(None),
+        )
+        .group_by(WorkoutSet.exercise_id)
+    )
+    return {exercise_id: Bests(e1rm, weight, reps) for exercise_id, e1rm, weight, reps in rows}
+
+
+def records(sets: list[WorkoutSet], before: Bests | None) -> list[str]:
+    """Which personal bests these sets beat; the first time an exercise is done sets none."""
+    strength = [s for s in sets if s.reps]
+    if before is None or not strength:
+        return []
+    weight = max(s.weight_kg for s in strength)
+    if weight == 0:
+        return ["reps"] if max(s.reps for s in strength) > before.reps else []
+    found = []
+    if max(set_e1rm(s) for s in strength) > before.e1rm:
+        found.append("e1rm")
+    if weight > before.weight_kg:
+        found.append("weight")
+    return found
+
+
+COMPARE_WINDOW = 30
+COMPARE_MIN_OVERLAP = 0.5
+
+
+async def comparable_workout(
+    session: AsyncSession, user_id: int, workout: Workout, exercise_ids: set[int]
+) -> "WorkoutSummary | None":
+    """The latest earlier workout that shares at least half of its exercises with this one."""
+    if not exercise_ids:
+        return None
+    recent = (
+        select(Workout.id)
+        .where(Workout.user_id == user_id, Workout.id < workout.id)
+        .order_by(Workout.id.desc())
+        .limit(COMPARE_WINDOW)
+    )
+    rows = await session.execute(
+        select(WorkoutSet.workout_id, WorkoutSet.exercise_id)
+        .where(WorkoutSet.workout_id.in_(recent))
+        .distinct()
+    )
+    done: dict[int, set[int]] = defaultdict(set)
+    for workout_id, exercise_id in rows:
+        done[workout_id].add(exercise_id)
+    best_id, best_overlap = None, 0.0
+    for workout_id in sorted(done, reverse=True):
+        overlap = len(done[workout_id] & exercise_ids) / len(done[workout_id] | exercise_ids)
+        if overlap >= COMPARE_MIN_OVERLAP and overlap > best_overlap:
+            best_id, best_overlap = workout_id, overlap
+    if best_id is None:
+        return None
+    return (await _summaries(session, [await session.get(Workout, best_id)]))[0]
+
+
+@dataclass(slots=True)
 class WorkoutSummary:
     workout: Workout
     sets: int
@@ -350,7 +440,12 @@ async def recent_workouts(
     query = select(Workout).where(Workout.user_id == user_id)
     if before_id:
         query = query.where(Workout.id < before_id)
-    workouts = list(await session.scalars(query.order_by(Workout.id.desc()).limit(limit)))
+    return await _summaries(
+        session, list(await session.scalars(query.order_by(Workout.id.desc()).limit(limit)))
+    )
+
+
+async def _summaries(session: AsyncSession, workouts: list[Workout]) -> list[WorkoutSummary]:
     if not workouts:
         return []
     stats = await session.execute(
@@ -395,31 +490,26 @@ async def get_template(
 
 async def exercise_history(
     session: AsyncSession, user_id: int, exercise_id: int, limit: int
-) -> list[tuple[date, list[WorkoutSet]]]:
-    days = (
-        await session.scalars(
-            select(WorkoutSet.day)
-            .where(WorkoutSet.user_id == user_id, WorkoutSet.exercise_id == exercise_id)
-            .group_by(WorkoutSet.day)
-            .order_by(WorkoutSet.day.desc())
-            .limit(limit)
-        )
-    ).all()
-    if not days:
-        return []
-    sets = await session.scalars(
-        select(WorkoutSet)
-        .where(
-            WorkoutSet.user_id == user_id,
-            WorkoutSet.exercise_id == exercise_id,
-            WorkoutSet.day.in_(days),
-        )
-        .order_by(WorkoutSet.day, WorkoutSet.id)
+) -> list[tuple[int, date, list[WorkoutSet]]]:
+    """The sets of the latest workouts with this exercise, oldest workout first."""
+    ours = (WorkoutSet.user_id == user_id, WorkoutSet.exercise_id == exercise_id)
+    latest = (
+        select(WorkoutSet.workout_id)
+        .where(*ours)
+        .group_by(WorkoutSet.workout_id)
+        .order_by(func.max(WorkoutSet.day).desc(), WorkoutSet.workout_id.desc())
+        .limit(limit)
     )
-    by_day: dict[date, list[WorkoutSet]] = defaultdict(list)
+    sets = await session.scalars(
+        select(WorkoutSet).where(*ours, WorkoutSet.workout_id.in_(latest)).order_by(WorkoutSet.id)
+    )
+    by_workout: dict[int, list[WorkoutSet]] = defaultdict(list)
     for s in sets:
-        by_day[s.day].append(s)
-    return sorted(by_day.items())
+        by_workout[s.workout_id].append(s)
+    return sorted(
+        ((workout_id, items[0].day, items) for workout_id, items in by_workout.items()),
+        key=lambda row: (row[1], row[0]),
+    )
 
 
 async def activity_kcal(session: AsyncSession, user_id: int, day: date, weight_kg: float) -> float:

@@ -75,7 +75,7 @@ async def test_workout_session_flow(client):
     assert history[1]["volume_kg"] == 80 * 8 + 80 * 7
 
     progress = (await client.get(f"/api/exercises/{exercise_id}/progress", headers=headers)).json()
-    assert len(progress["points"]) == 1
+    assert len(progress["points"]) == 2
     assert progress["records"]["weight_kg"] == 85
     assert progress["records"]["e1rm"] == pytest.approx(85 * (1 + 8 / 30), abs=0.1)
 
@@ -188,3 +188,59 @@ async def test_users_cannot_touch_each_others_workouts(client):
         f"/api/workouts/{workout['id']}/exercises", json={"catalog_id": BENCH}, headers=bob
     )
     assert response.status_code == 404
+
+
+async def test_custom_exercise_muscles(client):
+    headers = await onboarded(client)
+    body = {
+        "name": "Тяга к лицу",
+        "primary": ["shoulders", "traps"],
+        "secondary": ["traps", "biceps"],
+    }
+    created = (await client.post("/api/exercises", json=body, headers=headers)).json()
+    assert created["primary"] == ["shoulders", "traps"]
+    assert created["secondary"] == ["biceps"]
+    assert created["group"] == "delts"
+
+    url = f"/api/exercises/{created['id']}/muscles"
+    changed = await client.put(url, json={"primary": ["lats"], "secondary": []}, headers=headers)
+    assert changed.json()["primary"] == ["lats"] and changed.json()["group"] == "back"
+    bad = await client.put(url, json={"primary": ["wings"]}, headers=headers)
+    assert bad.status_code == 422
+
+    workout = await start(client, headers)
+    await log(client, headers, workout["id"], created["id"], weight_kg=20, reps=12)
+    data = (await client.get("/api/analytics", headers=headers)).json()
+    assert data["muscles_week"] == {"lats": 1}
+
+    catalog_item = await add_exercise(client, headers, workout["id"], catalog_id=BENCH)
+    bench_id = catalog_item["exercises"][-1]["exercise"]["id"]
+    locked = await client.put(
+        f"/api/exercises/{bench_id}/muscles", json={"primary": ["lats"]}, headers=headers
+    )
+    assert locked.status_code == 409
+
+
+async def test_workout_summary_compares_with_previous(client):
+    headers = await onboarded(client)
+    first = await start(client, headers)
+    first = await add_exercise(client, headers, first["id"], catalog_id=BENCH)
+    exercise_id = first["exercises"][0]["exercise"]["id"]
+    await log(client, headers, first["id"], exercise_id, weight_kg=80, reps=8)
+    await finish(client, headers, first["id"])
+    first = (await client.get(f"/api/workouts/{first['id']}", headers=headers)).json()
+    assert first["compare"] is None
+    assert first["exercises"][0]["records"] == []
+    assert first["muscles"]["chest"] == 1
+
+    second = await start(client, headers)
+    await log(client, headers, second["id"], exercise_id, weight_kg=85, reps=8)
+    await log(client, headers, second["id"], exercise_id, weight_kg=60, reps=10)
+    await finish(client, headers, second["id"])
+    second = (await client.get(f"/api/workouts/{second['id']}", headers=headers)).json()
+    assert second["compare"]["id"] == first["id"]
+    assert second["compare"]["volume_kg"] == 640
+    assert second["exercises"][0]["records"] == ["e1rm", "weight"]
+
+    progress = (await client.get(f"/api/exercises/{exercise_id}/progress", headers=headers)).json()
+    assert [p["workout_id"] for p in progress["points"]] == [first["id"], second["id"]]

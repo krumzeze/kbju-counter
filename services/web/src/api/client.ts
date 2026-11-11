@@ -162,8 +162,15 @@ export const api = {
   catalog: () => request<CatalogItem[]>("GET", "/catalog"),
   catalogItem: (id: string) => request<CatalogDetail>("GET", `/catalog/${encodeURIComponent(id)}`),
   exercises: () => request<Exercise[]>("GET", "/exercises"),
-  createExercise: (name: string, group: MuscleGroup | null, cardio: boolean) =>
-    request<Exercise>("POST", "/exercises", { name, group, cardio }),
+  createExercise: (body: {
+    name: string;
+    group: MuscleGroup | null;
+    cardio: boolean;
+    primary: string[];
+    secondary: string[];
+  }) => request<Exercise>("POST", "/exercises", body),
+  setExerciseMuscles: (id: number, primary: string[], secondary: string[]) =>
+    request<Exercise>("PUT", `/exercises/${id}/muscles`, { primary, secondary }),
   resolveExercise: (ref: ExerciseRef) => request<Exercise>("POST", "/exercises/resolve", ref),
   progress: (exerciseId: number) => request<Progress>("GET", `/exercises/${exerciseId}/progress`),
   analytics: () => request<Analytics>("GET", "/analytics"),

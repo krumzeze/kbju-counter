@@ -6,6 +6,7 @@ const SCREENS = [
   "/add",
   "/workouts",
   "/workouts/1",
+  "/workouts/2",
   "/catalog",
   "/catalog/Barbell_Bench_Press_-_Medium_Grip",
   "/exercises/1",

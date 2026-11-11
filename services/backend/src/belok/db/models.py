@@ -218,6 +218,9 @@ class Exercise(Base):
     catalog_id: Mapped[str | None] = mapped_column(String(96))
     group: Mapped[str | None] = mapped_column(String(16))
     cardio: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # Set by the user for custom exercises; catalog exercises take muscles from the catalog.
+    primary_muscles: Mapped[list | None] = mapped_column(JSON)
+    secondary_muscles: Mapped[list | None] = mapped_column(JSON)
 
     __table_args__ = (
         Index(

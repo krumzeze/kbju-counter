@@ -58,6 +58,8 @@ const MUSCLES: Record<string, [string, string]> = {
   calves: ["Икры", "Calves"],
 };
 
+export const MUSCLE_ORDER = Object.keys(MUSCLES);
+
 export const muscleLabel = (m: string) => {
   const pair = MUSCLES[m];
   return pair ? tr(pair[0], pair[1]) : m;
@@ -211,6 +213,11 @@ export function searchCatalog(items: CatalogItem[], query: string): CatalogItem[
 }
 
 export const imageUrl = (id: string, frame = 0) => `/exercise-img/${id}/${frame}.jpg`;
+
+export const e1rm = (s: SetValues) =>
+  !s.reps ? 0 : s.reps > 1 ? s.weight_kg * (1 + s.reps / 30) : s.weight_kg;
+
+export const setVolume = (s: SetValues) => s.weight_kg * (s.reps ?? 0);
 
 export function formatSet(s: SetValues): string {
   if (s.duration_s) return `${Math.round(s.duration_s / 60)} ${tr("мин", "min")}`;

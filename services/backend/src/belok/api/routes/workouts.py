@@ -12,6 +12,7 @@ from belok.api.workout_schemas import (
     CustomExerciseIn,
     ExerciseOut,
     ExerciseRef,
+    MusclesIn,
     PlanItemIn,
     PreviousSetOut,
     ProgressOut,
@@ -27,6 +28,7 @@ from belok.api.workout_schemas import (
     TemplateOut,
     TopExerciseOut,
     WeekOut,
+    WorkoutCompareOut,
     WorkoutExerciseOut,
     WorkoutOut,
     WorkoutPatchIn,
@@ -51,12 +53,15 @@ def _lang(user: User) -> Language:
 
 
 def exercise_out(e: Exercise, lang: Language, sets: int = 0, last_day=None) -> ExerciseOut:
+    primary, secondary = svc.muscles(e)
     return ExerciseOut(
         id=e.id,
         name=svc.title(e, lang),
         catalog_id=e.catalog_id,
         group=svc.group(e),
         cardio=e.cardio,
+        primary=primary,
+        secondary=secondary,
         sets=sets,
         last_day=last_day,
     )
@@ -105,23 +110,33 @@ async def _workout_out(session: AsyncSession, user: User, workout: Workout) -> W
             planned[s.exercise_id] = 0
     exercises = await svc.exercises_by_id(session, user.id, set(order))
     previous = await svc.previous_sets(session, user.id, workout, set(exercises))
+    done = {s.exercise_id for s in sets}
+    bests = await svc.earlier_bests(session, user.id, workout, done)
+    compare = await svc.comparable_workout(session, user.id, workout, done)
 
     items = []
+    muscles: dict[str, float] = {}
     for exercise_id in order:
         e = exercises.get(exercise_id)
         if e is None:
             continue
         before = previous.get(exercise_id, [])
+        own = [s for s in sets if s.exercise_id == exercise_id]
+        primary, secondary = svc.muscles(e)
+        for weight, names in ((1.0, primary), (0.5, secondary)):
+            for m in names:
+                muscles[m] = muscles.get(m, 0) + weight * len(own)
         items.append(
             WorkoutExerciseOut(
                 exercise=exercise_out(e, lang),
                 planned_sets=planned[exercise_id],
-                sets=[set_out(s, e, lang) for s in sets if s.exercise_id == exercise_id],
+                sets=[set_out(s, e, lang) for s in own],
                 previous=[
                     PreviousSetOut(weight_kg=s.weight_kg, reps=s.reps, duration_s=s.duration_s)
                     for s in before
                 ],
                 previous_day=before[0].day if before else None,
+                records=svc.records(own, bests.get(exercise_id)),
             )
         )
     return WorkoutOut(
@@ -133,6 +148,16 @@ async def _workout_out(session: AsyncSession, user: User, workout: Workout) -> W
         exercises=items,
         sets=len(sets),
         volume_kg=sum(svc.set_volume(s) for s in sets),
+        muscles={m: v for m, v in muscles.items() if v},
+        compare=compare
+        and WorkoutCompareOut(
+            id=compare.workout.id,
+            day=compare.workout.day,
+            started_at=compare.workout.started_at,
+            finished_at=compare.workout.finished_at or compare.last_set_at,
+            sets=compare.sets,
+            volume_kg=compare.volume_kg,
+        ),
     )
 
 
@@ -225,6 +250,22 @@ async def create_exercise(
     if not normalize_exercise(body.name):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "empty_exercise")
     exercise = await svc.custom_exercise(session, user.id, body.name, body.group, body.cardio)
+    if body.primary or body.secondary:
+        svc.set_muscles(exercise, body.primary, body.secondary)
+    await session.commit()
+    return exercise_out(exercise, _lang(user))
+
+
+@router.put("/exercises/{exercise_id}/muscles")
+async def set_exercise_muscles(
+    exercise_id: int, body: MusclesIn, user: ActiveUser, session: SessionDep
+) -> ExerciseOut:
+    exercise = await svc.get_exercise(session, user.id, exercise_id)
+    if exercise is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "exercise_not_found")
+    if exercise.catalog_id:
+        raise HTTPException(status.HTTP_409_CONFLICT, "catalog_exercise")
+    svc.set_muscles(exercise, body.primary, body.secondary)
     await session.commit()
     return exercise_out(exercise, _lang(user))
 
@@ -250,11 +291,13 @@ async def get_progress(
     points = []
     records = RecordsOut(e1rm=0, weight_kg=0, reps=0, volume_kg=0, duration_s=0)
     start = history_start(user, local_today(user.timezone), settings.free_history_days)
-    for day, sets in await svc.exercise_history(session, user.id, exercise.id, limit):
+    history = await svc.exercise_history(session, user.id, exercise.id, limit)
+    for workout_id, day, sets in history:
         if start and day < start:
             continue
         top = max(sets, key=lambda s: (svc.set_e1rm(s), s.reps or 0))
         point = ProgressPointOut(
+            workout_id=workout_id,
             day=day,
             top_weight_kg=top.weight_kg,
             top_reps=top.reps,
