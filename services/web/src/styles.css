@@ -1716,7 +1716,16 @@ a.history-row {
 }
 
 .demo {
-  padding: 22px 20px 20px;
+  overflow: hidden;
+  padding: 0 20px 20px;
+}
+
+.demo-photo {
+  display: block;
+  width: calc(100% + 40px);
+  margin: 0 -20px 18px;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
 }
 
 .demo .eyebrow {
@@ -1748,10 +1757,17 @@ a.history-row {
 
 .features li {
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 8px;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 14px;
   padding: 18px 0;
   border-bottom: 1px solid var(--border);
+}
+
+.feature-art {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
 }
 
 .feature-num {

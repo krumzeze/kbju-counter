@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../api/client";
+import { Art } from "../components/Art";
 import { Logo } from "../components/Logo";
 import { tr } from "../lib/i18n";
 
@@ -59,6 +60,7 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
       </section>
 
       <section className="card hero demo" aria-label={tr("Пример распознавания", "Recognition example")}>
+        <Art name="landing-dish" className="demo-photo" />
         <span className="eyebrow">{tr("Например, по фото", "For example, from a photo")}</span>
         <p className="demo-title">{tr("Гречка с курицей", "Buckwheat with chicken")}</p>
         <p className="summary-big">540</p>
@@ -72,7 +74,7 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
 
       <ol className="features">
         <li>
-          <span className="feature-num">01</span>
+          <Art name="landing-photo" className="feature-art" fallback={<span className="feature-num">01</span>} />
           <div>
             <h3>{tr("КБЖУ по фото", "Macros from a photo")}</h3>
             <p>
@@ -84,7 +86,7 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
           </div>
         </li>
         <li>
-          <span className="feature-num">02</span>
+          <Art name="landing-workouts" className="feature-art" fallback={<span className="feature-num">02</span>} />
           <div>
             <h3>{tr("Дневник тренировок", "Workout log")}</h3>
             <p>
@@ -96,7 +98,7 @@ export function Login({ onToken }: { onToken: (token: string) => void }) {
           </div>
         </li>
         <li>
-          <span className="feature-num">03</span>
+          <Art name="landing-target" className="feature-art" fallback={<span className="feature-num">03</span>} />
           <div>
             <h3>{tr("Живая норма", "Adaptive target")}</h3>
             <p>
