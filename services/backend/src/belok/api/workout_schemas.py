@@ -1,8 +1,9 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from belok.catalog import Group
+from belok.catalog import MUSCLE_GROUP, Group
 
 
 class CatalogItemOut(BaseModel):
@@ -31,6 +32,8 @@ class ExerciseOut(BaseModel):
     catalog_id: str | None
     group: str | None
     cardio: bool
+    primary: list[str]
+    secondary: list[str]
     sets: int = 0
     last_day: date | None = None
 
@@ -46,7 +49,20 @@ class ExerciseRef(BaseModel):
         return self
 
 
-class CustomExerciseIn(BaseModel):
+class MusclesIn(BaseModel):
+    primary: list[str] = Field(default_factory=list, max_length=len(MUSCLE_GROUP))
+    secondary: list[str] = Field(default_factory=list, max_length=len(MUSCLE_GROUP))
+
+    @model_validator(mode="after")
+    def known_and_disjoint(self) -> "MusclesIn":
+        if any(m not in MUSCLE_GROUP for m in (*self.primary, *self.secondary)):
+            raise ValueError("unknown muscle")
+        self.primary = list(dict.fromkeys(self.primary))
+        self.secondary = [m for m in dict.fromkeys(self.secondary) if m not in self.primary]
+        return self
+
+
+class CustomExerciseIn(MusclesIn):
     name: str = Field(min_length=1, max_length=128)
     group: Group | None = None
     cardio: bool = False
@@ -98,6 +114,16 @@ class WorkoutExerciseOut(BaseModel):
     sets: list[SetOut]
     previous: list[PreviousSetOut]
     previous_day: date | None
+    records: list[Literal["e1rm", "weight", "reps"]]
+
+
+class WorkoutCompareOut(BaseModel):
+    id: int
+    day: date
+    started_at: datetime
+    finished_at: datetime | None
+    sets: int
+    volume_kg: float
 
 
 class WorkoutOut(BaseModel):
@@ -109,6 +135,8 @@ class WorkoutOut(BaseModel):
     exercises: list[WorkoutExerciseOut]
     sets: int
     volume_kg: float
+    muscles: dict[str, float]
+    compare: WorkoutCompareOut | None
 
 
 class WorkoutSummaryOut(BaseModel):
@@ -162,6 +190,7 @@ class ProgressSetOut(BaseModel):
 
 
 class ProgressPointOut(BaseModel):
+    workout_id: int
     day: date
     top_weight_kg: float
     top_reps: int | None

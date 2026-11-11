@@ -213,6 +213,8 @@ export interface Exercise {
   catalog_id: string | null;
   group: MuscleGroup | null;
   cardio: boolean;
+  primary: string[];
+  secondary: string[];
   sets: number;
   last_day: string | null;
 }
@@ -231,6 +233,16 @@ export interface WorkoutExercise {
   sets: WorkoutSet[];
   previous: SetValues[];
   previous_day: string | null;
+  records: ("e1rm" | "weight" | "reps")[];
+}
+
+export interface WorkoutCompare {
+  id: number;
+  day: string;
+  started_at: string;
+  finished_at: string | null;
+  sets: number;
+  volume_kg: number;
 }
 
 export interface Workout {
@@ -242,6 +254,8 @@ export interface Workout {
   exercises: WorkoutExercise[];
   sets: number;
   volume_kg: number;
+  muscles: Record<string, number>;
+  compare: WorkoutCompare | null;
 }
 
 export interface WorkoutSummary {
@@ -269,6 +283,7 @@ export interface TemplateInput {
 }
 
 export interface ProgressPoint {
+  workout_id: number;
   day: string;
   top_weight_kg: number;
   top_reps: number | null;

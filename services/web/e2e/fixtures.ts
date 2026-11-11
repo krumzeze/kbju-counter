@@ -88,6 +88,8 @@ const bench: Exercise = {
   catalog_id: "Barbell_Bench_Press_-_Medium_Grip",
   group: "chest",
   cardio: false,
+  primary: ["chest"],
+  secondary: ["shoulders", "triceps"],
   sets: 12,
   last_day: isoDay(-2),
 };
@@ -97,6 +99,8 @@ const run: Exercise = {
   catalog_id: null,
   group: "cardio",
   cardio: true,
+  primary: [],
+  secondary: [],
   sets: 3,
   last_day: isoDay(-1),
 };
@@ -200,6 +204,7 @@ export const exercises: Exercise[] = [bench, run];
 export const progress: Progress = {
   exercise: bench,
   points: lastDays(4).map((d, i) => ({
+    workout_id: i + 1,
     day: d,
     top_weight_kg: 55 + i * 2.5,
     top_reps: 8,
@@ -236,12 +241,17 @@ export const activeWorkout: Workout = {
       sets: [set(1, 1, 60, 10)],
       previous: [{ weight_kg: 57.5, reps: 10, duration_s: null }],
       previous_day: isoDay(-2),
+      records: ["e1rm", "weight"],
     },
-    { exercise: run, planned_sets: 1, sets: [], previous: [], previous_day: null },
+    { exercise: run, planned_sets: 1, sets: [], previous: [], previous_day: null, records: [] },
   ],
   sets: 1,
   volume_kg: 600,
+  muscles: { chest: 1, shoulders: 0.5, triceps: 0.5 },
+  compare: { id: 2, day: isoDay(-2), started_at: at(-2), finished_at: at(-2), sets: 8, volume_kg: 4200 },
 };
+
+export const finishedWorkout: Workout = { ...activeWorkout, id: 2, finished_at: at() };
 
 export const workouts: WorkoutSummary[] = [
   {

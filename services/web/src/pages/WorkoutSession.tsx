@@ -13,6 +13,7 @@ import { count, dayLabel, shortDate } from "../lib/format";
 import { tr } from "../lib/i18n";
 import { useInvalidate, useWorkout, WORKOUT_KEYS } from "../lib/queries";
 import { confirmAction, haptic } from "../lib/telegram";
+import { WorkoutSummary } from "./WorkoutSummary";
 
 interface Draft {
   weight: string;
@@ -54,6 +55,7 @@ export function WorkoutSession() {
   const timer = useRestTimer();
   const [picking, setPicking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const client = useQueryClient();
   const invalidate = useInvalidate();
   const navigate = useNavigate();
@@ -100,6 +102,7 @@ export function WorkoutSession() {
   if (error) return <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />;
 
   const active = data.finished_at === null;
+  if (!active && !editing) return <WorkoutSummary workout={data} onEdit={() => setEditing(true)} />;
   const onLogged = async (record: boolean) => {
     haptic(record ? "success" : "warning");
     if (record) setToast(tr("Новый рекорд!", "New personal record!"));
@@ -152,7 +155,12 @@ export function WorkoutSession() {
           ✓ {tr("Завершить тренировку", "Finish workout")}
         </button>
       ) : (
-        data.exercises.length > 0 && <SaveAsTemplate workout={data} />
+        <>
+          <button className="btn btn-primary btn-block" onClick={() => setEditing(false)}>
+            {tr("Готово, к итогам", "Done, back to summary")}
+          </button>
+          {data.exercises.length > 0 && <SaveAsTemplate workout={data} />}
+        </>
       )}
 
       <button

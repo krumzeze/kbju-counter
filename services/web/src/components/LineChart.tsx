@@ -90,7 +90,7 @@ export function LineChart({ points, unit, height = 220, zeroBased = false, class
           <path className="chart-line" d={path} />
         )}
         {points.map((p, i) => (
-          <g key={p.day}>
+          <g key={i}>
             <circle
               className={i === shown ? "chart-dot active" : "chart-dot"}
               cx={x(i)}

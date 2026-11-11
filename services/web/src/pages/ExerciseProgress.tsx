@@ -1,14 +1,17 @@
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { errorMessage } from "../api/client";
-import type { ProgressPoint } from "../api/types";
+import { api, errorMessage } from "../api/client";
+import type { Exercise, ProgressPoint } from "../api/types";
 import { BarChart } from "../components/BarChart";
+import { BodyMap } from "../components/BodyMap";
+import { type MuscleChoice, MuscleEditor, muscleValues } from "../components/MuscleEditor";
 import { LineChart } from "../components/LineChart";
 import { ErrorState, Spinner } from "../components/States";
-import { formatSet, kg } from "../lib/catalog";
-import { count, dayLabel } from "../lib/format";
+import { formatSet, kg, muscleLabel } from "../lib/catalog";
+import { count, dayLabel, shortDate } from "../lib/format";
 import { tr } from "../lib/i18n";
-import { useProgress } from "../lib/queries";
+import { useInvalidate, useProgress } from "../lib/queries";
 import { PremiumNote } from "../components/PremiumNote";
 
 type Metric = "e1rm" | "weight" | "volume" | "reps";
@@ -37,6 +40,7 @@ export function ExerciseProgress() {
       </div>
 
       <PremiumNote />
+      {!exercise.catalog_id && !cardio && <Muscles exercise={exercise} />}
       {points.length === 0 ? (
         <p className="empty">{tr("Записей пока нет.", "No entries yet.")}</p>
       ) : (
@@ -92,11 +96,13 @@ export function ExerciseProgress() {
             )}
           </section>
 
+          {!cardio && points.length > 1 && <RecentSessions points={points.slice(-RECENT)} weighted={weighted} />}
+
           <section>
             <h2>{tr("История", "History")}</h2>
             <div className="stack">
               {[...points].reverse().map((p) => (
-                <div key={p.day} className="card history-row">
+                <Link key={p.workout_id} to={`/workouts/${p.workout_id}`} className="card history-row">
                   <strong className="capitalize">{dayLabel(p.day)}</strong>
                   <span className="set-chips">
                     {p.items.map((s, i) => (
@@ -110,13 +116,119 @@ export function ExerciseProgress() {
                       {tr("1ПМ", "1RM")} ≈ {p.e1rm.toFixed(1)} · {kg(p.volume_kg)}
                     </span>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
           </section>
         </>
       )}
     </div>
+  );
+}
+
+const RECENT = 4;
+
+/** Set-by-set bars for the latest sessions, newest first, on one shared scale. */
+function RecentSessions({ points, weighted }: { points: ProgressPoint[]; weighted: boolean }) {
+  const size = (s: ProgressPoint["items"][number]) => (weighted ? s.weight_kg : (s.reps ?? 0));
+  const peak = Math.max(1, ...points.flatMap((p) => p.items.map(size)));
+  return (
+    <section className="card">
+      <h2>{tr("Последние сессии", "Recent sessions")}</h2>
+      <p className="muted small">
+        {weighted
+          ? tr("Столбик: вес в подходе, под ним повторы.", "Bar: weight of the set, reps below it.")
+          : tr("Столбик: повторы в подходе.", "Bar: reps in the set.")}
+      </p>
+      <div className="sessions">
+        {[...points].reverse().map((p, i, list) => {
+          const before = list[i + 1];
+          const delta = before ? p.e1rm - before.e1rm : 0;
+          return (
+            <Link key={p.workout_id} to={`/workouts/${p.workout_id}`} className="session-row">
+              <span className="session-day">
+                <strong>{shortDate(p.day)}</strong>
+                {weighted && before && Math.abs(delta) >= 0.05 && (
+                  <span className={delta > 0 ? "small positive" : "small negative"}>
+                    {delta > 0 ? "+" : "−"}
+                    {Math.abs(delta).toFixed(1)}
+                  </span>
+                )}
+              </span>
+              <span className="session-bars">
+                {p.items.map((s, j) => (
+                  <span key={j} className="session-bar">
+                    <span className="session-top">{weighted ? s.weight_kg : s.reps}</span>
+                    <span className="session-fill" style={{ height: `calc((100% - 34px) * ${(size(s) / peak).toFixed(3)})` }} />
+                    {weighted && <span className="session-reps">{s.reps}</span>}
+                  </span>
+                ))}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function Muscles({ exercise }: { exercise: Exercise }) {
+  const [draft, setDraft] = useState<MuscleChoice | null>(null);
+  const invalidate = useInvalidate();
+  const save = useMutation({
+    mutationFn: (v: MuscleChoice) => api.setExerciseMuscles(exercise.id, v.primary, v.secondary),
+    onSuccess: async () => {
+      await invalidate("progress", "exercises", "analytics", "workout");
+      setDraft(null);
+    },
+  });
+  const empty = exercise.primary.length + exercise.secondary.length === 0;
+
+  return (
+    <section className="card muscles-card">
+      <div className="card-head">
+        <h2>{tr("Мышцы", "Muscles")}</h2>
+        {!draft && (
+          <button className="btn-ghost" onClick={() => setDraft({ primary: exercise.primary, secondary: exercise.secondary })}>
+            {empty ? tr("Указать", "Set") : tr("Изменить", "Edit")}
+          </button>
+        )}
+      </div>
+      {draft ? (
+        <>
+          <MuscleEditor value={draft} onChange={setDraft} />
+          {save.isError && <p className="error">{errorMessage(save.error)}</p>}
+          <div className="sheet-actions">
+            <button className="btn" onClick={() => setDraft(null)}>
+              {tr("Отмена", "Cancel")}
+            </button>
+            <button className="btn btn-primary" disabled={save.isPending} onClick={() => save.mutate(draft)}>
+              {tr("Сохранить", "Save")}
+            </button>
+          </div>
+        </>
+      ) : empty ? (
+        <p className="muted small">
+          {tr(
+            "Укажи, какие мышцы работают, и упражнение появится на карте нагрузки в аналитике.",
+            "Set the muscles this exercise works and it will show up on the muscle load map.",
+          )}
+        </p>
+      ) : (
+        <>
+          <BodyMap values={muscleValues(exercise)} />
+          <p className="small center">
+            {exercise.primary.map(muscleLabel).join(", ")}
+            {exercise.secondary.length > 0 && (
+              <span className="muted">
+                {exercise.primary.length > 0 && " · "}
+                {exercise.secondary.map(muscleLabel).join(", ")}
+              </span>
+            )}
+          </p>
+        </>
+      )}
+    </section>
   );
 }
 
