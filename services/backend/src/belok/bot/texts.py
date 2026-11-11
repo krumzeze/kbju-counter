@@ -26,12 +26,14 @@ STRINGS: dict[str, dict[Language, str]] = {
     },
     "welcome": {
         RU: "Привет! Я Белок: считаю калории по фото, веду тренировки и вес.\n\n"
-        "Всё работает в приложении, открой его кнопкой ниже. А ещё можно просто "
-        "отправить мне голосовое о том, что ты съел.\n\n"
+        "Всё работает в приложении, открой его кнопкой ниже. А прямо здесь можно:\n"
+        "🎙 рассказать голосовым, что было на тарелке, а граммы поправить в ответе;\n"
+        "📊 /day: закрепить карточку дня, она обновляется сама после каждой записи.\n\n"
         '<a href="{privacy_url}">Политика конфиденциальности</a>',
         EN: "Hi! I'm Belok: I count calories from photos and track your workouts and weight.\n\n"
-        "Everything lives in the app, open it with the button below. You can also just "
-        "send me a voice message about what you ate.\n\n"
+        "Everything lives in the app, open it with the button below. Right here you can:\n"
+        "🎙 tell me in a voice message what you ate and adjust the grams in my reply;\n"
+        "📊 /day: pin a day card that updates itself after every entry.\n\n"
         '<a href="{privacy_url}">Privacy policy</a>',
     },
     "remind_nothing_today": {
@@ -144,6 +146,11 @@ STRINGS: dict[str, dict[Language, str]] = {
         EN: "📊 Your day: calories, macros, water and steps. "
         "The card updates itself after every entry.",
     },
+    "day_card_button": {RU: "📊 Карточка дня", EN: "📊 Day card"},
+    "cmd_day": {RU: "Карточка дня в чате", EN: "Day card in the chat"},
+    "cmd_support": {RU: "Написать в поддержку", EN: "Contact support"},
+    "cmd_paysupport": {RU: "Вопрос по оплате", EN: "Payment question"},
+    "cmd_privacy": {RU: "Политика конфиденциальности", EN: "Privacy policy"},
     "day_card_unavailable": {
         RU: "Карточка дня сейчас недоступна, загляни в приложение.",
         EN: "The day card is unavailable right now, check the app.",

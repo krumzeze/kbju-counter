@@ -2,7 +2,7 @@ import logging
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
-from aiogram.types import BotCommandScopeChat, MenuButtonWebApp, WebAppInfo
+from aiogram.types import BotCommand, BotCommandScopeChat, MenuButtonWebApp, WebAppInfo
 
 from belok.bot.texts import days_count, t
 from belok.config import Settings
@@ -41,16 +41,24 @@ async def setup_profile(bot: Bot, settings: Settings) -> None:
             log.warning("Failed to update bot profile for language %s: %s", code or "default", e)
 
 
+COMMANDS = ("day", "support", "paysupport", "privacy")
+
+
+def commands(lang: Language) -> list[BotCommand]:
+    return [BotCommand(command=c, description=t(lang, f"cmd_{c}")) for c in COMMANDS]
+
+
 async def setup_defaults(bot: Bot, settings: Settings) -> None:
-    await bot.delete_my_commands()
-    await bot.delete_my_commands(language_code="ru")
+    await bot.set_my_commands(commands(Language.EN))
+    for code in sorted(RUSSIAN_SPEAKING):
+        await bot.set_my_commands(commands(Language.RU), language_code=code)
     if settings.webapp_url:
         await bot.set_chat_menu_button(menu_button=menu_button(Language.EN, settings))
     await setup_profile(bot, settings)
 
 
 async def reset_chat_menu(bot: Bot, chat_id: int, lang: Language, settings: Settings) -> None:
-    """Drops command lists set per chat by older versions and shows the app button instead."""
+    """Drops command lists set per chat by older versions so the default ones show."""
     await bot.delete_my_commands(scope=BotCommandScopeChat(chat_id=chat_id))
     if settings.webapp_url:
         await bot.set_chat_menu_button(chat_id=chat_id, menu_button=menu_button(lang, settings))

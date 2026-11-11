@@ -1,4 +1,4 @@
-from aiogram import Bot, Router
+from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import (
     CallbackQuery,
@@ -49,6 +49,25 @@ async def cmd_privacy(message: Message, settings: Settings, lang: Language) -> N
     await message.answer(t(lang, "privacy", url=_privacy_url(settings.webapp_url)))
 
 
+DAY_CARD = "day_card"
+
+
+@router.callback_query(F.data == DAY_CARD)
+async def day_card_button(
+    callback: CallbackQuery,
+    bot: Bot,
+    session: AsyncSession,
+    user: User,
+    settings: Settings,
+    lang: Language,
+) -> None:
+    await callback.answer()
+    if not user.profile_complete or not await send_day_card(
+        bot, session, user, settings.webapp_url
+    ):
+        await bot.send_message(user.id, t(lang, "day_card_unavailable"))
+
+
 @router.message(Command("day"))
 async def cmd_day(
     message: Message,
@@ -82,9 +101,10 @@ async def _open_app(message: Message, bot: Bot, settings: Settings, lang: Langua
     button = InlineKeyboardButton(
         text=t(lang, "open_app"), web_app=WebAppInfo(url=settings.webapp_url)
     )
+    day = InlineKeyboardButton(text=t(lang, "day_card_button"), callback_data=DAY_CARD)
     await message.answer(
         t(lang, "welcome", privacy_url=_privacy_url(settings.webapp_url)),
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[button]]),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[button], [day]]),
         link_preview_options=LinkPreviewOptions(is_disabled=True),
     )
 
