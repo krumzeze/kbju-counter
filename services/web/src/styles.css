@@ -3971,3 +3971,8 @@ span.set-check {
   align-items: center;
   gap: 8px;
 }
+
+.day-card-hint {
+  display: block;
+  margin-top: 2px;
+}

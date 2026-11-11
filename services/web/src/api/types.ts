@@ -506,7 +506,7 @@ export interface Plan {
   currency: string | null;
 }
 
-export type FeatureKey = "photo" | "text" | "voice" | "barcode" | "reminders" | "payments";
+export type FeatureKey = "photo" | "text" | "voice" | "barcode" | "reminders" | "payments" | "widgets";
 
 export interface FeatureFlag {
   key: FeatureKey;

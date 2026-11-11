@@ -6,7 +6,12 @@ from enum import StrEnum
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramAPIError, TelegramForbiddenError, TelegramRetryAfter
+from aiogram.exceptions import (
+    TelegramAPIError,
+    TelegramBadRequest,
+    TelegramForbiddenError,
+    TelegramRetryAfter,
+)
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from redis.asyncio import Redis
 from sqlalchemy import Date, case, cast, func, or_, select
@@ -15,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from belok.bot.texts import t
 from belok.db.models import BodyWeight, Meal, User
 from belok.i18n import Language
-from belok.services import features, heartbeat
+from belok.services import features, heartbeat, widgets
 from belok.services.features import Feature
 from belok.timeutil import utcnow
 
@@ -160,7 +165,8 @@ async def send_due(
             key = await _message_key(session, user, kind, local)
             if key is None or not await claim(f"belok:remind:{kind}:{user.id}:{local.date()}"):
                 continue
-            if await _send(bot, user, kind, key, webapp_url):
+            widget = await _widget(session, user, kind, local)
+            if await _send(bot, user, kind, key, webapp_url, widget):
                 sent += 1
     await session.commit()
     return sent
@@ -193,7 +199,28 @@ async def _message_key(
     return f"remind_{kind}"
 
 
-async def _send(bot: Bot, user: User, kind: Reminder, key: str, webapp_url: str | None) -> bool:
+async def _widget(
+    session: AsyncSession, user: User, kind: Reminder, local: datetime
+) -> tuple[str, str] | None:
+    """Widget name and state for a one-tap reminder, or None to send plain text."""
+    if not await widgets.enabled(session):
+        return None
+    if kind == Reminder.WEIGHT:
+        return "weight", await widgets.weight_state(session, user)
+    since = MEAL_SINCE[kind]
+    until = MEAL_SINCE[Reminder.DINNER] if kind == Reminder.LUNCH else time(23, 59)
+    meals = await widgets.usual_meals(session, user, since, until, local.date())
+    return ("usual", widgets.usual_state(user, meals)) if meals else None
+
+
+async def _send(
+    bot: Bot,
+    user: User,
+    kind: Reminder,
+    key: str,
+    webapp_url: str | None,
+    widget: tuple[str, str] | None = None,
+) -> bool:
     lang = user.language or Language.RU
     pref = "weight" if kind == Reminder.WEIGHT else "meals"
     buttons = []
@@ -207,6 +234,13 @@ async def _send(bot: Bot, user: User, kind: Reminder, key: str, webapp_url: str 
     markup = InlineKeyboardMarkup(inline_keyboard=buttons)
     for _ in range(2):
         try:
+            if widget is not None:
+                try:
+                    await widgets.send(bot, user, *widget, t(lang, key), markup)
+                    return True
+                except TelegramBadRequest:
+                    log.warning("reminder widget to %s failed", user.id, exc_info=True)
+                    widget = None
             await bot.send_message(user.id, t(lang, key), reply_markup=markup)
             return True
         except TelegramRetryAfter as exc:

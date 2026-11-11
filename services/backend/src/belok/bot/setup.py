@@ -6,7 +6,7 @@ from aiogram.types import ErrorEvent
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from belok.bot.handlers import payments, reminders, start, support, voice
-from belok.bot.middlewares import DbSessionMiddleware, UserMiddleware
+from belok.bot.middlewares import DbSessionMiddleware, UserMiddleware, WidgetQueryMiddleware
 from belok.config import Settings
 from belok.services import errors
 
@@ -18,6 +18,7 @@ def build_dispatcher(
 ) -> Dispatcher:
     dp = Dispatcher(storage=storage)
     dp.update.outer_middleware(DbSessionMiddleware(sessionmaker))
+    dp.update.outer_middleware(WidgetQueryMiddleware())
     dp.update.outer_middleware(UserMiddleware(settings))
     dp.include_router(payments.router)
     dp.include_router(support.router)

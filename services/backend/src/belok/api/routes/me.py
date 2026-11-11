@@ -1,7 +1,15 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from belok.api.deps import CurrentUser, PhotosDep, SessionDep, SettingsDep
+from belok.api.deps import (
+    ActiveUser,
+    BotDep,
+    CurrentUser,
+    PhotosDep,
+    SessionDep,
+    SettingsDep,
+    refresh_day_card_later,
+)
 from belok.api.schemas import (
     AdaptiveOut,
     LanguageIn,
@@ -24,6 +32,7 @@ from belok.services.referrals import referral_stats
 from belok.services.repo import latest_weight
 from belok.services.targets import adaptive_estimate
 from belok.services.users import REFERRAL_PREFIX, update_profile
+from belok.services.widgets import send_day_card
 from belok.services.workouts import activity_kcal
 from belok.timeutil import local_today, utcnow
 
@@ -35,7 +44,7 @@ async def get_me(user: CurrentUser, session: SessionDep, settings: SettingsDep) 
     return await _me(session, user, settings)
 
 
-@router.put("/me/profile")
+@router.put("/me/profile", dependencies=[Depends(refresh_day_card_later)])
 async def put_profile(
     body: ProfileIn, user: CurrentUser, session: SessionDep, settings: SettingsDep
 ) -> MeOut:
@@ -48,13 +57,22 @@ async def put_profile(
     return await _me(session, user, settings)
 
 
-@router.put("/me/language")
+@router.put("/me/language", dependencies=[Depends(refresh_day_card_later)])
 async def put_language(
     body: LanguageIn, user: CurrentUser, session: SessionDep, settings: SettingsDep
 ) -> MeOut:
     user.language = body.language
     await session.commit()
     return await _me(session, user, settings)
+
+
+@router.post("/me/day-card", status_code=status.HTTP_204_NO_CONTENT)
+async def post_day_card(
+    user: ActiveUser, session: SessionDep, settings: SettingsDep, bot: BotDep
+) -> Response:
+    if not await send_day_card(bot, session, user, settings.webapp_url):
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "day_card_unavailable")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch("/me/settings")

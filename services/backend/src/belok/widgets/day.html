@@ -1,0 +1,61 @@
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:15px system-ui,sans-serif;color:var(--tg-theme-text-color);padding:12px 12px 18px}
+.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.hd b{font-size:17px}
+.h{color:var(--tg-theme-hint-color);font-size:13px}
+.top{display:flex;gap:14px;align-items:center}
+.ring{position:relative;width:96px;height:96px;flex:none}
+.ring div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.ring b{font-size:20px}
+.bars{flex:1;display:flex;flex-direction:column;gap:7px}
+.l{display:flex;justify-content:space-between;font-size:13px}
+.bar{height:6px;border-radius:3px;background:var(--tg-theme-secondary-bg-color);overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--tg-theme-button-color)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.top+.row{margin-top:12px}
+button{font:inherit;border:0;border-radius:10px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);height:34px;padding:0 12px;white-space:nowrap}
+.q{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 2px}
+.q button{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.u{width:100%;margin-top:8px;background:none;color:var(--tg-theme-destructive-text-color)}
+.over{color:var(--tg-theme-destructive-text-color)}
+</style>
+<div id="a"></div>
+<script>
+const W=window.TelegramWidget,A=document.getElementById('a');
+let S=null,busy='',sure=false,msg='';
+const T=(r,e)=>S&&S.l==='en'?e:r;
+const R=Math.round,N=n=>R(n).toLocaleString(T('ru-RU','en-US'));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hap=t=>{try{W.HapticFeedback.notificationOccurred(t)}catch(e){}};
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function load(){try{S=JSON.parse(W.chatData)}catch(e){S=null}
+if(S&&S.d!==today()){Object.assign(S,{d:today(),k:0,p:0,f:0,c:0,w:0,s:0,u:null})}}
+function bar(n,v,t){const w=t?Math.min(100,v/t*100):0;
+return '<div><div class="l"><span>'+n+'</span><span>'+R(v)+(t?' / '+R(t):'')+' '+T('г','g')+'</span></div><div class="bar"><i style="width:'+w+'%"></i></div></div>'}
+function draw(){
+if(!S){A.innerHTML='';return}
+const K=S.K||0,p=K?Math.min(1,S.k/K):0,L=276.5,over=K&&S.k>K;
+const date=new Date(S.d+'T12:00').toLocaleDateString(T('ru-RU','en-US'),{day:'numeric',month:'long'});
+let h='<div class="hd"><b>'+T('Сегодня','Today')+'</b><span class="h">'+date+'</span></div><div class="top"><div class="ring"><svg viewBox="0 0 100 100" width="96" height="96"><circle cx="50" cy="50" r="44" fill="none" style="stroke:var(--tg-theme-secondary-bg-color)" stroke-width="9"/><circle cx="50" cy="50" r="44" fill="none" style="stroke:var(--tg-theme-'+(over?'destructive-text':'button')+'-color)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+(p*L)+' '+L+'" transform="rotate(-90 50 50)"/></svg><div><b'+(over?' class="over"':'')+'>'+N(S.k)+'</b><span class="h">'+(K?T('из ','of ')+N(K):T('ккал','kcal'))+'</span></div></div><div class="bars">'+
+bar(T('Белки','Protein'),S.p,S.P)+bar(T('Жиры','Fat'),S.f,S.F)+bar(T('Углеводы','Carbs'),S.c,S.C)+'</div></div>';
+h+='<div class="row"><span>💧 '+N(S.w)+(S.W?' / '+N(S.W):'')+' '+T('мл','ml')+'</span><button data-a="w">'+(busy==='w'?'…':'+250 '+T('мл','ml'))+'</button></div>';
+h+='<div class="row"><span>👣 '+N(S.s)+' / '+N(S.S)+'</span></div>';
+if(S.q&&S.q.length){h+='<div class="row"><span class="h">'+T('Добавить снова','Add again')+'</span></div><div class="q">';
+S.q.forEach(m=>{h+='<button data-a="r" data-id="'+m[0]+'">'+(busy==='r'+m[0]?'…':'+ '+esc(m[1])+' · '+R(m[2]))+'</button>'});h+='</div>'}
+if(S.u)h+='<button class="u" data-a="u">'+(busy==='u'?'…':sure?T('Точно удалить «','Really delete “')+esc(S.u)+T('»?','”?'):T('Отменить последнее: ','Undo last: ')+esc(S.u))+'</button>';
+if(msg)h+='<div class="h">'+msg+'</div>';
+A.innerHTML=h}
+function send(key,data){busy=key;draw();
+W.request(data).then(r=>{busy='';msg=r.result==='ok'?'':T('Не получилось','Something went wrong');hap(r.result==='ok'?'success':'error');draw()},
+()=>{busy='';msg=T('Не получилось, попробуй ещё раз','Something went wrong, try again');hap('error');draw()})}
+A.addEventListener('click',ev=>{
+const b=ev.target.closest('button');if(!b||busy)return;
+const a=b.dataset.a;msg='';
+if(a==='w')send('w','w:250');
+else if(a==='r')send('r'+b.dataset.id,'r:'+b.dataset.id);
+else if(a==='u'){if(!sure){sure=true;draw();setTimeout(()=>{sure=false;draw()},4000)}else{sure=false;send('u','u')}}});
+W.onEvent('chatDataChanged',()=>{load();draw()});
+W.onEvent('activated',()=>{load();draw()});
+load();draw();
+</script>

@@ -1,0 +1,46 @@
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:15px system-ui,sans-serif;color:var(--tg-theme-text-color);padding:12px 12px 18px;text-align:center}
+.v{font-size:34px;font-weight:700;margin:4px 0}
+.v small{font-size:16px;font-weight:500;color:var(--tg-theme-hint-color)}
+.h{color:var(--tg-theme-hint-color);font-size:13px}
+.s{display:flex;gap:6px;justify-content:center;margin:8px 0 4px}
+button{font:inherit;border:0;border-radius:10px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);height:38px;min-width:58px;padding:0 10px}
+.p{width:100%;margin-top:12px;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);font-weight:600;height:42px}
+svg{display:block;width:100%;height:56px;margin-top:10px}
+.ok{color:var(--tg-theme-button-color);font-weight:600;margin-top:12px}
+</style>
+<div id="a"></div>
+<script>
+const W=window.TelegramWidget,A=document.getElementById('a');
+let S=null,v=0,saved=null,busy=false,msg='';
+const T=(r,e)=>S&&S.l==='en'?e:r;
+const F=x=>x.toLocaleString(T('ru-RU','en-US'),{minimumFractionDigits:1,maximumFractionDigits:1});
+const hap=t=>{try{t?W.HapticFeedback.notificationOccurred(t):W.HapticFeedback.selectionChanged()}catch(e){}};
+function load(){try{S=JSON.parse(W.chatData)}catch(e){S=null}
+if(!S)return;v=S.t||S.v||70;saved=S.t||null;
+try{const x=localStorage.getItem('saved');if(x)saved=v=+x}catch(e){}}
+function line(){const h=(S.h||[]).concat(saved?[]:[v]);if(h.length<2)return'';
+const lo=Math.min(...h),hi=Math.max(...h),d=hi-lo||1,x=i=>i*300/(h.length-1),y=w=>50-(w-lo)/d*44;
+const pts=h.map((w,i)=>x(i).toFixed(1)+','+y(w).toFixed(1)).join(' ');
+return '<svg viewBox="-4 0 308 56" preserveAspectRatio="none"><polyline points="'+pts+'" fill="none" style="stroke:var(--tg-theme-button-color)" stroke-width="2.5" stroke-linejoin="round"/><circle cx="'+x(h.length-1)+'" cy="'+y(h[h.length-1])+'" r="4" style="fill:var(--tg-theme-button-color)"/></svg>'}
+function draw(){
+if(!S){A.innerHTML='';return}
+const prev=S.h&&S.h.length?S.h[S.h.length-1]:null,d=prev!=null?v-prev:null;
+let h='<div class="h">'+T('Вес сегодня','Today’s weight')+'</div><div class="v">'+F(v)+' <small>'+T('кг','kg')+'</small></div>';
+if(d!=null&&Math.abs(d)>=0.05)h+='<div class="h">'+(d>0?'+':'−')+F(Math.abs(d))+' '+T('к прошлому разу','since last time')+'</div>';
+if(saved){h+=line()+'<div class="ok">✓ '+T('Записано','Saved')+'</div>'}
+else{h+='<div class="s"><button data-d="-1">−1</button><button data-d="-0.1">−0,1</button><button data-d="0.1">+0,1</button><button data-d="1">+1</button></div>'+line()+
+'<button class="p" data-a="s">'+(busy?'…':T('Записать','Save'))+'</button>'}
+if(msg)h+='<div class="h">'+msg+'</div>';
+A.innerHTML=h}
+A.addEventListener('click',ev=>{
+const b=ev.target.closest('button');if(!b||busy||saved)return;msg='';
+if(b.dataset.d){v=Math.min(400,Math.max(20,Math.round((v+ +b.dataset.d)*10)/10));hap();draw();return}
+busy=true;draw();
+W.request('wt:'+v.toFixed(1)).then(r=>{busy=false;
+if(r.result==='ok'){saved=v;try{localStorage.setItem('saved',String(v))}catch(e){}hap('success')}else{msg=T('Не получилось','Could not save');hap('error')}draw()},
+()=>{busy=false;msg=T('Не получилось, попробуй ещё раз','Could not save, try again');hap('error');draw()})});
+W.onEvent('chatDataChanged',()=>{load();draw()});
+load();draw();
+</script>

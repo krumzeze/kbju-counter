@@ -1,0 +1,55 @@
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:15px system-ui,sans-serif;color:var(--tg-theme-text-color);padding:12px 12px 18px}
+h3{font-size:16px;margin-bottom:6px}
+.r{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.n small,.h{display:block;color:var(--tg-theme-hint-color);font-size:13px}
+.off .n{text-decoration:line-through;opacity:.5}
+button{font:inherit;border:0;border-radius:10px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);min-width:34px;height:34px;padding:0 10px}
+.g{min-width:58px;text-align:center;font-weight:600}
+.t{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:10px 0 2px;font-weight:600}
+.p{width:100%;margin-top:12px;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);font-weight:600;height:42px}
+.h{margin-top:8px}
+</style>
+<div id="a"></div>
+<script>
+const W=window.TelegramWidget,A=document.getElementById('a');
+let S=null,G=[],busy=false,msg='';
+const T=(r,e)=>S&&S.l==='en'?e:r;
+const R=Math.round,N=n=>R(n).toLocaleString(T('ru-RU','en-US'));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hap=t=>{try{t?W.HapticFeedback.notificationOccurred(t):W.HapticFeedback.selectionChanged()}catch(e){}};
+function load(){try{S=JSON.parse(W.chatData)}catch(e){S=null}G=S&&S.i?S.i.map(i=>i[1]):[]}
+const k=(it,g,n)=>it[1]?it[n]*g/it[1]:0;
+const changed=()=>S.i.some((it,j)=>it[1]!==G[j]);
+function draw(){
+if(!S){A.innerHTML='';return}
+if(S.x){A.innerHTML='<h3>'+T('Приём удалён','Meal deleted')+'</h3>';return}
+const t=[2,3,4,5].map(n=>S.i.reduce((s,it,j)=>s+k(it,G[j],n),0));
+let h='<h3>'+esc(S.t)+'</h3>';
+S.i.forEach((it,j)=>{const g=G[j];
+h+='<div class="r'+(g?'':' off')+'"><div class="n">'+esc(it[0])+'<small>'+R(k(it,g,2))+' '+T('ккал','kcal')+'</small></div>'+
+(g?'<button data-a="-" data-j="'+j+'">−</button><span class="g">'+g+' '+T('г','g')+'</span><button data-a="+" data-j="'+j+'">+</button><button data-a="x" data-j="'+j+'">✕</button>'
+:'<button data-a="o" data-j="'+j+'">'+T('Вернуть','Undo')+'</button>')+'</div>'});
+h+='<div class="t"><span>'+R(t[0])+' '+T('ккал','kcal')+'</span><span>'+T('Б','P')+' '+R(t[1])+' · '+T('Ж','F')+' '+R(t[2])+' · '+T('У','C')+' '+R(t[3])+'</span></div>';
+if(S.K)h+='<span class="h">'+T('За день','Today')+': '+N(S.e+t[0])+' / '+N(S.K)+' '+T('ккал','kcal')+'</span>';
+if(changed())h+='<button class="p" data-a="s">'+(busy?'…':G.some(g=>g)?T('Сохранить','Save'):T('Удалить приём','Delete meal'))+'</button>';
+else if(msg)h+='<span class="h">'+msg+'</span>';
+A.innerHTML=h}
+function apply(){const i=[];S.i.forEach((it,j)=>{const g=G[j];if(g)i.push([it[0],g,k(it,g,2),k(it,g,3),k(it,g,4),k(it,g,5)])});S.i=i;G=i.map(x=>x[1]);if(!i.length)S.x=1}
+A.addEventListener('click',ev=>{
+const b=ev.target.closest('button');if(!b||busy)return;
+const a=b.dataset.a,j=+b.dataset.j;msg='';
+if(a==='+'){G[j]=Math.min(3000,G[j]+(G[j]<50?5:10));hap()}
+else if(a==='-'){G[j]=Math.max(5,G[j]-(G[j]<=50?5:10));hap()}
+else if(a==='x'){G[j]=0;hap()}
+else if(a==='o'){G[j]=S.i[j][1];hap()}
+else if(a==='s'){busy=true;
+W.request('s:'+S.id+':'+G.join(',')).then(r=>{busy=false;
+if(r.result==='ok'){apply();msg='✓ '+T('Сохранено','Saved');hap('success')}else{msg=T('Не получилось','Could not save');hap('error')}
+draw()},()=>{busy=false;msg=T('Не получилось, попробуй ещё раз','Could not save, try again');hap('error');draw()})}
+draw()});
+W.onEvent('chatDataChanged',()=>{load();draw()});
+load();draw();
+</script>

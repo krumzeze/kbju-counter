@@ -17,6 +17,7 @@ class Feature(StrEnum):
     BARCODE = "barcode"
     REMINDERS = "reminders"
     PAYMENTS = "payments"
+    WIDGETS = "widgets"
 
 
 class FeatureDisabled(Exception):

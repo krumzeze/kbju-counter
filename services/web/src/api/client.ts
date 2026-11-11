@@ -125,6 +125,7 @@ export const api = {
   saveProfile: (body: ProfileInput) => request<Me>("PUT", "/me/profile", body),
   setLanguage: (language: Lang) => request<Me>("PUT", "/me/language", { language }),
   updateSettings: (body: Settings) => request<Me>("PATCH", "/me/settings", body),
+  sendDayCard: () => request<void>("POST", "/me/day-card"),
 
   day: (day?: string) => request<Day>("GET", day ? `/day?day=${day}` : "/day"),
   mealFromText: (text: string) => request<Meal>("POST", "/meals/text", { text }),
@@ -272,6 +273,10 @@ export const adminApi = {
 
 const messages = (): Record<string, string> => ({
   daily_limit: tr("На сегодня лимит распознаваний исчерпан", "You've hit today's analysis limit"),
+  day_card_unavailable: tr(
+    "Не получилось отправить карточку, попробуй позже",
+    "Couldn't send the card, try again later",
+  ),
   premium_required: tr(
     "Бесплатные распознавания на сегодня закончились. Больше в Premium",
     "You've used today's free recognitions. Get more with Premium",

@@ -46,7 +46,13 @@ async def main() -> None:
 
     try:
         await setup_defaults(bot, settings)
-        await dp.start_polling(bot, settings=settings, analyzer=analyzer, stt=stt)
+        await dp.start_polling(
+            bot,
+            allowed_updates=[*dp.resolve_used_update_types(), "widget_query"],
+            settings=settings,
+            analyzer=analyzer,
+            stt=stt,
+        )
     finally:
         for task in background:
             task.cancel()

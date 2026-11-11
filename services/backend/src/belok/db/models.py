@@ -86,6 +86,7 @@ class User(Base):
     photo_eval_consent: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=text("false")
     )
+    day_card_message_id: Mapped[int | None] = mapped_column(BigInteger)
 
     @property
     def profile_complete(self) -> bool:

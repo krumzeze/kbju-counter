@@ -53,8 +53,25 @@ class FakeBot:
         self.sent: list[tuple[int, str]] = []
         self.fail_for: dict[int, Exception] = {}
         self.invoices: list[dict] = []
+        self.calls: list = []
 
     id = 42
+
+    async def __call__(self, method) -> object:
+        self.calls.append(method)
+        if method.__api_method__ == "sendWidget":
+            self.sent.append((method.chat_id, method.caption))
+            return SimpleNamespace(message_id=len(self.sent))
+        return True
+
+    async def pin_chat_message(self, *args, **kwargs) -> bool:
+        return True
+
+    async def unpin_chat_message(self, *args, **kwargs) -> bool:
+        return True
+
+    async def delete_message(self, *args, **kwargs) -> bool:
+        return True
 
     async def send_message(self, chat_id: int, text: str, **kwargs) -> SimpleNamespace:
         if chat_id in self.fail_for:

@@ -2,7 +2,17 @@ from collections.abc import Awaitable, Callable
 from datetime import date
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Response,
+    UploadFile,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.api.deps import (
@@ -12,6 +22,7 @@ from belok.api.deps import (
     PhotosDep,
     SessionDep,
     SettingsDep,
+    refresh_day_card_later,
     require,
 )
 from belok.api.routes.workouts import set_out
@@ -67,7 +78,7 @@ from belok.services.targets import TargetSource
 from belok.services.workouts import sets_on
 from belok.timeutil import local_today, utcnow
 
-router = APIRouter(tags=["meals"])
+router = APIRouter(tags=["meals"], dependencies=[Depends(refresh_day_card_later)])
 
 MAX_PHOTO_BYTES = 10 * 1024 * 1024
 
