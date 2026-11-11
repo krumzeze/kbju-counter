@@ -75,7 +75,7 @@ async def test_workout_session_flow(client):
     assert history[1]["volume_kg"] == 80 * 8 + 80 * 7
 
     progress = (await client.get(f"/api/exercises/{exercise_id}/progress", headers=headers)).json()
-    assert len(progress["points"]) == 1
+    assert len(progress["points"]) == 2
     assert progress["records"]["weight_kg"] == 85
     assert progress["records"]["e1rm"] == pytest.approx(85 * (1 + 8 / 30), abs=0.1)
 
