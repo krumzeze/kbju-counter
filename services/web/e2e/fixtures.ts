@@ -77,7 +77,7 @@ export const me: Me = {
     formula_tdee: 2400,
   },
   base_target: target,
-  features: { photo: true, text: true, voice: true, barcode: true, reminders: true, payments: true },
+  features: { photo: true, text: true, voice: true, barcode: true, reminders: true, payments: true, widgets: true },
   analyses_left: 3,
   free_history_days: 7,
 };
