@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
 import type { Day } from "../api/types";
 import { Avatar } from "../components/Avatar";
+import { HomeScreenOffer } from "../components/HomeScreen";
 import { Icon } from "../components/Icon";
 import { MacroBars } from "../components/MacroBars";
 import { MealCard } from "../components/MealCard";
@@ -37,6 +38,7 @@ export function Today() {
       </header>
 
       <DateStrip value={day} onChange={setDay} />
+      <HomeScreenOffer />
 
       {isPending ? (
         <Spinner />

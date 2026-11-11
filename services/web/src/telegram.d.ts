@@ -11,7 +11,10 @@ interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: { user?: { language_code?: string; photo_url?: string } };
   colorScheme?: "light" | "dark";
-  onEvent?(event: "themeChanged", cb: () => void): void;
+  onEvent?(event: "themeChanged" | "homeScreenAdded", cb: () => void): void;
+  offEvent?(event: "themeChanged" | "homeScreenAdded", cb: () => void): void;
+  addToHomeScreen?(): void;
+  checkHomeScreenStatus?(callback: (status: "unsupported" | "unknown" | "added" | "missed") => void): void;
   setHeaderColor?(color: string): void;
   setBackgroundColor?(color: string): void;
   ready(): void;
