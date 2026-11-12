@@ -353,3 +353,16 @@ def test_long_recipes_still_fit_a_widget():
     code = cook_html(SimpleNamespace(language=None), recipe).encode()
     assert len(code) <= 32768 and len(zlib.compress(code, 9)) <= 4096
     assert b'"x": true' in code
+
+
+async def test_seed_recipes_fill_the_catalog_once(client, s3):
+    from belok.seed.recipes import RECIPES, seed
+
+    _, _, cook = await users(client)
+    async with client.app.state.sessionmaker() as session:
+        assert await seed(session, client.app.state.photos) == len(RECIPES)
+        assert await seed(session, client.app.state.photos) == 0
+    catalog = (await client.get("/api/recipes?limit=100", headers=cook)).json()
+    assert len(catalog) == len(RECIPES)
+    assert all(r["photo_url"] and r["author_name"] == "Белок" for r in catalog)
+    assert len([k for k in s3.objects if k.startswith("recipes/")]) == len(RECIPES)
