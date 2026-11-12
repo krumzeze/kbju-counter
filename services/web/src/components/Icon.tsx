@@ -17,6 +17,9 @@ const PATHS = {
   play: "M8 5.5v13l10.5-6.5z",
   trash: "M5 7h14M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3",
   logout: "M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M9 16l-4-4 4-4M5 12h11",
+  book: "M5 4.5h10a4 4 0 0 1 4 4v11.5H9a4 4 0 0 1-4-4zM9 9h6M9 13h6",
+  heart: "M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20z",
+  star: "m12 4 2.4 5 5.4.6-4 3.7 1.1 5.3L12 16l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z",
 } as const;
 
 export type IconName = keyof typeof PATHS;

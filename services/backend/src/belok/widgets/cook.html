@@ -1,0 +1,105 @@
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:15px system-ui,sans-serif;color:var(--tg-theme-text-color);padding:12px 12px 18px}
+h3{font-size:16px;margin-bottom:8px}
+.h{color:var(--tg-theme-hint-color);font-size:13px}
+.tabs{display:flex;gap:4px;padding:3px;border-radius:10px;background:var(--tg-theme-secondary-bg-color);margin-bottom:10px}
+.tabs button{flex:1;height:32px;background:none;font-size:13px}
+.tabs .on{background:var(--tg-theme-bg-color);font-weight:600}
+button{font:inherit;border:0;border-radius:10px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);min-width:34px;height:34px;padding:0 10px}
+.r{display:flex;align-items:center;gap:6px;padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.off .n{text-decoration:line-through;opacity:.5}
+.g{min-width:58px;text-align:center;font-weight:600}
+.p{width:100%;margin-top:12px;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);font-weight:600;height:42px}
+.dots{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.dots button{min-width:0;width:26px;height:26px;padding:0;font-size:12px}
+.dots .d{background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color)}
+.dots .c{outline:2px solid var(--tg-theme-button-color)}
+.st{white-space:pre-wrap;line-height:1.4;margin:6px 0 4px}
+.row{display:flex;gap:8px;margin-top:10px}
+.row button{flex:1}
+.big{display:flex;align-items:center;justify-content:space-between;margin:10px 0}
+.big b{font-size:24px}
+.t{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:10px;font-weight:600}
+.ok{color:var(--tg-theme-button-color);font-weight:600;margin-top:10px}
+</style>
+<div id="a"></div>
+<script>
+const W=window.TelegramWidget,A=document.getElementById('a');
+const R=/*DATA*/null;
+const T=(r,e)=>R.l==='en'?e:r;
+const N=n=>Math.round(n).toLocaleString(T('ru-RU','en-US'));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hap=t=>{try{t?W.HapticFeedback.notificationOccurred(t):W.HapticFeedback.selectionChanged()}catch(e){}};
+const PG=8;
+let S={tab:0,step:0,pg:0,done:[],g:R.i.map(i=>i[1]),m:'p',n:1,w:0,c:0,ok:0},busy=0,msg='';
+try{Object.assign(S,JSON.parse(localStorage.getItem('cook')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('cook',JSON.stringify(S))}catch(e){}};
+const raw=()=>S.g.reduce((a,b)=>a+b,0);
+const cooked=()=>S.c||Math.max(1,Math.round(R.c&&R.r?R.c*raw()/R.r:raw()));
+const grams=()=>S.w||Math.max(10,Math.round(cooked()/R.p/10)*10);
+function tot(){const k=S.m==='p'?S.n/R.p:grams()/cooked(),t=[0,0,0,0];
+R.i.forEach((it,j)=>{if(!it[1]||!S.g[j])return;const f=S.g[j]/it[1]*k;for(let x=0;x<4;x++)t[x]+=it[2+x]*f});return t}
+const step=g=>g<100?10:50;
+function products(){
+let h='<div class="h">'+T('Продукты на ','Ingredients for ')+R.p+' '+T('порц.','serv.')+T(', в сыром виде',', raw')+'</div>';
+const from=S.pg*PG;
+R.i.slice(from,from+PG).forEach((it,k)=>{const j=from+k,g=S.g[j];
+h+='<div class="r'+(g?'':' off')+'"><span class="n">'+esc(it[0])+'</span><button data-a="-" data-j="'+j+'">−</button><span class="g">'+g+' '+T('г','g')+'</span><button data-a="+" data-j="'+j+'">+</button></div>'});
+if(R.i.length>PG)h+='<div class="row"><button data-a="pp">←</button><span class="h">'+(S.pg+1)+'/'+Math.ceil(R.i.length/PG)+'</span><button data-a="pn">→</button></div>';
+return h}
+function steps(){
+if(!R.s.length)return'<div class="h">'+T('Шагов нет, готовь как привык','No steps, cook your way')+'</div>';
+const n=R.s.length,k=Math.min(S.step,n-1);
+let h='<div class="h">'+T('Шаг ','Step ')+(k+1)+T(' из ',' of ')+n+' · '+T('сделано ','done ')+S.done.length+'</div><div class="dots">';
+R.s.forEach((s,j)=>{h+='<button class="'+(S.done.includes(j)?'d':'')+(j===k?' c':'')+'" data-a="s" data-j="'+j+'">'+(j+1)+'</button>'});
+h+='</div><div class="st">'+esc(R.s[k])+'</div>';
+if(R.x)h+='<div class="h">'+T('Полный текст в приложении','Full text in the app')+'</div>';
+const d=S.done.includes(k);
+h+='<div class="row"><button data-a="sb">←</button><button class="'+(d?'':'p')+'" style="margin:0" data-a="sd">'+(d?T('Снять отметку','Undo'):T('Готово ✓','Done ✓'))+'</button></div>';
+return h}
+function diary(){
+const t=tot();let h='<div class="tabs"><button data-a="mp" class="'+(S.m==='p'?'on':'')+'">'+T('Порциями','Servings')+'</button><button data-a="mg" class="'+(S.m==='g'?'on':'')+'">'+T('В граммах','Grams')+'</button></div>';
+if(S.m==='p')h+='<div class="big"><button data-a="n-">−</button><span><b>'+String(S.n).replace('.',T(',','.'))+'</b> <span class="h">'+T('из ','of ')+R.p+'</span></span><button data-a="n+">+</button></div>';
+else h+='<div class="big"><button data-a="w-">−</button><span><b>'+N(grams())+' '+T('г','g')+'</b></span><button data-a="w+">+</button></div><div class="r"><span class="n">'+T('Вес готового блюда','Cooked weight')+'</span><button data-a="c-">−</button><span class="g">'+N(cooked())+'</span><button data-a="c+">+</button></div>';
+h+='<div class="t"><span>'+N(t[0])+' '+T('ккал','kcal')+'</span><span>'+T('Б','P')+' '+N(t[1])+' · '+T('Ж','F')+' '+N(t[2])+' · '+T('У','C')+' '+N(t[3])+'</span></div>';
+h+=S.ok?'<div class="ok">✓ '+T('Добавлено в дневник','Added to your diary')+'</div>':'<button class="p" data-a="add">'+(busy?'…':T('Добавить в дневник','Add to diary'))+'</button>';
+if(msg)h+='<div class="h" style="margin-top:8px">'+msg+'</div>';
+return h}
+function draw(){
+const tabs=[T('Продукты','Ingredients'),T('Шаги','Steps'),T('В дневник','Log it')];
+let h='<h3>'+esc(R.t)+'</h3><div class="tabs">'+tabs.map((x,j)=>'<button data-a="t" data-j="'+j+'" class="'+(S.tab===j?'on':'')+'">'+x+'</button>').join('')+'</div>';
+h+=[products,steps,diary][S.tab]();
+A.innerHTML=h}
+function request(){
+const ch=S.g.some((g,j)=>g!==R.i[j][1]);
+let d='c:'+R.id+':'+(S.m==='p'?'p:'+S.n:'g:'+grams()+':'+cooked());
+if(ch)d+=':'+S.g.join(',');
+if(new TextEncoder().encode(d).length>64){msg=T('Слишком много правок для чата, добавь из приложения','Too many edits for the chat, log it in the app');draw();return}
+busy=1;draw();
+W.request(d).then(r=>{busy=0;if(r.result==='ok'){S.ok=1;save();hap('success')}else{msg=T('Не получилось','Something went wrong');hap('error')}draw()},
+()=>{busy=0;msg=T('Не получилось, попробуй ещё раз','Something went wrong, try again');hap('error');draw()})}
+A.addEventListener('click',ev=>{
+const b=ev.target.closest('button');if(!b||busy)return;
+const a=b.dataset.a,j=+b.dataset.j;msg='';
+if(a==='add')return request();
+if(a==='t')S.tab=j;
+else if(a==='+')S.g[j]=Math.min(10000,S.g[j]+step(S.g[j]));
+else if(a==='-')S.g[j]=Math.max(0,S.g[j]-step(S.g[j]-1));
+else if(a==='pp')S.pg=Math.max(0,S.pg-1);
+else if(a==='pn')S.pg=Math.min(Math.ceil(R.i.length/PG)-1,S.pg+1);
+else if(a==='s')S.step=j;
+else if(a==='sb')S.step=Math.max(0,S.step-1);
+else if(a==='sd'){const k=Math.min(S.step,R.s.length-1);if(S.done.includes(k))S.done=S.done.filter(x=>x!==k);else{S.done.push(k);S.step=Math.min(R.s.length-1,k+1);hap('success')}}
+else if(a==='mp'||a==='mg')S.m=a==='mp'?'p':'g';
+else if(a==='n+')S.n=Math.min(50,S.n+0.5);
+else if(a==='n-')S.n=Math.max(0.5,S.n-0.5);
+else if(a==='w+')S.w=grams()+10;
+else if(a==='w-')S.w=Math.max(10,grams()-10);
+else if(a==='c+')S.c=cooked()+50;
+else if(a==='c-')S.c=Math.max(50,cooked()-50);
+if(a!=='sd'&&a!=='t')hap();
+save();draw()});
+draw();
+</script>

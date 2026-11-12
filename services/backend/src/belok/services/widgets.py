@@ -2,8 +2,10 @@
 
 import json
 import logging
+import zlib
 from contextlib import suppress
 from datetime import date, time, timedelta
+from html import escape
 from typing import Any
 
 from aiogram import Bot
@@ -13,12 +15,13 @@ from sqlalchemy import Date, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.bot.texts import t
-from belok.db.models import Meal, User
+from belok.db.models import Meal, Recipe, User
 from belok.domain.nutrition import water_target_ml
 from belok.i18n import Language
 from belok.services import features
 from belok.services.features import Feature
 from belok.services.meals import copy_meal, meal_history, resize_item
+from belok.services.recipes import RecipeError, get_visible, to_meal
 from belok.services.repo import (
     add_water,
     day_summary,
@@ -199,15 +202,16 @@ async def send(
     bot: Bot,
     user: User,
     name: str,
-    state: str,
+    state: str | None,
     caption: str,
     markup: InlineKeyboardMarkup | None = None,
     quiet: bool = False,
+    code: str | None = None,
 ) -> Message:
     return await bot(
         SendWidget(
             chat_id=user.id,
-            html=html(name),
+            html=code or html(name),
             chat_data=state,
             caption=caption,
             parse_mode="HTML",
@@ -216,6 +220,63 @@ async def send(
             reply_markup=markup,
         )
     )
+
+
+MAX_HTML_BYTES = 32768
+MAX_COMPRESSED_BYTES = 4096
+COOK_TEXT_LIMITS = (600, 300, 160, 80)
+
+
+def cook_html(user: User, recipe: Recipe) -> str:
+    """The cooking widget with the recipe inlined, steps shortened until it fits."""
+    template = html("cook")
+    for limit in COOK_TEXT_LIMITS:
+        steps = [s["text"] for s in recipe.steps]
+        short = [_short(text, limit) for text in steps]
+        data = {
+            "l": _lang(user),
+            "id": recipe.id,
+            "t": _short(recipe.title, 80),
+            "p": recipe.portions,
+            "c": round(recipe.cooked_grams) if recipe.cooked_grams else 0,
+            "r": round(recipe.raw_grams()),
+            "i": [
+                [
+                    _short(i.name, 40),
+                    round(i.grams),
+                    *(round(v, 1) for v in (i.kcal, i.protein, i.fat, i.carbs)),
+                ]
+                for i in recipe.items
+            ],
+            "s": short,
+            "x": short != steps,
+        }
+        payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+        code = template.replace("/*DATA*/null", payload).encode()
+        if len(code) <= MAX_HTML_BYTES and len(zlib.compress(code, 9)) <= MAX_COMPRESSED_BYTES:
+            return code.decode()
+    raise ValueError("recipe too long for a widget")
+
+
+async def send_recipe(
+    bot: Bot, session: AsyncSession, user: User, recipe: Recipe, webapp_url: str | None
+) -> bool:
+    if not await enabled(session) or not recipe.items:
+        return False
+    lang = user.language or Language.RU
+    markup = None
+    if webapp_url:
+        url = f"{webapp_url.rstrip('/')}/recipes/{recipe.id}"
+        button = InlineKeyboardButton(text=t(lang, "open_recipe"), web_app=WebAppInfo(url=url))
+        markup = InlineKeyboardMarkup(inline_keyboard=[[button]])
+    try:
+        code = cook_html(user, recipe)
+        caption = t(lang, "cook_caption", title=escape(recipe.title))
+        await send(bot, user, "cook", None, caption, markup, code=code)
+    except (TelegramAPIError, ValueError):
+        log.warning("cook widget for %s failed", user.id, exc_info=True)
+        return False
+    return True
 
 
 async def send_meal(
@@ -311,8 +372,39 @@ async def _save_meal(session: AsyncSession, user: User, arg: str) -> Meal | None
     return meal
 
 
+async def _cook(session: AsyncSession, user: User, arg: str, today: date) -> bool:
+    """c:<id>:p:<servings>[:<grams>] or c:<id>:g:<grams eaten>:<cooked>[:<grams>]"""
+    parts = arg.split(":")
+    try:
+        recipe = await get_visible(session, user, int(parts[0]))
+        mode = parts[1]
+        amount = float(parts[2])
+        cooked = float(parts[3]) if mode == "g" else None
+        rest = parts[4:] if mode == "g" else parts[3:]
+        if mode not in ("p", "g") or len(rest) > 1:
+            return False
+        grams = [float(g) for g in rest[0].split(",")] if rest else [i.grams for i in recipe.items]
+        if any(not 0 <= g <= 10000 for g in grams) or not 0 < amount <= 20000:
+            return False
+        meal = to_meal(
+            recipe,
+            user,
+            today,
+            grams,
+            amount if mode == "p" else None,
+            amount if mode == "g" else None,
+            cooked if cooked and cooked > 0 else None,
+        )
+    except (ValueError, IndexError, RecipeError):
+        return False
+    session.add(meal)
+    return True
+
+
 async def _apply(session: AsyncSession, user: User, kind: str, arg: str) -> Meal | None | bool:
     today = local_today(user.timezone)
+    if kind == "c":
+        return await _cook(session, user, arg, today)
     if kind == "s":
         return await _save_meal(session, user, arg)
     if kind == "r" and arg.isdigit():

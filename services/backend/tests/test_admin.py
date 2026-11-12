@@ -442,6 +442,7 @@ async def test_prefs(client):
         "payments": True,
         "errors": True,
         "daily": True,
+        "recipes": True,
     }
     updated = await client.put("/api/admin/prefs", json={"daily": False}, headers=admin)
     assert updated.json() == {
@@ -449,4 +450,5 @@ async def test_prefs(client):
         "payments": True,
         "errors": True,
         "daily": False,
+        "recipes": True,
     }

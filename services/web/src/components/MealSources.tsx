@@ -148,7 +148,7 @@ export function ManualMeal({ onDone, barcode: scan }: { onDone: (meal: Meal) => 
   );
 }
 
-function BarcodeScan({ onResult }: { onResult: (result: Barcode) => void }) {
+export function BarcodeScan({ onResult }: { onResult: (result: Barcode) => void }) {
   const [digits, setDigits] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const scan = useMutation({

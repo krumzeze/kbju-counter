@@ -243,6 +243,15 @@ function ItemRow({
 }
 
 export function MealIcon({ source }: { source: Meal["source"] }) {
-  const name = source === "photo" ? "camera" : source === "voice" ? "mic" : source === "barcode" ? "barcode" : "pen";
+  const name =
+    source === "photo"
+      ? "camera"
+      : source === "voice"
+        ? "mic"
+        : source === "barcode"
+          ? "barcode"
+          : source === "recipe"
+            ? "book"
+            : "pen";
   return <Icon name={name} size={22} />;
 }

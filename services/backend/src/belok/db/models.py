@@ -104,6 +104,9 @@ class Meal(Base):
     title: Mapped[str] = mapped_column(String(255))
     scale: Mapped[float] = mapped_column(Float, default=1.0)
     photo_key: Mapped[str | None] = mapped_column(String(64))
+    recipe_id: Mapped[int | None] = mapped_column(
+        ForeignKey("recipes.id", ondelete="SET NULL"), index=True
+    )
 
     items: Mapped[list["MealItem"]] = relationship(
         back_populates="meal", cascade="all, delete-orphan", lazy="selectin"
@@ -134,6 +137,102 @@ class MealItem(Base):
 
     def macros(self) -> Macros:
         return Macros(self.kcal, self.protein, self.fat, self.carbs)
+
+
+class RecipeStatus(StrEnum):
+    PRIVATE = "private"
+    PENDING = "pending"
+    PUBLIC = "public"
+    REJECTED = "rejected"
+
+
+class Recipe(Base):
+    __tablename__ = "recipes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    forked_from_id: Mapped[int | None] = mapped_column(
+        ForeignKey("recipes.id", ondelete="SET NULL"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(255))
+    portions: Mapped[int] = mapped_column(Integer, default=1)
+    cooked_grams: Mapped[float | None] = mapped_column(Float)
+    # [{"text": str, "photo": key | None}]
+    steps: Mapped[list] = mapped_column(JSON, default=list)
+    photo_key: Mapped[str | None] = mapped_column(String(64))
+    author_name: Mapped[str | None] = mapped_column(String(64))
+    status: Mapped[RecipeStatus] = mapped_column(
+        StrEnumType(RecipeStatus, 8), default=RecipeStatus.PRIVATE, index=True
+    )
+    reject_reason: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    items: Mapped[list["RecipeItem"]] = relationship(
+        back_populates="recipe",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="RecipeItem.position",
+    )
+
+    def totals(self) -> Macros:
+        total = Macros()
+        for item in self.items:
+            total += item.macros()
+        return total
+
+    def raw_grams(self) -> float:
+        return sum(i.grams for i in self.items)
+
+    def photo_keys(self) -> list[str]:
+        keys = [self.photo_key] if self.photo_key else []
+        return keys + [s["photo"] for s in self.steps if s.get("photo")]
+
+
+class RecipeItem(Base):
+    __tablename__ = "recipe_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipes.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    name: Mapped[str] = mapped_column(String(255))
+    grams: Mapped[float] = mapped_column(Float)
+    kcal: Mapped[float] = mapped_column(Float)
+    protein: Mapped[float] = mapped_column(Float)
+    fat: Mapped[float] = mapped_column(Float)
+    carbs: Mapped[float] = mapped_column(Float)
+
+    recipe: Mapped[Recipe] = relationship(back_populates="items")
+
+    def macros(self) -> Macros:
+        return Macros(self.kcal, self.protein, self.fat, self.carbs)
+
+
+class RecipeFavorite(Base):
+    __tablename__ = "recipe_favorites"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    recipe_id: Mapped[int] = mapped_column(
+        ForeignKey("recipes.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class RecipeRating(Base):
+    __tablename__ = "recipe_ratings"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    recipe_id: Mapped[int] = mapped_column(
+        ForeignKey("recipes.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    stars: Mapped[int] = mapped_column(Integer)
 
 
 class PhotoEval(Base):

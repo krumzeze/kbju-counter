@@ -146,6 +146,19 @@ STRINGS: dict[str, dict[Language, str]] = {
         EN: "📊 Your day: calories, macros, water and steps. "
         "The card updates itself after every entry.",
     },
+    "recipe_approved": {
+        RU: "✅ Рецепт «{title}» опубликован в каталоге. Спасибо!",
+        EN: "✅ Your recipe “{title}” is now in the catalog. Thank you!",
+    },
+    "recipe_rejected": {
+        RU: "↩️ Рецепт «{title}» пока не опубликовали: {reason}\n\nПоправь его и отправь снова.",
+        EN: "↩️ Your recipe “{title}” wasn't published yet: {reason}\n\nFix it and submit again.",
+    },
+    "cook_caption": {
+        RU: "🍳 <b>{title}</b>\nОтмечай шаги по ходу готовки, а в конце добавь блюдо в дневник.",
+        EN: "🍳 <b>{title}</b>\nTick off the steps as you cook, then log the dish.",
+    },
+    "open_recipe": {RU: "Открыть рецепт", EN: "Open the recipe"},
     "day_card_button": {RU: "📊 Карточка дня", EN: "📊 Day card"},
     "cmd_day": {RU: "Карточка дня в чате", EN: "Day card in the chat"},
     "cmd_support": {RU: "Написать в поддержку", EN: "Contact support"},

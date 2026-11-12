@@ -16,6 +16,10 @@ import { LanguagePicker } from "./pages/LanguagePicker";
 import { Login } from "./pages/Login";
 import { Premium } from "./pages/Premium";
 import { Profile } from "./pages/Profile";
+import { RecipeEdit } from "./pages/RecipeEdit";
+import { RecipePublish } from "./pages/RecipePublish";
+import { Recipes } from "./pages/Recipes";
+import { RecipeView } from "./pages/RecipeView";
 import { Support } from "./pages/Support";
 import { TemplateEdit } from "./pages/TemplateEdit";
 import { Today } from "./pages/Today";
@@ -27,6 +31,7 @@ import { Broadcasts } from "./pages/admin/Broadcasts";
 import { Dashboard } from "./pages/admin/Dashboard";
 import { Log } from "./pages/admin/Log";
 import { Promos } from "./pages/admin/Promos";
+import { Recipes as AdminRecipes } from "./pages/admin/Recipes";
 import { Referrals } from "./pages/admin/Referrals";
 import { Settings } from "./pages/admin/Settings";
 import { System } from "./pages/admin/System";
@@ -120,6 +125,11 @@ function AuthenticatedApp() {
         <Route path="templates/new" element={onboarded(<TemplateEdit />)} />
         <Route path="templates/:id" element={onboarded(<TemplateEdit />)} />
         <Route path="stats" element={onboarded(<Stats />)} />
+        <Route path="recipes" element={onboarded(<Recipes />)} />
+        <Route path="recipes/new" element={onboarded(<RecipeEdit me={me} />)} />
+        <Route path="recipes/:id" element={onboarded(<RecipeView />)} />
+        <Route path="recipes/:id/edit" element={onboarded(<RecipeEdit me={me} />)} />
+        <Route path="recipes/:id/publish" element={onboarded(<RecipePublish me={me} />)} />
         <Route path="weight" element={<Navigate to="/stats" replace />} />
         <Route path="profile" element={<Profile me={me} />} />
         <Route path="premium" element={onboarded(<Premium me={me} />)} />
@@ -130,6 +140,7 @@ function AuthenticatedApp() {
             <Route path="users" element={<Users />} />
             <Route path="users/:id" element={<UserDetail />} />
             <Route path="broadcasts" element={<Broadcasts />} />
+            <Route path="recipes" element={<AdminRecipes />} />
             <Route path="promos" element={<Promos />} />
             <Route path="referrals" element={<Referrals />} />
             <Route path="system" element={<System />} />

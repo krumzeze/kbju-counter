@@ -159,7 +159,7 @@ async def delete_user(
     if user.id == admin.id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "cannot_change_self")
     if photos is not None:
-        for prefix in ("meals", "eval"):
+        for prefix in ("meals", "eval", "recipes"):
             await photos.delete_prefix(f"{prefix}/{user.id}/")
     log_action(session, admin, "delete_user", user.id, username=user.username)
     await session.execute(delete(User).where(User.id == user.id))
