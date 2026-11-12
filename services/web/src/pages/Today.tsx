@@ -8,6 +8,7 @@ import { HomeScreenOffer } from "../components/HomeScreen";
 import { Icon } from "../components/Icon";
 import { MacroBars } from "../components/MacroBars";
 import { MealCard } from "../components/MealCard";
+import { RecipeSuggestions } from "../components/RecipeSuggestions";
 import { ErrorState, Spinner } from "../components/States";
 import { STEP_GOAL, count, decimal, round, shiftDay, todayIso } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
@@ -52,6 +53,7 @@ export function Today() {
               <Icon name="camera" size={22} />
               {tr("Сфотографировать еду", "Snap your food")}
             </Link>
+            {isToday && <RecipeSuggestions day={data} />}
             <section>
               <div className="section-head rule">
                 <h2>{tr("Еда", "Food")}</h2>

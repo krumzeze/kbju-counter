@@ -20,9 +20,7 @@ def upgrade() -> None:
     op.create_table(
         "payments",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "user_id", sa.BigInteger(), sa.ForeignKey("users.id", ondelete="SET NULL")
-        ),
+        sa.Column("user_id", sa.BigInteger(), sa.ForeignKey("users.id", ondelete="SET NULL")),
         sa.Column(
             "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),

@@ -230,6 +230,7 @@ class PrefsOut(BaseModel):
     payments: bool
     errors: bool
     daily: bool
+    recipes: bool
 
 
 class PrefsIn(BaseModel):
@@ -237,6 +238,7 @@ class PrefsIn(BaseModel):
     payments: bool | None = None
     errors: bool | None = None
     daily: bool | None = None
+    recipes: bool | None = None
 
 
 class FeatureOut(BaseModel):

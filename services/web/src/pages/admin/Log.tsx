@@ -114,6 +114,10 @@ export function ActionText({ action }: { action: AdminAction }) {
       return <span>Запустил рассылку #{String(d.broadcast_id)}</span>;
     case "cancel_broadcast":
       return <span>Остановил рассылку #{String(d.broadcast_id)}</span>;
+    case "approve_recipe":
+      return <span>Опубликовал рецепт #{String(d.recipe_id)} от {target}</span>;
+    case "reject_recipe":
+      return <span>Вернул рецепт #{String(d.recipe_id)} автору {target}</span>;
     default:
       return <span>{action.action}</span>;
   }

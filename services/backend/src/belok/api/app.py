@@ -17,6 +17,7 @@ from belok.api.routes import (
     meals,
     payments,
     photos,
+    recipes,
     support,
     tracking,
     workouts,
@@ -63,7 +64,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.tribute = TributeCatalog.from_settings(settings)
     app.state.photos = PhotoStore.from_settings(settings)
-    modules = (admin, auth, client_errors, me, meals, payments, photos, support, tracking, workouts)
+    modules = (
+        admin,
+        auth,
+        client_errors,
+        me,
+        meals,
+        payments,
+        photos,
+        recipes,
+        support,
+        tracking,
+        workouts,
+    )
     for module in modules:
         app.include_router(module.router, prefix="/api")
 

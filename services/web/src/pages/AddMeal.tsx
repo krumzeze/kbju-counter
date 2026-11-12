@@ -6,12 +6,13 @@ import type { Me, Meal } from "../api/types";
 import { Icon } from "../components/Icon";
 import { MealCard } from "../components/MealCard";
 import { ManualMeal, MealHistory } from "../components/MealSources";
+import { RecipeQuickList } from "../components/RecipeQuickList";
 import { tr } from "../lib/i18n";
 import { prepareImage } from "../lib/image";
 import { useInvalidate } from "../lib/queries";
 import { haptic } from "../lib/telegram";
 
-type Mode = "photo" | "text" | "manual" | "history";
+type Mode = "photo" | "text" | "manual" | "history" | "recipes";
 
 const modes = (features: Me["features"]): { value: Mode; label: string }[] =>
   [
@@ -19,6 +20,7 @@ const modes = (features: Me["features"]): { value: Mode; label: string }[] =>
     { value: "text" as const, label: tr("Текст", "Text"), on: features.text },
     { value: "manual" as const, label: tr("Вручную", "Manual"), on: true },
     { value: "history" as const, label: tr("История", "History"), on: true },
+    { value: "recipes" as const, label: tr("Рецепты", "Recipes"), on: true },
   ].filter((m) => m.on);
 
 export function AddMeal({ me }: { me: Me }) {
@@ -97,7 +99,7 @@ export function AddMeal({ me }: { me: Me }) {
   return (
     <div className="page">
       <h1>{tr("Что съел?", "What did you eat?")}</h1>
-      <div className="segmented" role="tablist">
+      <div className={available.length > 4 ? "segmented compact" : "segmented"} role="tablist">
         {available.map((m) => (
           <button key={m.value} role="tab" aria-selected={mode === m.value} onClick={() => setMode(m.value)}>
             {m.label}
@@ -109,6 +111,8 @@ export function AddMeal({ me }: { me: Me }) {
         <ManualMeal onDone={setMeal} barcode={me.features.barcode} />
       ) : mode === "history" ? (
         <MealHistory onDone={setMeal} />
+      ) : mode === "recipes" ? (
+        <RecipeQuickList />
       ) : mode === "photo" ? (
         <>
           <button className="dropzone" onClick={() => fileInput.current?.click()}>

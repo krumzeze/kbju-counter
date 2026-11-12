@@ -16,7 +16,7 @@ export interface MealItem extends Macros {
   grams: number;
 }
 
-export type MealSource = "photo" | "text" | "manual" | "voice" | "barcode";
+export type MealSource = "photo" | "text" | "manual" | "voice" | "barcode" | "recipe";
 
 export interface Meal {
   id: number;
@@ -544,4 +544,77 @@ export interface Prefs {
   payments: boolean;
   errors: boolean;
   daily: boolean;
+  recipes: boolean;
+}
+
+export type RecipeStatus = "private" | "pending" | "public" | "rejected";
+export type RecipeScope = "catalog" | "mine" | "favorites";
+export type RecipeFilter = "protein" | "light" | "fits";
+
+export interface RecipeItem {
+  name: string;
+  grams: number;
+  kcal: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+}
+
+export interface RecipeStep {
+  text: string;
+  photo: string | null;
+  photo_url: string | null;
+}
+
+export interface RecipeCard {
+  id: number;
+  title: string;
+  status: RecipeStatus;
+  portions: number;
+  per_portion: Macros;
+  photo_url: string | null;
+  author_name: string | null;
+  is_mine: boolean;
+  is_favorite: boolean;
+  favorites: number;
+  rating: number | null;
+  ratings: number;
+  cooked: number;
+}
+
+export interface Recipe extends RecipeCard {
+  cooked_grams: number | null;
+  raw_grams: number;
+  totals: Macros;
+  items: RecipeItem[];
+  steps: RecipeStep[];
+  photo: string | null;
+  reject_reason: string | null;
+  forked_from: { id: number; title: string } | null;
+  my_rating: number | null;
+  can_rate: boolean;
+  created_at: string;
+}
+
+export interface AdminRecipe extends Recipe {
+  owner_id: number;
+  owner_name: string | null;
+  warnings: string[];
+}
+
+export interface RecipeInput {
+  title: string;
+  portions: number;
+  cooked_grams: number | null;
+  items: RecipeItem[];
+  steps: { text: string; photo: string | null }[];
+  photo: string | null;
+}
+
+export interface RecipeDiaryInput {
+  mode: "portions" | "grams";
+  portions?: number;
+  grams?: number;
+  cooked_grams?: number;
+  items: number[];
 }

@@ -1,4 +1,13 @@
 import type {
+  AdminRecipe,
+  Recipe,
+  RecipeCard,
+  RecipeDiaryInput,
+  RecipeFilter,
+  RecipeInput,
+  RecipeItem,
+  RecipeScope,
+  RecipeStatus,
   AdminAction,
   AppError,
   Barcode,
@@ -148,6 +157,31 @@ export const api = {
   mealHistory: (sort: "frequent" | "recent") =>
     request<MealHistoryItem[]>("GET", `/meals/history?sort=${sort}`),
   repeatMeal: (id: number) => request<Meal>("POST", `/meals/${id}/repeat`),
+
+  recipes: (scope: RecipeScope, q: string, filters: RecipeFilter[]) => {
+    const params = new URLSearchParams({ scope });
+    if (q.trim()) params.set("q", q.trim());
+    filters.forEach((f) => params.append("filters", f));
+    return request<RecipeCard[]>("GET", `/recipes?${params}`);
+  },
+  recipeSuggestions: () => request<RecipeCard[]>("GET", "/recipes/suggestions"),
+  recipe: (id: number) => request<Recipe>("GET", `/recipes/${id}`),
+  createRecipe: (body: RecipeInput) => request<Recipe>("POST", "/recipes", body),
+  updateRecipe: (id: number, body: RecipeInput) => request<Recipe>("PUT", `/recipes/${id}`, body),
+  deleteRecipe: (id: number) => request<void>("DELETE", `/recipes/${id}`),
+  forkRecipe: (id: number) => request<Recipe>("POST", `/recipes/${id}/fork`),
+  favoriteRecipe: (id: number, on: boolean) =>
+    request<void>(on ? "PUT" : "DELETE", `/recipes/${id}/favorite`),
+  rateRecipe: (id: number, stars: number) => request<Recipe>("PUT", `/recipes/${id}/rating`, { stars }),
+  recipeToDiary: (id: number, body: RecipeDiaryInput) => request<Meal>("POST", `/recipes/${id}/diary`, body),
+  publishRecipe: (id: number, author_name: string) =>
+    request<Recipe>("POST", `/recipes/${id}/publish`, { author_name }),
+  uploadRecipePhoto: (photo: Blob) => {
+    const form = new FormData();
+    form.append("photo", photo, "recipe.jpg");
+    return request<{ photo: string; photo_url: string | null }>("POST", "/recipes/photos", form);
+  },
+  parseIngredients: (text: string) => request<RecipeItem[]>("POST", "/recipes/ingredients", { text }),
   resizeMealItem: (mealId: number, itemId: number, grams: number) =>
     request<Meal>("PATCH", `/meals/${mealId}/items/${itemId}`, { grams }),
   deleteMealItem: (mealId: number, itemId: number) =>
@@ -267,12 +301,25 @@ export const adminApi = {
     request<FeatureFlag[]>("PUT", `/admin/features/${key}`, { enabled }),
   health: () => request<Health>("GET", "/admin/health"),
   errors: () => request<AppError[]>("GET", "/admin/errors"),
+  adminRecipes: (status: RecipeStatus) => request<AdminRecipe[]>("GET", `/admin/recipes?status=${status}`),
+  approveRecipe: (id: number) => request<Recipe>("POST", `/admin/recipes/${id}/approve`),
+  rejectRecipe: (id: number, reason: string) =>
+    request<Recipe>("POST", `/admin/recipes/${id}/reject`, { reason }),
   resolveErrors: (fingerprint?: string) =>
     request<void>("DELETE", fingerprint ? `/admin/errors?fingerprint=${fingerprint}` : "/admin/errors"),
 };
 
 const messages = (): Record<string, string> => ({
   daily_limit: tr("На сегодня лимит распознаваний исчерпан", "You've hit today's analysis limit"),
+  recipe_not_found: tr("Рецепт не найден или его скрыли", "Recipe not found or hidden"),
+  no_photo: tr("Добавь фото блюда", "Add a photo of the dish"),
+  no_steps: tr("Опиши хотя бы один шаг", "Describe at least one step"),
+  no_items: tr("Добавь хотя бы один продукт", "Add at least one ingredient"),
+  cook_first: tr("Оценить можно после того, как добавишь блюдо в дневник", "You can rate it after logging it"),
+  invalid_photo: tr("Это фото нельзя использовать", "This photo can't be used"),
+  photos_unavailable: tr("Загрузка фото сейчас недоступна", "Photo upload is unavailable right now"),
+  invalid_amount: tr("Проверь количество", "Check the amount"),
+  invalid_items: tr("Оставь хотя бы один продукт", "Keep at least one ingredient"),
   day_card_unavailable: tr(
     "Не получилось отправить карточку, попробуй позже",
     "Couldn't send the card, try again later",

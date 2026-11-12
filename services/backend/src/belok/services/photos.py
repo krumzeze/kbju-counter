@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 MAX_SIDE = 800
 QUALITY = 75
 URL_WINDOW = 24 * 3600
-KEY_RE = re.compile(r"^meals/\d+/[0-9a-f]{32}\.webp$")
+KEY_RE = re.compile(r"^(meals|recipes)/\d+/[0-9a-f]{32}\.webp$")
 
 StorageError = (BotoCoreError, ClientError)
 
@@ -34,6 +34,10 @@ def make_thumbnail(image: bytes) -> bytes:
 
 def meal_key(user_id: int) -> str:
     return f"meals/{user_id}/{uuid.uuid4().hex}.webp"
+
+
+def recipe_key(user_id: int) -> str:
+    return f"recipes/{user_id}/{uuid.uuid4().hex}.webp"
 
 
 def eval_key(user_id: int, meal_id: int) -> str:

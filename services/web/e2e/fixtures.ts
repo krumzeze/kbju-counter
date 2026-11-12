@@ -1,5 +1,8 @@
 import type {
   AdminAction,
+  AdminRecipe,
+  Recipe,
+  RecipeCard,
   AppError,
   Analytics,
   Broadcast,
@@ -434,7 +437,49 @@ export const referrers: Referrer[] = [{ ...brief, invited: 3, paid: 1, days: 7 }
 
 export const actions: AdminAction[] = [action];
 
-export const prefs: Prefs = { new_users: true, payments: true, errors: true, daily: false };
+export const prefs: Prefs = { new_users: true, payments: true, errors: true, daily: false, recipes: true };
+
+export const recipeCard: RecipeCard = {
+  id: 1,
+  title: "Курица с булгуром",
+  status: "public",
+  portions: 4,
+  per_portion: { kcal: 336, protein: 40.5, fat: 2.9, carbs: 38 },
+  photo_url: null,
+  author_name: "Аня",
+  is_mine: false,
+  is_favorite: true,
+  favorites: 12,
+  rating: 4.6,
+  ratings: 8,
+  cooked: 40,
+};
+
+export const recipe: Recipe = {
+  ...recipeCard,
+  cooked_grams: 1000,
+  raw_grams: 800,
+  totals: { kcal: 1344, protein: 162, fat: 11.6, carbs: 152 },
+  items: [
+    { name: "Куриное филе", grams: 600, kcal: 660, protein: 138, fat: 9, carbs: 0 },
+    { name: "Булгур", grams: 200, kcal: 684, protein: 24, fat: 2.6, carbs: 152 },
+  ],
+  steps: [{ text: "Отвари булгур", photo: null, photo_url: null }],
+  photo: null,
+  reject_reason: null,
+  forked_from: null,
+  my_rating: null,
+  can_rate: true,
+  created_at: at(),
+};
+
+export const adminRecipe: AdminRecipe = {
+  ...recipe,
+  status: "pending",
+  owner_id: 2,
+  owner_name: "Аня",
+  warnings: [],
+};
 
 export const features: FeatureFlag[] = (Object.keys(me.features) as FeatureFlag["key"][]).map((key) => ({
   key,

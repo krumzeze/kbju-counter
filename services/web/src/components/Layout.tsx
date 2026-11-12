@@ -7,8 +7,8 @@ import { Logo } from "./Logo";
 const tabs = (): { to: string; label: string; icon: IconName }[] => [
   { to: "/", label: tr("Главная", "Home"), icon: "home" },
   { to: "/workouts", label: tr("Зал", "Gym"), icon: "gym" },
+  { to: "/recipes", label: tr("Рецепты", "Recipes"), icon: "book" },
   { to: "/stats", label: tr("Статистика", "Stats"), icon: "chart" },
-  { to: "/profile", label: tr("Профиль", "Profile"), icon: "user" },
 ];
 
 export function Layout() {
@@ -17,7 +17,7 @@ export function Layout() {
   const inAdmin = pathname.startsWith("/admin");
   const inWorkout = /^\/workouts\/\d+$/.test(pathname);
   const classes = ["app", isMiniApp && "mini", inAdmin && "admin"].filter(Boolean).join(" ");
-  const [home, gym, stats, profile] = tabs();
+  const [home, gym, recipes, stats] = tabs();
   return (
     <div className={classes}>
       {!isMiniApp && (
@@ -41,8 +41,8 @@ export function Layout() {
             <Icon name="plus" size={26} />
           </NavLink>
         )}
+        <Tab {...recipes} />
         <Tab {...stats} />
-        <Tab {...profile} />
       </nav>
     </div>
   );
