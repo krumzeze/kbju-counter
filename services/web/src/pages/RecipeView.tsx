@@ -8,7 +8,7 @@ import { RecipeDiarySheet } from "../components/RecipeDiarySheet";
 import { ErrorState, Spinner } from "../components/States";
 import { count, decimal, round, todayIso } from "../lib/format";
 import { tr } from "../lib/i18n";
-import { useDay, useInvalidate } from "../lib/queries";
+import { useDay, useInvalidate, useMe } from "../lib/queries";
 import { RECIPE_KEYS, portionsWord, scaleMacros, statusLabel, useRecipe } from "../lib/recipes";
 import { confirmAction, haptic } from "../lib/telegram";
 
@@ -41,6 +41,7 @@ function RecipeBody({ recipe, onAdd }: { recipe: Recipe; onAdd: () => void }) {
   const navigate = useNavigate();
   const invalidate = useInvalidate();
   const today = useDay(todayIso());
+  const { data: me } = useMe();
 
   const favorite = useMutation({
     mutationFn: () => api.favoriteRecipe(recipe.id, !recipe.is_favorite),
@@ -62,6 +63,11 @@ function RecipeBody({ recipe, onAdd }: { recipe: Recipe; onAdd: () => void }) {
       await invalidate(...RECIPE_KEYS);
       navigate("/recipes", { replace: true });
     },
+  });
+  const cook = useMutation({
+    mutationFn: () => api.cookRecipe(recipe.id),
+    onSuccess: () => haptic("success"),
+    onError: () => haptic("error"),
   });
   const rate = useMutation({
     mutationFn: (stars: number) => api.rateRecipe(recipe.id, stars),
@@ -211,6 +217,24 @@ function RecipeBody({ recipe, onAdd }: { recipe: Recipe; onAdd: () => void }) {
         </button>
       </div>
       {fork.isError && <p className="error">{errorMessage(fork.error)}</p>}
+      {me?.features.widgets && (
+        <div className="stack-tight">
+          <button className="btn btn-block" disabled={cook.isPending || cook.isSuccess} onClick={() => cook.mutate()}>
+            <Icon name="list" size={20} />
+            {cook.isSuccess ? tr("Рецепт в чате с ботом", "Sent to the bot chat") : tr("Готовить по шагам в Telegram", "Cook step by step in Telegram")}
+          </button>
+          {cook.isError ? (
+            <p className="error small">{errorMessage(cook.error)}</p>
+          ) : (
+            <p className="muted small center">
+              {tr(
+                "Бот пришлёт рецепт с чек-листом шагов, а в конце блюдо можно сразу добавить в дневник.",
+                "The bot sends a step checklist, and at the end you can log the dish right there.",
+              )}
+            </p>
+          )}
+        </div>
+      )}
 
       <section className="card">
         <div className="section-head">

@@ -275,3 +275,81 @@ async def test_ingredients_from_text(client, analyzer):
     )
     assert response.status_code == 200, response.text
     assert response.json()[0]["name"] == "Гречка"
+
+
+async def cook_query(client, bot, data: str) -> str:
+    from belok.db.models import User
+    from belok.services import widgets
+    from belok.widgets.api import WidgetQuery
+
+    raw = {"id": "q", "from": {"id": COOK}, "data": data, "message_id": 5}
+    async with client.app.state.sessionmaker() as session:
+        user = await session.get(User, COOK)
+        await widgets.answer_query(bot, session, user, WidgetQuery.parse(raw))
+    return next(c for c in reversed(bot.calls) if c.__api_method__ == "answerWidgetQuery").data
+
+
+async def test_cooking_widget_logs_the_dish(client, bot):
+    admin, author, cook = await users(client)
+    recipe = await published(client, admin, author)
+    response = await client.post(f"/api/recipes/{recipe['id']}/cook", headers=cook)
+    assert response.status_code == 204, response.text
+    widget = bot.calls[-1]
+    assert widget.__api_method__ == "sendWidget"
+    assert "Курица с булгуром" in widget.html and "/*DATA*/" not in widget.html
+    assert "Отвари булгур" in widget.html
+
+    rid = recipe["id"]
+    assert await cook_query(client, bot, f"c:{rid}:p:1") == "ok"
+    assert await cook_query(client, bot, f"c:{rid}:g:250:1000:600,0") == "ok"
+    assert await cook_query(client, bot, f"c:{rid}:p:1:600") == "error"
+    assert await cook_query(client, bot, f"c:{rid}:x:1") == "error"
+    async with client.app.state.sessionmaker() as session:
+        meals = (await session.scalars(select(Meal).order_by(Meal.id))).all()
+    assert [round(m.totals().kcal) for m in meals] == [336, 165]
+
+
+def test_long_recipes_still_fit_a_widget():
+    import random
+    import zlib
+    from types import SimpleNamespace
+
+    from belok.db.models import Recipe, RecipeItem
+    from belok.services.widgets import cook_html
+
+    rng = random.Random(1)  # noqa: S311
+    words = [
+        "нарежь",
+        "обжарь",
+        "добавь",
+        "перемешай",
+        "посоли",
+        "томи",
+        "на",
+        "сковороде",
+        "до",
+        "золотистой",
+        "корочки",
+        "минут",
+        "огонь",
+        "лук",
+        "морковь",
+        "чеснок",
+        "сливки",
+        "соус",
+    ]
+    steps = [
+        {"text": " ".join(rng.choice(words) for _ in range(90)), "photo": None} for _ in range(15)
+    ]
+    items = [
+        RecipeItem(
+            position=k, name=f"Продукт номер {k}", grams=150, kcal=200, protein=10, fat=5, carbs=20
+        )
+        for k in range(25)
+    ]
+    recipe = Recipe(
+        id=1, title="Очень длинный рецепт", portions=6, cooked_grams=None, steps=steps, items=items
+    )
+    code = cook_html(SimpleNamespace(language=None), recipe).encode()
+    assert len(code) <= 32768 and len(zlib.compress(code, 9)) <= 4096
+    assert b'"x": true' in code

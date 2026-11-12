@@ -170,6 +170,7 @@ export const api = {
   updateRecipe: (id: number, body: RecipeInput) => request<Recipe>("PUT", `/recipes/${id}`, body),
   deleteRecipe: (id: number) => request<void>("DELETE", `/recipes/${id}`),
   forkRecipe: (id: number) => request<Recipe>("POST", `/recipes/${id}/fork`),
+  cookRecipe: (id: number) => request<void>("POST", `/recipes/${id}/cook`),
   favoriteRecipe: (id: number, on: boolean) =>
     request<void>(on ? "PUT" : "DELETE", `/recipes/${id}/favorite`),
   rateRecipe: (id: number, stars: number) => request<Recipe>("PUT", `/recipes/${id}/rating`, { stars }),
@@ -311,6 +312,10 @@ export const adminApi = {
 
 const messages = (): Record<string, string> => ({
   daily_limit: tr("На сегодня лимит распознаваний исчерпан", "You've hit today's analysis limit"),
+  widget_unavailable: tr(
+    "Не получилось отправить рецепт в чат, попробуй позже",
+    "Couldn't send the recipe to the chat, try later",
+  ),
   recipe_not_found: tr("Рецепт не найден или его скрыли", "Recipe not found or hidden"),
   no_photo: tr("Добавь фото блюда", "Add a photo of the dish"),
   no_steps: tr("Опиши хотя бы один шаг", "Describe at least one step"),

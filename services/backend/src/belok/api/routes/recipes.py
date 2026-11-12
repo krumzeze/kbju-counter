@@ -50,6 +50,7 @@ from belok.services.notify import notify_admins
 from belok.services.photos import PhotoStore, make_thumbnail, recipe_key
 from belok.services.recipes import Filter, ItemData, RecipeError, Scope, Stats
 from belok.services.repo import day_summary
+from belok.services.widgets import send_recipe
 from belok.timeutil import local_today
 
 log = logging.getLogger(__name__)
@@ -388,6 +389,23 @@ async def add_to_diary(
     session.add(meal)
     await session.commit()
     return MealOut.of(meal)
+
+
+@router.post("/recipes/{recipe_id}/cook", status_code=status.HTTP_204_NO_CONTENT)
+async def cook_in_chat(
+    recipe_id: int,
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    bot: BotDep,
+) -> Response:
+    try:
+        recipe = await recipes.get_visible(session, user, recipe_id)
+    except RecipeError as exc:
+        raise _fail(exc) from exc
+    if not await send_recipe(bot, session, user, recipe, settings.webapp_url):
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "widget_unavailable")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/recipes/{recipe_id}/publish")
