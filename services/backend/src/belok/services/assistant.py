@@ -114,7 +114,7 @@ def _history(chat: AiChat, text: str) -> list[dict]:
     return history
 
 
-def _usage(user: User, kind: str, model: str, reply: Reply | None, latency_ms: int) -> LlmUsage:
+def usage_row(user: User, kind: str, model: str, reply: Reply | None, latency_ms: int) -> LlmUsage:
     return LlmUsage(
         user_id=user.id,
         day=local_today(user.timezone),
@@ -148,10 +148,10 @@ async def send_message(
     try:
         reply = await assistant.chat(data, history, lang, REPLY_TOKENS)
     except AssistantError as exc:
-        session.add(_usage(user, CHAT_KIND, exc.model, None, exc.latency_ms))
+        session.add(usage_row(user, CHAT_KIND, exc.model, None, exc.latency_ms))
         await session.commit()
         raise
-    session.add(_usage(user, CHAT_KIND, reply.model, reply, reply.latency_ms))
+    session.add(usage_row(user, CHAT_KIND, reply.model, reply, reply.latency_ms))
     now = utcnow()
     chat.messages.append(AiMessage(role="user", text=text, created_at=now))
     answer = AiMessage(role="assistant", text=reply.text, created_at=now)

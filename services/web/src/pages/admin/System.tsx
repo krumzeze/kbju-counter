@@ -51,6 +51,7 @@ const CHECK_LABELS: Record<string, string> = {
   "worker:bot": "Процесс бота",
   "worker:reminders": "Цикл напоминаний",
   "worker:monitor": "Мониторинг и сводки",
+  "worker:reviews": "Разборы недели",
 };
 
 const STATUS: Record<CheckStatus, { label: string; className: string }> = {

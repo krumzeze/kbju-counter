@@ -134,6 +134,14 @@ STRINGS: dict[str, dict[Language, str]] = {
         RU: "Поправить порцию можно в приложении.",
         EN: "You can adjust the portion in the app.",
     },
+    "review_title": {RU: "Разбор недели {start}–{end}", EN: "Week review {start}–{end}"},
+    "review_ready": {
+        RU: "🧠 <b>Разбор твоей недели готов</b>\n\n{text}\n\n"
+        "<i>Можно продолжить разговор в приложении.</i>",
+        EN: "🧠 <b>Your week review is ready</b>\n\n{text}\n\n"
+        "<i>You can keep talking in the app.</i>",
+    },
+    "review_open": {RU: "Открыть разбор", EN: "Open the review"},
     "clarify_ask": {
         RU: "🤔 {question}\n\n<i>Выбери вариант или ответь на это сообщение своими словами.</i>",
         EN: "🤔 {question}\n\n<i>Pick an option or reply to this message in your own words.</i>",
