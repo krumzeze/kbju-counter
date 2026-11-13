@@ -1,4 +1,10 @@
 import type {
+  RecipeSuggestion,
+  AiMessage,
+  PhotoMode,
+  AiChatDetail,
+  AiChatList,
+  AiReply,
   AdminRecipe,
   Recipe,
   RecipeCard,
@@ -136,6 +142,21 @@ export const api = {
   updateSettings: (body: Settings) => request<Me>("PATCH", "/me/settings", body),
   sendDayCard: () => request<void>("POST", "/me/day-card"),
 
+  aiChats: () => request<AiChatList>("GET", "/assistant/chats"),
+  aiChat: (id: number) => request<AiChatDetail>("GET", `/assistant/chats/${id}`),
+  aiStart: (text: string) => request<AiReply>("POST", "/assistant/chats", { text }),
+  aiSend: (id: number, text: string) => request<AiReply>("POST", `/assistant/chats/${id}/messages`, { text }),
+  aiDelete: (id: number) => request<void>("DELETE", `/assistant/chats/${id}`),
+  aiPhoto: (chatId: number | null, mode: PhotoMode, photo: Blob, note: string) => {
+    const form = new FormData();
+    form.append("photo", photo, "photo.jpg");
+    form.append("mode", mode);
+    if (note) form.append("note", note);
+    return request<AiReply>("POST", chatId === null ? "/assistant/photo" : `/assistant/chats/${chatId}/photo`, form);
+  },
+  aiLogDish: (messageId: number, index: number) =>
+    request<{ meal: Meal; message: AiMessage }>("POST", `/assistant/messages/${messageId}/dishes/${index}`),
+
   day: (day?: string) => request<Day>("GET", day ? `/day?day=${day}` : "/day"),
   mealFromText: (text: string) => request<Meal>("POST", "/meals/text", { text }),
   mealFromPhoto: (photo: Blob, note: string) => {
@@ -146,6 +167,8 @@ export const api = {
   },
   scaleMeal: (id: number, scale: number) => request<Meal>("PATCH", `/meals/${id}`, { scale }),
   refineMeal: (id: number, text: string) => request<Meal>("POST", `/meals/${id}/refine`, { text }),
+  answerMeal: (id: number, text: string) => request<Meal>("POST", `/meals/${id}/answer`, { text }),
+  dismissQuestion: (id: number) => request<Meal>("DELETE", `/meals/${id}/question`),
   deleteMeal: (id: number) => request<void>("DELETE", `/meals/${id}`),
   mealManual: (body: ManualMealInput) => request<Meal>("POST", "/meals/manual", body),
   barcode: (code: string) => request<Barcode>("GET", `/barcode/${code}`),
@@ -164,7 +187,7 @@ export const api = {
     filters.forEach((f) => params.append("filters", f));
     return request<RecipeCard[]>("GET", `/recipes?${params}`);
   },
-  recipeSuggestions: () => request<RecipeCard[]>("GET", "/recipes/suggestions"),
+  recipeSuggestions: () => request<RecipeSuggestion[]>("GET", "/recipes/suggestions"),
   recipe: (id: number) => request<Recipe>("GET", `/recipes/${id}`),
   createRecipe: (body: RecipeInput) => request<Recipe>("POST", "/recipes", body),
   updateRecipe: (id: number, body: RecipeInput) => request<Recipe>("PUT", `/recipes/${id}`, body),
@@ -336,6 +359,18 @@ const messages = (): Record<string, string> => ({
   invoice_failed: tr("Не удалось создать счёт, попробуй ещё раз", "Couldn't create the invoice, please try again"),
   too_many_messages: tr("Слишком много сообщений за сутки, подожди немного", "Too many messages today, please wait a little"),
   empty_message: tr("Напиши сообщение", "Write a message"),
+  no_question: tr("Этот вопрос уже закрыт", "This question is already closed"),
+  too_fast: tr("Слишком быстро, подожди минутку", "Too fast, wait a minute"),
+  assistant_busy: tr(
+    "Ассистент сейчас перегружен, попробуй позже",
+    "The assistant is overloaded right now, try later",
+  ),
+  assistant_failed: tr(
+    "Ассистент не ответил, попробуй ещё раз",
+    "The assistant didn't answer, please try again",
+  ),
+  chat_not_found: tr("Чат не найден", "Chat not found"),
+  photo_limit: tr("На сегодня фото для ассистента закончились", "No more photos for the assistant today"),
   plan_not_found: tr("Такого тарифа больше нет", "This plan is no longer available"),
   payments_disabled: tr("Оплата временно недоступна", "Payments are temporarily unavailable"),
   analysis_failed: tr(

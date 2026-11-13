@@ -243,6 +243,8 @@ async def test_suggestions_fit_the_rest_of_the_day(client):
     recipe = await published(client, admin, author)
     found = (await client.get("/api/recipes/suggestions", headers=cook)).json()
     assert [r["id"] for r in found] == [recipe["id"]]
+    assert set(found[0]["covers"]) == {"protein", "fat", "carbs"}
+    assert all(0 < pct <= 100 for pct in found[0]["covers"].values())
 
 
 async def test_deleting_a_recipe_keeps_logged_meals(client, s3):

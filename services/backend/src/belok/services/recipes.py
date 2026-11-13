@@ -194,8 +194,47 @@ async def search(
     return list(await session.scalars(query))
 
 
-async def suggestions(session: AsyncSession, user: User, remaining: Macros) -> list[Recipe]:
-    """Recipes the user can see whose portion fits what's left today, most protein first."""
+# Protein matters most when choosing what to cook for the rest of the day.
+GAP_WEIGHTS = {"protein": 2.0, "fat": 1.0, "carbs": 1.0}
+# Grams of a macro still missing before it counts as a gap worth filling.
+MIN_GAP_G = 5.0
+# How far a portion may go past what's left before it stops being a suggestion.
+KCAL_SLACK = 1.05
+FAT_SLACK_G = 8.0
+
+
+def covers(portion: Macros, remaining: Macros) -> dict[str, int]:
+    """Percent of each missing macro the portion would cover, capped at 100."""
+    result = {}
+    for name in GAP_WEIGHTS:
+        gap = getattr(remaining, name)
+        if gap >= MIN_GAP_G:
+            result[name] = round(min(1.0, getattr(portion, name) / gap) * 100)
+    return result
+
+
+def gap_score(portion: Macros, remaining: Macros) -> float | None:
+    """How well a portion fills the day's macro gap; None when it doesn't fit what's left."""
+    if portion.kcal <= 0 or portion.kcal > remaining.kcal * KCAL_SLACK:
+        return None
+    if portion.fat > max(0.0, remaining.fat) + FAT_SLACK_G:
+        return None
+    filled = weight = overshoot = 0.0
+    for name, w in GAP_WEIGHTS.items():
+        gap, value = getattr(remaining, name), getattr(portion, name)
+        if gap >= MIN_GAP_G:
+            filled += w * min(1.0, value / gap)
+            weight += w
+        overshoot += max(0.0, value - max(0.0, gap)) / max(gap, 20.0)
+    if weight == 0:
+        return None
+    return filled / weight - 0.5 * overshoot
+
+
+async def suggestions(
+    session: AsyncSession, user: User, remaining: Macros
+) -> list[tuple[Recipe, dict[str, int]]]:
+    """Visible recipes that best fill what's left of today's macros, with how much they cover."""
     if remaining.kcal < 150:
         return []
     favorite = exists().where(
@@ -206,9 +245,14 @@ async def suggestions(session: AsyncSession, user: User, remaining: Macros) -> l
             or_(Recipe.status == Status.PUBLIC, Recipe.owner_id == user.id, favorite)
         )
     )
-    fitting = [r for r in candidates if 0 < per_portion(r).kcal <= remaining.kcal]
-    fitting.sort(key=lambda r: abs(per_portion(r).protein - remaining.protein))
-    return fitting[:SUGGESTIONS]
+    scored = []
+    for recipe in candidates:
+        portion = per_portion(recipe)
+        score = gap_score(portion, remaining)
+        if score is not None:
+            scored.append((score, recipe.id, recipe, covers(portion, remaining)))
+    scored.sort(key=lambda row: (-row[0], row[1]))
+    return [(recipe, cover) for _, _, recipe, cover in scored[:SUGGESTIONS]]
 
 
 def apply(

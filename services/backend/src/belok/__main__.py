@@ -17,6 +17,7 @@ from belok.services.broadcasts import run_worker
 from belok.services.heartbeat import run_heartbeat
 from belok.services.monitor import run_monitor
 from belok.services.reminders import run_reminders
+from belok.services.reviews import run_reviews
 
 
 async def main() -> None:
@@ -40,6 +41,7 @@ async def main() -> None:
         ),
         asyncio.create_task(run_reminders(bot, sessionmaker, storage.redis, settings.webapp_url)),
         asyncio.create_task(run_heartbeat(sessionmaker)),
+        asyncio.create_task(run_reviews(bot, sessionmaker, settings)),
     ]
     analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
     stt = SpeechToText.from_settings(settings)

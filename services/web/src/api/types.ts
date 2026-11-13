@@ -16,7 +16,7 @@ export interface MealItem extends Macros {
   grams: number;
 }
 
-export type MealSource = "photo" | "text" | "manual" | "voice" | "barcode" | "recipe";
+export type MealSource = "photo" | "text" | "manual" | "voice" | "barcode" | "recipe" | "ai";
 
 export interface Meal {
   id: number;
@@ -28,6 +28,12 @@ export interface Meal {
   items: MealItem[];
   totals: Macros;
   photo_url: string | null;
+  question: MealQuestion | null;
+}
+
+export interface MealQuestion {
+  text: string;
+  options: string[];
 }
 
 export interface ManualMealInput {
@@ -506,7 +512,15 @@ export interface Plan {
   currency: string | null;
 }
 
-export type FeatureKey = "photo" | "text" | "voice" | "barcode" | "reminders" | "payments" | "widgets";
+export type FeatureKey =
+  | "photo"
+  | "text"
+  | "voice"
+  | "barcode"
+  | "reminders"
+  | "payments"
+  | "widgets"
+  | "assistant";
 
 export interface FeatureFlag {
   key: FeatureKey;
@@ -617,4 +631,55 @@ export interface RecipeDiaryInput {
   grams?: number;
   cooked_grams?: number;
   items: number[];
+}
+
+export type PhotoMode = "menu" | "fridge";
+
+export interface Dish extends Macros {
+  name: string;
+  grams: number;
+  tag: "fits" | "balanced" | "both";
+  note: string;
+}
+
+export interface AiMessageData {
+  photo?: PhotoMode;
+  mode?: PhotoMode;
+  dishes?: Dish[];
+  logged?: number[];
+}
+
+export interface AiMessage {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  data: AiMessageData | null;
+  created_at: string;
+}
+
+export interface AiChat {
+  id: number;
+  kind: "chat" | "review";
+  title: string;
+  updated_at: string;
+}
+
+export interface AiChatDetail extends AiChat {
+  messages: AiMessage[];
+}
+
+export interface AiChatList {
+  chats: AiChat[];
+  messages_left: number;
+  daily_messages: number;
+  has_access: boolean;
+}
+
+export interface AiReply {
+  chat: AiChatDetail;
+  messages_left: number;
+}
+
+export interface RecipeSuggestion extends RecipeCard {
+  covers: Partial<Record<"protein" | "fat" | "carbs", number>>;
 }

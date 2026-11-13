@@ -11,6 +11,7 @@ from belok.api.auth import InvalidAuth, decode_token
 from belok.config import Settings
 from belok.db.models import User
 from belok.llm.analyzer import FoodAnalyzer
+from belok.llm.assistant import Assistant
 from belok.llm.speech import SpeechToText
 from belok.services import features
 from belok.services.features import Feature
@@ -39,6 +40,10 @@ def get_analyzer(request: Request) -> FoodAnalyzer:
     return request.app.state.analyzer
 
 
+def get_assistant(request: Request) -> Assistant:
+    return request.app.state.assistant
+
+
 def get_food_db(request: Request) -> FoodDatabase:
     return request.app.state.food_db
 
@@ -62,6 +67,7 @@ def get_tribute(request: Request) -> TributeCatalog:
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 AnalyzerDep = Annotated[FoodAnalyzer, Depends(get_analyzer)]
+AssistantDep = Annotated[Assistant, Depends(get_assistant)]
 FoodDbDep = Annotated[FoodDatabase, Depends(get_food_db)]
 SttDep = Annotated[SpeechToText | None, Depends(get_stt)]
 PhotosDep = Annotated[PhotoStore | None, Depends(get_photos)]

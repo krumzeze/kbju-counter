@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     daily_analysis_limit: int = 20
     free_daily_analyses: int = 2
     free_history_days: int = 30
+    assistant_model: str = "claude-haiku-5-5"
+    review_model: str = "claude-sonnet-5-5"
+    assistant_daily_messages: int = 30
+    assistant_trial_messages: int = 10
+    assistant_daily_budget_usd: float = 5.0
     default_timezone: str = "Europe/Moscow"
     log_level: str = "INFO"
 

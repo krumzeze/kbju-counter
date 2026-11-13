@@ -27,6 +27,7 @@ from belok.api.deps import (
 )
 from belok.api.routes.workouts import set_out
 from belok.api.schemas import (
+    AnswerIn,
     BarcodeOut,
     DayOut,
     MacrosOut,
@@ -51,6 +52,7 @@ from belok.services.features import Feature
 from belok.services.meals import (
     DailyLimitReached,
     analyze_meal,
+    answer_question,
     attach_photo,
     clamp_scale,
     copy_meal,
@@ -280,6 +282,54 @@ async def refine_meal(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "no_food")
     await keep_for_eval(session, photos, user, meal)
     replace_items(meal, analysis)
+    await session.commit()
+    return _out(meal, photos, settings)
+
+
+@router.post("/meals/{meal_id}/answer")
+async def answer_meal_question(
+    meal_id: int,
+    body: AnswerIn,
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    analyzer: AnalyzerDep,
+    photos: PhotosDep,
+) -> MealOut:
+    meal = await get_meal(session, user.id, meal_id)
+    if meal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "meal_not_found")
+    if meal.question is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "no_question")
+    lang = _language(user)
+    try:
+        await answer_question(
+            session,
+            photos,
+            user,
+            meal,
+            body.text.strip(),
+            lambda prev, q, a: analyzer.clarify(prev, q, a, lang),
+        )
+    except AnalysisError as exc:
+        await session.commit()
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "analysis_failed") from exc
+    await session.commit()
+    return _out(meal, photos, settings)
+
+
+@router.delete("/meals/{meal_id}/question")
+async def dismiss_meal_question(
+    meal_id: int,
+    user: ActiveUser,
+    session: SessionDep,
+    settings: SettingsDep,
+    photos: PhotosDep,
+) -> MealOut:
+    meal = await get_meal(session, user.id, meal_id)
+    if meal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "meal_not_found")
+    meal.question = None
     await session.commit()
     return _out(meal, photos, settings)
 

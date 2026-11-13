@@ -5,6 +5,7 @@ from aiogram.enums import ChatAction
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from belok.bot.handlers.clarify import ask_question
 from belok.bot.texts import t
 from belok.config import Settings
 from belok.db.models import Meal, User
@@ -80,13 +81,15 @@ async def voice_meal(
         title=escape(meal.title),
         kcal=meal.totals().kcal,
     )
-    if await send_meal(bot, session, user, meal, caption, settings.webapp_url):
-        return
-    summary = await day_summary(session, user, local_today(user.timezone))
-    target = summary.target.macros.kcal if summary.target else None
-    await message.answer(
-        meal_text(lang, text, meal, summary.eaten.kcal, target), reply_markup=markup
-    )
+    widget = await send_meal(bot, session, user, meal, caption, settings.webapp_url)
+    if widget is None:
+        summary = await day_summary(session, user, local_today(user.timezone))
+        target = summary.target.macros.kcal if summary.target else None
+        await message.answer(
+            meal_text(lang, text, meal, summary.eaten.kcal, target), reply_markup=markup
+        )
+    if meal.question:
+        await ask_question(message, lang, meal, widget.message_id if widget else 0)
 
 
 def meal_text(

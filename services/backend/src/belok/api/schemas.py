@@ -33,6 +33,11 @@ class MealItemOut(BaseModel):
     carbs: float
 
 
+class QuestionOut(BaseModel):
+    text: str
+    options: list[str]
+
+
 class MealOut(BaseModel):
     id: int
     day: date
@@ -43,6 +48,7 @@ class MealOut(BaseModel):
     items: list[MealItemOut]
     totals: MacrosOut
     photo_url: str | None = None
+    question: QuestionOut | None = None
 
     @classmethod
     def of(cls, meal: Meal, photo_url: str | None = None) -> "MealOut":
@@ -56,6 +62,7 @@ class MealOut(BaseModel):
             items=[MealItemOut.model_validate(i) for i in meal.items],
             totals=MacrosOut.model_validate(meal.totals()),
             photo_url=photo_url,
+            question=QuestionOut(**meal.question) if meal.question else None,
         )
 
 
@@ -208,6 +215,10 @@ class TextMealIn(BaseModel):
 
 class RefineMealIn(BaseModel):
     text: str = Field(min_length=2, max_length=300)
+
+
+class AnswerIn(BaseModel):
+    text: str = Field(min_length=1, max_length=200)
 
 
 class MealPatchIn(BaseModel):

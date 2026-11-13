@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from belok.db.models import Heartbeat, LlmUsage
 from belok.llm.analyzer import FoodAnalyzer
 from belok.llm.speech import SpeechToText
-from belok.services import heartbeat, monitor, reminders
+from belok.services import heartbeat, monitor, reminders, reviews
 from belok.services.products import FoodDatabase
 from belok.services.tribute import TributeCatalog
 from belok.timeutil import utcnow
@@ -27,6 +27,7 @@ MISSED_BEATS = 3
 WORKERS = {
     "bot": heartbeat.BOT_INTERVAL,
     "reminders": reminders.CHECK_INTERVAL,
+    "reviews": reviews.CHECK_INTERVAL,
     "monitor": monitor.CHECK_INTERVAL,
 }
 LLM_WINDOW = timedelta(hours=1)

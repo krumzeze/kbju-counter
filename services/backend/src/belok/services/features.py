@@ -18,6 +18,7 @@ class Feature(StrEnum):
     REMINDERS = "reminders"
     PAYMENTS = "payments"
     WIDGETS = "widgets"
+    ASSISTANT = "assistant"
 
 
 class FeatureDisabled(Exception):

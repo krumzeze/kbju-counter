@@ -9,6 +9,7 @@ import { useMe } from "./lib/queries";
 import { webApp } from "./lib/telegram";
 import { AddMeal } from "./pages/AddMeal";
 import { Analytics } from "./pages/Analytics";
+import { Assistant } from "./pages/Assistant";
 import { Catalog } from "./pages/Catalog";
 import { ExerciseInfo } from "./pages/ExerciseInfo";
 import { ExerciseProgress } from "./pages/ExerciseProgress";
@@ -125,6 +126,8 @@ function AuthenticatedApp() {
         <Route path="templates/new" element={onboarded(<TemplateEdit />)} />
         <Route path="templates/:id" element={onboarded(<TemplateEdit />)} />
         <Route path="stats" element={onboarded(<Stats />)} />
+        <Route path="assistant" element={onboarded(<Assistant />)} />
+        <Route path="assistant/:id" element={onboarded(<Assistant />)} />
         <Route path="recipes" element={onboarded(<Recipes />)} />
         <Route path="recipes/new" element={onboarded(<RecipeEdit me={me} />)} />
         <Route path="recipes/:id" element={onboarded(<RecipeView />)} />

@@ -33,9 +33,16 @@ export function Today() {
           <p className="hello-date eyebrow">{longDate(day)}</p>
           <h1>{title}</h1>
         </div>
-        <Link to="/profile" className="avatar" aria-label={tr("Профиль", "Profile")}>
-          <Avatar name={me?.first_name ?? me?.username ?? null} />
-        </Link>
+        <div className="hello-actions">
+          {me?.features.assistant && (
+            <Link to="/assistant" className="icon-btn ai-btn" aria-label={tr("AI-помощник", "AI assistant")}>
+              <Icon name="sparkle" size={20} />
+            </Link>
+          )}
+          <Link to="/profile" className="avatar" aria-label={tr("Профиль", "Profile")}>
+            <Avatar name={me?.first_name ?? me?.username ?? null} />
+          </Link>
+        </div>
       </header>
 
       <DateStrip value={day} onChange={setDay} />

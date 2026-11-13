@@ -12,7 +12,7 @@ from belok.images import BadImage
 from belok.llm.analyzer import AnalysisError, AnalysisResult, FoodAnalysis, FoodItem
 from belok.services.access import has_access
 from belok.services.photos import PhotoStore, StorageError, eval_key, make_thumbnail, meal_key
-from belok.services.repo import analyses_on
+from belok.services.repo import CLARIFY_KIND, analyses_on
 from belok.timeutil import local_today, utcnow
 
 log = logging.getLogger(__name__)
@@ -106,6 +106,9 @@ async def analyze_meal(
         scale=1.0,
         items=[MealItem(**item.model_dump()) for item in analysis.items],
     )
+    question = analysis.usable_question()
+    if question is not None:
+        meal.question = question.model_dump()
     session.add(meal)
     await session.flush()
     return meal
@@ -133,6 +136,32 @@ def replace_items(meal: Meal, analysis: FoodAnalysis) -> None:
     meal.title = analysis.title
     meal.scale = 1.0
     meal.items = [MealItem(**item.model_dump()) for item in analysis.items]
+    meal.question = None
+
+
+async def answer_question(
+    session: AsyncSession,
+    store: PhotoStore | None,
+    user: User,
+    meal: Meal,
+    answer: str,
+    clarify: Callable[[FoodAnalysis, str, str], Awaitable[AnalysisResult]],
+) -> bool:
+    """Re-estimate the meal with the answer to its open question; False when no food came back.
+
+    Answers are free: they don't count toward the daily limit, and each meal has one question.
+    """
+    question = meal.question["text"]
+    previous = meal_analysis(meal)
+    analysis = await run_analysis(
+        session, user, CLARIFY_KIND, lambda: clarify(previous, question, answer)
+    )
+    if not analysis.items:
+        meal.question = None
+        return False
+    await keep_for_eval(session, store, user, meal)
+    replace_items(meal, analysis)
+    return True
 
 
 def manual_meal(

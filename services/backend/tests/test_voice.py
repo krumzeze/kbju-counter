@@ -5,10 +5,12 @@ import pytest
 from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy import select
 
+from belok.bot.handlers.clarify import answer_button
 from belok.bot.handlers.voice import voice_meal
 from belok.db.models import Meal, User
 from belok.i18n import Language
-from tests.conftest import onboarded
+from belok.llm.analyzer import Clarification, FoodItem
+from tests.conftest import FakeBot, onboarded
 
 pytestmark = pytest.mark.db
 
@@ -81,3 +83,39 @@ async def test_voice_with_no_food(client, settings, analyzer):
     message = FakeMessage()
     await run_voice(client, settings, analyzer, FakeStt("привет как дела"), message)
     assert "не нашёл там еды" in message.answers[0]
+
+
+class FakeCallback:
+    def __init__(self, data: str) -> None:
+        self.data = data
+        self.message = None
+        self.notes: list[str | None] = []
+
+    async def answer(self, text: str | None = None, **kwargs) -> None:
+        self.notes.append(text)
+
+
+async def test_voice_question_answered_with_a_button(client, settings, analyzer):
+    await onboarded(client)
+    analyzer.question = Clarification(text="Сколько масла?", options=["Без масла", "Ложка"])
+    message = FakeMessage()
+    await run_voice(client, settings, analyzer, FakeStt("яичница"), message)
+    assert "Сколько масла?" in message.answers[-1]
+
+    async with client.app.state.sessionmaker() as session:
+        user = await session.get(User, 1001)
+        meal_id = await session.scalar(select(Meal.id))
+        eggs = FoodItem(name="Яичница", grams=120, kcal=250, protein=14, fat=20, carbs=1)
+        analyzer.items = [eggs]
+        callback = FakeCallback(f"cq:{meal_id}:0:1")
+        await answer_button(callback, FakeBot(), session, user, Language.RU, analyzer)
+        assert analyzer.clarified[1:] == ("Сколько масла?", "Ложка")
+
+        stale = FakeCallback(f"cq:{meal_id}:0:0")
+        await answer_button(stale, FakeBot(), session, user, Language.RU, analyzer)
+        assert stale.notes == ["Этот вопрос уже закрыт."]
+
+    async with client.app.state.sessionmaker() as session:
+        meal = await session.get(Meal, meal_id)
+        assert meal.question is None
+        assert meal.title == "Обед" and meal.items[0].name == "Яичница"
