@@ -11,3 +11,6 @@ redis:
   resources:
     requests: { cpu: 10m, memory: 16Mi }
     limits: { memory: 64Mi }
+
+image:
+  tag: "9533eccf388c3b69be4ba028f787f089321590b9"
