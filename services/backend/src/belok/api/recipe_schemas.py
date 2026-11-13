@@ -109,6 +109,11 @@ class RecipeCardOut(BaseModel):
     cooked: int
 
 
+class SuggestionOut(RecipeCardOut):
+    # Percent of the day's missing protein, fat and carbs one portion covers.
+    covers: dict[str, int]
+
+
 class RecipeOut(RecipeCardOut):
     cooked_grams: float | None
     raw_grams: float

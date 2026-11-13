@@ -33,6 +33,7 @@ from belok.api.recipe_schemas import (
     RecipeRef,
     RejectIn,
     StepOut,
+    SuggestionOut,
 )
 from belok.api.routes.meals import _ensure_within_limit, _language, _read_photo
 from belok.api.schemas import MacrosOut, MealOut
@@ -179,11 +180,15 @@ async def list_recipes(
 @router.get("/recipes/suggestions")
 async def recipe_suggestions(
     user: ActiveUser, session: SessionDep, photos: PhotosDep
-) -> list[RecipeCardOut]:
+) -> list[SuggestionOut]:
     remaining = await _remaining(session, user)
     if remaining is None:
         return []
-    return await _cards(session, user, await recipes.suggestions(session, user, remaining), photos)
+    found = await recipes.suggestions(session, user, remaining)
+    st = await recipes.stats(session, user, [r.id for r, _ in found])
+    return [
+        SuggestionOut(**_card_fields(r, user, st[r.id], photos), covers=cover) for r, cover in found
+    ]
 
 
 @router.post("/recipes/photos", status_code=status.HTTP_201_CREATED)

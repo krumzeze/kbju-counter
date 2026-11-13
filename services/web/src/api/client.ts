@@ -1,4 +1,5 @@
 import type {
+  RecipeSuggestion,
   AiMessage,
   PhotoMode,
   AiChatDetail,
@@ -186,7 +187,7 @@ export const api = {
     filters.forEach((f) => params.append("filters", f));
     return request<RecipeCard[]>("GET", `/recipes?${params}`);
   },
-  recipeSuggestions: () => request<RecipeCard[]>("GET", "/recipes/suggestions"),
+  recipeSuggestions: () => request<RecipeSuggestion[]>("GET", "/recipes/suggestions"),
   recipe: (id: number) => request<Recipe>("GET", `/recipes/${id}`),
   createRecipe: (body: RecipeInput) => request<Recipe>("POST", "/recipes", body),
   updateRecipe: (id: number, body: RecipeInput) => request<Recipe>("PUT", `/recipes/${id}`, body),

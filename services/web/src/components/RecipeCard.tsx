@@ -57,7 +57,7 @@ export function RecipeRow({ recipe }: { recipe: RecipeCard }) {
   );
 }
 
-export function RecipeTile({ recipe }: { recipe: RecipeCard }) {
+export function RecipeTile({ recipe, caption }: { recipe: RecipeCard; caption?: string }) {
   return (
     <Link to={`/recipes/${recipe.id}`} className="card recipe-tile">
       <Photo url={recipe.photo_url} className="recipe-tile-photo" />
@@ -65,6 +65,7 @@ export function RecipeTile({ recipe }: { recipe: RecipeCard }) {
       <span className="muted small">
         {round(recipe.per_portion.kcal)} {tr("ккал", "kcal")} · {tr("Б", "P")} {round(recipe.per_portion.protein)}
       </span>
+      {caption && <span className="recipe-tile-caption small">{caption}</span>}
     </Link>
   );
 }

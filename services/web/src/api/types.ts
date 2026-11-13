@@ -679,3 +679,7 @@ export interface AiReply {
   chat: AiChatDetail;
   messages_left: number;
 }
+
+export interface RecipeSuggestion extends RecipeCard {
+  covers: Partial<Record<"protein" | "fat" | "carbs", number>>;
+}

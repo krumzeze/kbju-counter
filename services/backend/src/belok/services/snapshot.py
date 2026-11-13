@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.db.models import Meal, User, Workout
 from belok.domain.nutrition import Goal, Macros, Sex
+from belok.services.recipes import per_portion, suggestions
 from belok.services.repo import DayStats, daily_stats, day_summary, meals_on
 from belok.services.targets import weights_between
 from belok.services.workouts import summarize
@@ -21,6 +22,7 @@ RECENT_DAYS = 7
 LONG_DAYS = 28
 WORKOUT_DAYS = 14
 FREQUENT_FOODS = 10
+APP_RECIPES = 4
 
 
 def _m(m: Macros) -> str:
@@ -72,6 +74,12 @@ async def snapshot(session: AsyncSession, user: User, today: date) -> str:
             target.carbs - summary.eaten.carbs,
         )
         lines.append(f"Left for today (negative means over): {_m(left)}.")
+        fitting = await suggestions(session, user, left)
+        if fitting:
+            lines.append("Recipes in the app that best fill what's left today (per portion):")
+            for recipe, cover in fitting[:APP_RECIPES]:
+                covered = ", ".join(f"{k} {v}%" for k, v in cover.items())
+                lines.append(f"- {recipe.title}: {_m(per_portion(recipe))}; covers {covered}")
     tz = ZoneInfo(user.timezone)
     meals = await meals_on(session, user.id, today)
     if meals:
