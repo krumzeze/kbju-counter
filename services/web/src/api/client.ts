@@ -1,4 +1,6 @@
 import type {
+  LlmCall,
+  Page,
   RecipeSuggestion,
   AiMessage,
   PhotoMode,
@@ -296,6 +298,10 @@ export const adminApi = {
     return request<UserPage>("GET", `/admin/users?${params}`);
   },
   user: (id: number) => request<UserDetail>("GET", `/admin/users/${id}`),
+  userMeals: (id: number, offset: number, limit: number) =>
+    request<Page<Meal>>("GET", `/admin/users/${id}/meals?offset=${offset}&limit=${limit}`),
+  userLlm: (id: number, offset: number, limit: number) =>
+    request<Page<LlmCall>>("GET", `/admin/users/${id}/llm?offset=${offset}&limit=${limit}`),
   patchUser: (id: number, body: UserPatch) => request<UserDetail>("PATCH", `/admin/users/${id}`, body),
   grant: (id: number, days: number) =>
     request<UserDetail>("POST", `/admin/users/${id}/grant`, { days }),

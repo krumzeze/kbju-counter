@@ -436,8 +436,6 @@ export interface UserDetail extends UserRow {
   invited_paid: number;
   referral_days: number;
   activity: ActivityDay[];
-  meals: Meal[];
-  llm: LlmCall[];
   redemptions: { code: string; days: number; created_at: string }[];
   actions: AdminAction[];
 }
@@ -682,4 +680,9 @@ export interface AiReply {
 
 export interface RecipeSuggestion extends RecipeCard {
   covers: Partial<Record<"protein" | "fat" | "carbs", number>>;
+}
+
+export interface Page<T> {
+  items: T[];
+  total: number;
 }

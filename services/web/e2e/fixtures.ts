@@ -382,18 +382,6 @@ export const userDetail: UserDetail = {
   invited_paid: 0,
   referral_days: 0,
   activity: lastDays(7).map((d) => ({ day: d, meals: 3, sets: 0, steps: 4000, analyses: 2 })),
-  meals: [meal],
-  llm: [
-    {
-      created_at: at(),
-      kind: "photo",
-      model: "claude-haiku-5-5",
-      ok: true,
-      no_food: false,
-      cost_usd: 0.004,
-      latency_ms: 2300,
-    },
-  ],
   redemptions: [{ code: "WELCOME", days: 7, created_at: at(-15) }],
   actions: [action],
 };
@@ -550,4 +538,19 @@ export const aiChat: AiChatDetail = {
       created_at: at(),
     },
   ],
+};
+
+export const userMeals = { items: Array.from({ length: 10 }, (_, i) => ({ ...meal, id: i + 1 })), total: 23 };
+
+export const userLlm = {
+  items: Array.from({ length: 10 }, () => ({
+    created_at: at(),
+    kind: "photo",
+    model: "claude-haiku-5-5",
+    ok: true,
+    no_food: false,
+    cost_usd: 0.004,
+    latency_ms: 2300,
+  })),
+  total: 41,
 };

@@ -4,7 +4,14 @@ import { adminApi, errorMessage } from "../../api/client";
 import type { UserDetail as Detail, UserPatch } from "../../api/types";
 import { BarChart } from "../../components/BarChart";
 import { ErrorState, Spinner } from "../../components/States";
-import { useAdminMutation, useUser, useUserAction } from "../../lib/adminQueries";
+import {
+  USER_PAGE,
+  useAdminMutation,
+  useUser,
+  useUserAction,
+  useUserLlm,
+  useUserMeals,
+} from "../../lib/adminQueries";
 import { ago, date, dateTime, displayName, percent, round, usd } from "../../lib/format";
 import { confirmAction } from "../../lib/telegram";
 import { ActionText } from "./Log";
@@ -18,6 +25,8 @@ const SOURCE_LABELS: Record<string, string> = {
   manual: "вручную",
   voice: "голос",
   barcode: "штрихкод",
+  recipe: "рецепт",
+  ai: "AI",
 };
 
 export function UserDetail() {
@@ -112,50 +121,8 @@ export function UserDetail() {
       <MessageCard user={user} />
 
       <div className="grid-2">
-        <section className="card">
-          <h2>Последняя еда</h2>
-          {user.meals.length === 0 ? (
-            <p className="muted">Пока ничего</p>
-          ) : (
-            <ul className="list">
-              {user.meals.map((m) => (
-                <li key={m.id}>
-                  <div className="hbar-head">
-                    <strong>
-                      {m.title} <span className="muted small">· {SOURCE_LABELS[m.source]}</span>
-                    </strong>
-                    <span>{round(m.totals.kcal)} ккал</span>
-                  </div>
-                  <span className="muted small">
-                    {dateTime(m.created_at)} · {m.items.map((i) => i.name).join(", ")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <section className="card">
-          <h2>Запросы к LLM</h2>
-          {user.llm.length === 0 ? (
-            <p className="muted">Пока ничего</p>
-          ) : (
-            <ul className="list">
-              {user.llm.map((c) => (
-                <li key={c.created_at} className="hbar-head">
-                  <span>
-                    {c.ok ? (c.no_food ? "нет еды" : "ок") : "ошибка"}{" "}
-                    <span className="muted small">
-                      {dateTime(c.created_at)} · {c.kind}
-                    </span>
-                  </span>
-                  <span className="muted small">
-                    {(c.latency_ms / 1000).toFixed(1)} с · {c.cost_usd === null ? "—" : usd(c.cost_usd)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <UserMeals id={user.id} />
+        <UserLlm id={user.id} />
       </div>
 
       <div className="grid-2">
@@ -391,4 +358,95 @@ function DangerZone({ user }: { user: Detail }) {
 
 function sum(days: Detail["activity"], key: "meals" | "sets"): number {
   return days.reduce((total, d) => total + d[key], 0);
+}
+
+function UserMeals({ id }: { id: number }) {
+  const [offset, setOffset] = useState(0);
+  const { data, isPending, error, refetch, isPlaceholderData } = useUserMeals(id, offset);
+  return (
+    <section className="card">
+      <h2>Еда {data ? <span className="muted small">· {data.total}</span> : null}</h2>
+      {isPending ? (
+        <Spinner />
+      ) : error ? (
+        <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
+      ) : data.items.length === 0 ? (
+        <p className="muted">Пока ничего</p>
+      ) : (
+        <>
+          <ul className={isPlaceholderData ? "list loading" : "list"}>
+            {data.items.map((m) => (
+              <li key={m.id}>
+                <div className="hbar-head">
+                  <strong>
+                    {m.title} <span className="muted small">· {SOURCE_LABELS[m.source] ?? m.source}</span>
+                  </strong>
+                  <span>{round(m.totals.kcal)} ккал</span>
+                </div>
+                <span className="muted small">
+                  {dateTime(m.created_at)} · {m.items.map((i) => i.name).join(", ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Pager offset={offset} total={data.total} onChange={setOffset} />
+        </>
+      )}
+    </section>
+  );
+}
+
+function UserLlm({ id }: { id: number }) {
+  const [offset, setOffset] = useState(0);
+  const { data, isPending, error, refetch, isPlaceholderData } = useUserLlm(id, offset);
+  return (
+    <section className="card">
+      <h2>Запросы к LLM {data ? <span className="muted small">· {data.total}</span> : null}</h2>
+      {isPending ? (
+        <Spinner />
+      ) : error ? (
+        <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
+      ) : data.items.length === 0 ? (
+        <p className="muted">Пока ничего</p>
+      ) : (
+        <>
+          <ul className={isPlaceholderData ? "list loading" : "list"}>
+            {data.items.map((c, i) => (
+              <li key={`${c.created_at}-${i}`} className="hbar-head">
+                <span>
+                  {c.ok ? (c.no_food ? "нет еды" : "ок") : "ошибка"}{" "}
+                  <span className="muted small">
+                    {dateTime(c.created_at)} · {c.kind}
+                  </span>
+                </span>
+                <span className="muted small">
+                  {(c.latency_ms / 1000).toFixed(1)} с · {c.cost_usd === null ? "—" : usd(c.cost_usd)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Pager offset={offset} total={data.total} onChange={setOffset} />
+        </>
+      )}
+    </section>
+  );
+}
+
+function Pager({ offset, total, onChange }: { offset: number; total: number; onChange: (offset: number) => void }) {
+  if (total <= USER_PAGE) return null;
+  const page = Math.floor(offset / USER_PAGE) + 1;
+  const pages = Math.ceil(total / USER_PAGE);
+  return (
+    <div className="actions pager">
+      <button className="btn small" disabled={offset === 0} onClick={() => onChange(Math.max(0, offset - USER_PAGE))}>
+        ← Назад
+      </button>
+      <span className="muted small">
+        {page} из {pages}
+      </span>
+      <button className="btn small" disabled={page >= pages} onClick={() => onChange(offset + USER_PAGE)}>
+        Дальше →
+      </button>
+    </div>
+  );
 }
