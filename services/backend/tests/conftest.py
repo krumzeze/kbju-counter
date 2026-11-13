@@ -14,7 +14,7 @@ from belok.config import Settings
 from belok.db.models import Base
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisResult, Clarification, FoodAnalysis, FoodItem
-from belok.llm.assistant import AssistantError, Reply
+from belok.llm.assistant import AssistantError, Dish, Reply
 from belok.services import features
 from belok.services.photos import PhotoStore
 from belok.services.products import ProductInfo
@@ -145,6 +145,34 @@ class FakeAssistant:
             raise AssistantError(self.chat_model, 5)
         self.calls.append((snapshot, history))
         return Reply(f"ответ {len(self.calls)}", self.chat_model, 1500, 100, self.cost, 5)
+
+    async def photo(self, mode, image, media_type, snapshot, note, language):
+        if self.fail:
+            raise AssistantError(self.review_model, 5)
+        self.calls.append((snapshot, [{"mode": mode, "note": note, "media_type": media_type}]))
+        dishes = [
+            Dish(
+                name="Стейк из лосося",
+                grams=250,
+                kcal=420,
+                protein=45,
+                fat=24,
+                carbs=3,
+                tag="both",
+                note="Соус отдельно",
+            ),
+            Dish(
+                name="Паста карбонара",
+                grams=300,
+                kcal=780,
+                protein=28,
+                fat=38,
+                carbs=80,
+                tag="balanced",
+                note="Половина порции",
+            ),
+        ]
+        return Reply("Бери лосося", self.review_model, 3000, 400, self.cost, 5, dishes)
 
     async def review(self, snapshot: str, language: Language):
         self.calls.append((snapshot, []))

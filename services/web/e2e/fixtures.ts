@@ -533,5 +533,21 @@ export const aiChat: AiChatDetail = {
       data: null,
       created_at: at(),
     },
+    { id: 3, role: "user", text: "📷 Фото меню: ужин", data: { photo: "menu" }, created_at: at() },
+    {
+      id: 4,
+      role: "assistant",
+      text: "Лучший выбор лосось: закроет почти весь остаток белка.",
+      data: {
+        mode: "menu",
+        logged: [1],
+        dishes: [
+          { name: "Стейк из лосося с овощами", grams: 320, kcal: 520, protein: 46, fat: 30, carbs: 14, tag: "both", note: "Попроси соус отдельно" },
+          { name: "Цезарь с курицей", grams: 280, kcal: 480, protein: 32, fat: 30, carbs: 20, tag: "fits", note: "Половину заправки" },
+          { name: "Паста карбонара", grams: 300, kcal: 780, protein: 28, fat: 38, carbs: 80, tag: "balanced", note: "Не влезет, если не взять половину" },
+        ],
+      },
+      created_at: at(),
+    },
   ],
 };

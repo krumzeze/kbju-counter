@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from belok.api.schemas import MealOut
 from belok.services.assistant import MAX_CHARS
 
 
@@ -42,3 +43,8 @@ class AiReplyOut(BaseModel):
 
 class AiMessageIn(BaseModel):
     text: str = Field(min_length=1, max_length=MAX_CHARS)
+
+
+class DishLoggedOut(BaseModel):
+    meal: MealOut
+    message: AiMessageOut

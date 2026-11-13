@@ -2,10 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../api/client";
-import type { AiChat, AiChatDetail, AiReply } from "../api/types";
+import type { AiChat, AiChatDetail, AiMessage, AiReply, Dish, PhotoMode } from "../api/types";
 import { Icon } from "../components/Icon";
 import { ErrorState, Spinner } from "../components/States";
+import { round } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
+import { prepareImage } from "../lib/image";
+import { useInvalidate } from "../lib/queries";
 import { confirmAction } from "../lib/telegram";
 
 const MAX_CHARS = 1000;
@@ -32,6 +35,18 @@ export function Assistant() {
     enabled: chatId !== null,
   });
   const bottom = useRef<HTMLDivElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [photoMenu, setPhotoMenu] = useState(false);
+  const [photoMode, setPhotoMode] = useState<PhotoMode>("menu");
+
+  const onReply = (reply: AiReply) => {
+      qc.setQueryData(["ai-chat", reply.chat.id], reply.chat);
+      qc.setQueryData(["ai-chats"], (old: typeof list.data) =>
+        old ? { ...old, messages_left: reply.messages_left } : old,
+      );
+      void qc.invalidateQueries({ queryKey: ["ai-chats"] });
+      if (chatId !== reply.chat.id) navigate(`/assistant/${reply.chat.id}`, { replace: chatId !== null });
+  };
 
   const send = useMutation({
     mutationFn: (value: string) => (chatId === null ? api.aiStart(value) : api.aiSend(chatId, value)),
@@ -39,17 +54,24 @@ export function Assistant() {
       setPending(value);
       setText("");
     },
-    onSuccess: (reply: AiReply) => {
-      qc.setQueryData(["ai-chat", reply.chat.id], reply.chat);
-      qc.setQueryData(["ai-chats"], (old: typeof list.data) =>
-        old ? { ...old, messages_left: reply.messages_left } : old,
-      );
-      void qc.invalidateQueries({ queryKey: ["ai-chats"] });
-      if (chatId !== reply.chat.id) navigate(`/assistant/${reply.chat.id}`, { replace: chatId !== null });
-    },
+    onSuccess: onReply,
     onError: (_, value) => setText(value),
     onSettled: () => setPending(null),
   });
+
+  const photo = useMutation({
+    mutationFn: async ({ mode, file, note }: { mode: PhotoMode; file: File; note: string }) =>
+      api.aiPhoto(chatId, mode, await prepareImage(file), note),
+    onMutate: ({ mode, note }) => {
+      const label = photoLabel(mode);
+      setPending(note ? `${label}: ${note}` : label);
+      setText("");
+    },
+    onSuccess: onReply,
+    onError: (_, { note }) => setText(note),
+    onSettled: () => setPending(null),
+  });
+  const busy = send.isPending || photo.isPending;
 
   const remove = useMutation({
     mutationFn: (id: number) => api.aiDelete(id),
@@ -70,9 +92,14 @@ export function Assistant() {
   const { chats, messages_left, daily_messages, has_access } = list.data;
   const current = chats.find((c) => c.id === chatId);
   const trimmed = text.trim();
-  const canSend = has_access && messages_left > 0 && trimmed.length > 0 && !send.isPending;
+  const canSend = has_access && messages_left > 0 && trimmed.length > 0 && !busy;
   const submit = (value: string) => {
-    if (value.trim() && has_access && messages_left > 0 && !send.isPending) send.mutate(value.trim());
+    if (value.trim() && has_access && messages_left > 0 && !busy) send.mutate(value.trim());
+  };
+  const pickPhoto = (mode: PhotoMode) => {
+    setPhotoMode(mode);
+    setPhotoMenu(false);
+    fileInput.current?.click();
   };
 
   return (
@@ -129,6 +156,7 @@ export function Assistant() {
         {messages.map((m) => (
           <Bubble key={m.id} role={m.role}>
             {m.role === "assistant" ? <RichText text={m.text} /> : m.text}
+            {m.data?.dishes && m.data.dishes.length > 0 && <Dishes message={m} />}
           </Bubble>
         ))}
         {pending && (
@@ -141,7 +169,7 @@ export function Assistant() {
             </div>
           </>
         )}
-        {send.error && <p className="error small">{errorMessage(send.error)}</p>}
+        {(send.error ?? photo.error) && <p className="error small">{errorMessage(send.error ?? photo.error)}</p>}
         <div ref={bottom} />
       </div>
 
@@ -153,6 +181,41 @@ export function Assistant() {
             submit(text);
           }}
         >
+          <div className="assistant-attach">
+            <button
+              type="button"
+              className="icon-btn"
+              disabled={busy || messages_left === 0}
+              onClick={() => setPhotoMenu(!photoMenu)}
+              aria-expanded={photoMenu}
+              aria-label={tr("Отправить фото", "Send a photo")}
+            >
+              <Icon name="camera" size={20} />
+            </button>
+            {photoMenu && (
+              <div className="assistant-attach-menu" role="menu">
+                <button type="button" role="menuitem" onClick={() => pickPhoto("menu")}>
+                  <strong>{tr("Меню в ресторане", "Restaurant menu")}</strong>
+                  <span className="muted small">{tr("Подскажу, что заказать под твою норму", "I'll tell you what to order for your targets")}</span>
+                </button>
+                <button type="button" role="menuitem" onClick={() => pickPhoto("fridge")}>
+                  <strong>{tr("Холодильник", "Fridge")}</strong>
+                  <span className="muted small">{tr("Предложу, что приготовить из того, что есть", "I'll suggest what to cook from what you have")}</span>
+                </button>
+              </div>
+            )}
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) photo.mutate({ mode: photoMode, file, note: text.trim().slice(0, 200) });
+              }}
+            />
+          </div>
           <textarea
             className="input"
             rows={1}
@@ -273,4 +336,55 @@ export function RichText({ text }: { text: string }) {
   }
   flush();
   return <>{blocks}</>;
+}
+
+function photoLabel(mode: PhotoMode) {
+  return mode === "menu" ? tr("📷 Фото меню", "📷 Menu photo") : tr("📷 Фото холодильника", "📷 Fridge photo");
+}
+
+const tagLabel = (tag: Dish["tag"]) =>
+  tag === "fits"
+    ? tr("Влезает в норму", "Fits your day")
+    : tag === "balanced"
+      ? tr("Сбалансировано", "Well balanced")
+      : tr("Влезает и сбалансировано", "Fits and balanced");
+
+function Dishes({ message }: { message: AiMessage }) {
+  const qc = useQueryClient();
+  const invalidate = useInvalidate();
+  const log = useMutation({
+    mutationFn: (index: number) => api.aiLogDish(message.id, index),
+    onSuccess: async ({ message: updated }) => {
+      qc.setQueriesData({ queryKey: ["ai-chat"] }, (old: AiChatDetail | undefined) =>
+        old ? { ...old, messages: old.messages.map((m) => (m.id === updated.id ? updated : m)) } : old,
+      );
+      await invalidate("day");
+    },
+  });
+  const logged = new Set(message.data?.logged ?? []);
+  return (
+    <ul className="dish-list">
+      {message.data?.dishes?.map((d, i) => (
+        <li key={i} className="dish">
+          <div className="dish-head">
+            <strong>{d.name}</strong>
+            <span className={`dish-tag ${d.tag}`}>{tagLabel(d.tag)}</span>
+          </div>
+          <p className="muted small">
+            ~{round(d.grams)} {tr("г", "g")} · {round(d.kcal)} {tr("ккал", "kcal")} · {tr("Б", "P")} {round(d.protein)} ·{" "}
+            {tr("Ж", "F")} {round(d.fat)} · {tr("У", "C")} {round(d.carbs)}
+          </p>
+          {d.note && <p className="dish-note small">{d.note}</p>}
+          <button
+            className="btn btn-primary small dish-log"
+            disabled={logged.has(i) || log.isPending}
+            onClick={() => log.mutate(i)}
+          >
+            {logged.has(i) ? tr("Добавлено ✓", "Added ✓") : tr("В дневник", "Log it")}
+          </button>
+        </li>
+      ))}
+      {log.error && <li className="error small">{errorMessage(log.error)}</li>}
+    </ul>
+  );
 }

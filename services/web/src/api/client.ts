@@ -1,4 +1,6 @@
 import type {
+  AiMessage,
+  PhotoMode,
   AiChatDetail,
   AiChatList,
   AiReply,
@@ -144,6 +146,15 @@ export const api = {
   aiStart: (text: string) => request<AiReply>("POST", "/assistant/chats", { text }),
   aiSend: (id: number, text: string) => request<AiReply>("POST", `/assistant/chats/${id}/messages`, { text }),
   aiDelete: (id: number) => request<void>("DELETE", `/assistant/chats/${id}`),
+  aiPhoto: (chatId: number | null, mode: PhotoMode, photo: Blob, note: string) => {
+    const form = new FormData();
+    form.append("photo", photo, "photo.jpg");
+    form.append("mode", mode);
+    if (note) form.append("note", note);
+    return request<AiReply>("POST", chatId === null ? "/assistant/photo" : `/assistant/chats/${chatId}/photo`, form);
+  },
+  aiLogDish: (messageId: number, index: number) =>
+    request<{ meal: Meal; message: AiMessage }>("POST", `/assistant/messages/${messageId}/dishes/${index}`),
 
   day: (day?: string) => request<Day>("GET", day ? `/day?day=${day}` : "/day"),
   mealFromText: (text: string) => request<Meal>("POST", "/meals/text", { text }),
@@ -358,6 +369,7 @@ const messages = (): Record<string, string> => ({
     "The assistant didn't answer, please try again",
   ),
   chat_not_found: tr("Чат не найден", "Chat not found"),
+  photo_limit: tr("На сегодня фото для ассистента закончились", "No more photos for the assistant today"),
   plan_not_found: tr("Такого тарифа больше нет", "This plan is no longer available"),
   payments_disabled: tr("Оплата временно недоступна", "Payments are temporarily unavailable"),
   analysis_failed: tr(

@@ -16,7 +16,7 @@ export interface MealItem extends Macros {
   grams: number;
 }
 
-export type MealSource = "photo" | "text" | "manual" | "voice" | "barcode" | "recipe";
+export type MealSource = "photo" | "text" | "manual" | "voice" | "barcode" | "recipe" | "ai";
 
 export interface Meal {
   id: number;
@@ -633,11 +633,27 @@ export interface RecipeDiaryInput {
   items: number[];
 }
 
+export type PhotoMode = "menu" | "fridge";
+
+export interface Dish extends Macros {
+  name: string;
+  grams: number;
+  tag: "fits" | "balanced" | "both";
+  note: string;
+}
+
+export interface AiMessageData {
+  photo?: PhotoMode;
+  mode?: PhotoMode;
+  dishes?: Dish[];
+  logged?: number[];
+}
+
 export interface AiMessage {
   id: number;
   role: "user" | "assistant";
   text: string;
-  data: Record<string, unknown> | null;
+  data: AiMessageData | null;
   created_at: string;
 }
 

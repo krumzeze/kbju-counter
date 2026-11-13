@@ -4940,12 +4940,100 @@ span.set-check {
 
 .assistant-composer {
   position: sticky;
-  bottom: calc(76px + env(safe-area-inset-bottom));
+  bottom: calc(68px + env(safe-area-inset-bottom));
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   gap: 8px;
-  padding: 10px 0 4px;
+  padding: 10px 0 12px;
   background: var(--bg);
+}
+
+.assistant-attach {
+  position: relative;
+}
+
+.assistant-attach .icon-btn {
+  width: 46px;
+  height: 46px;
+}
+
+.assistant-attach-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 5;
+  display: grid;
+  gap: 4px;
+  width: min(300px, 80vw);
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.assistant-attach-menu button {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assistant-attach-menu button:hover {
+  background: var(--surface-2);
+}
+
+.bubble .dish-list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dish {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-s);
+  background: var(--bg);
+}
+
+.dish p {
+  margin: 0;
+}
+
+.dish-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.dish-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dish-tag.balanced {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.dish-log {
+  justify-self: start;
+  margin-top: 4px;
 }
 
 .assistant-composer textarea {

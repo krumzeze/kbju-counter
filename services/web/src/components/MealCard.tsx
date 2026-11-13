@@ -316,6 +316,8 @@ export function MealIcon({ source }: { source: Meal["source"] }) {
           ? "barcode"
           : source === "recipe"
             ? "book"
-            : "pen";
+            : source === "ai"
+              ? "sparkle"
+              : "pen";
   return <Icon name={name} size={22} />;
 }

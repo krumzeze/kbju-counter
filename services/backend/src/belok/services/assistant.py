@@ -8,12 +8,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from belok.config import Settings
-from belok.db.models import AiChat, AiMessage, LlmUsage, User
+from belok.db.models import AiChat, AiMessage, LlmUsage, Meal, MealItem, User
 from belok.i18n import Language
-from belok.llm.assistant import Assistant, AssistantError, Reply
+from belok.llm.assistant import Assistant, AssistantError, PhotoMode, Reply
 from belok.services.access import AccessStatus, access_status
 from belok.services.notify import notify_admins
-from belok.services.repo import CHAT_KIND, REVIEW_KIND
+from belok.services.repo import ASSISTANT_KINDS, CHAT_KIND, FRIDGE_KIND, MENU_KIND
 from belok.services.snapshot import snapshot
 from belok.timeutil import local_today, utcnow
 
@@ -24,10 +24,14 @@ HISTORY_MESSAGES = 16
 PER_MINUTE = 5
 REPLY_TOKENS = 3000
 TITLE_CHARS = 60
+PHOTOS_PER_DAY = 5
+PHOTO_KINDS = {"menu": MENU_KIND, "fridge": FRIDGE_KIND}
+# Messages the user sends: plain chat and photos share the daily message limit.
+SENT_KINDS = (CHAT_KIND, MENU_KIND, FRIDGE_KIND)
 
 
 class AssistantLimit(Exception):
-    """code: premium_required, daily_limit, too_fast or assistant_busy."""
+    """code: premium_required, daily_limit, photo_limit, too_fast or assistant_busy."""
 
     def __init__(self, code: str) -> None:
         super().__init__(code)
@@ -42,17 +46,21 @@ def daily_messages(user: User, settings: Settings) -> int:
     return settings.assistant_daily_messages
 
 
-async def messages_left(session: AsyncSession, user: User, settings: Settings) -> int:
-    used = await session.scalar(
+async def _used_today(session: AsyncSession, user: User, kinds: tuple[str, ...]) -> int:
+    return await session.scalar(
         select(func.count())
         .select_from(LlmUsage)
         .where(
             LlmUsage.user_id == user.id,
             LlmUsage.day == local_today(user.timezone),
-            LlmUsage.kind == CHAT_KIND,
+            LlmUsage.kind.in_(kinds),
             LlmUsage.ok.is_(True),
         )
     )
+
+
+async def messages_left(session: AsyncSession, user: User, settings: Settings) -> int:
+    used = await _used_today(session, user, SENT_KINDS)
     return max(0, daily_messages(user, settings) - used)
 
 
@@ -60,7 +68,7 @@ async def spent_today(session: AsyncSession) -> float:
     start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     total = await session.scalar(
         select(func.coalesce(func.sum(LlmUsage.cost_usd), 0.0)).where(
-            LlmUsage.created_at >= start, LlmUsage.kind.in_((CHAT_KIND, REVIEW_KIND))
+            LlmUsage.created_at >= start, LlmUsage.kind.in_(ASSISTANT_KINDS)
         )
     )
     return float(total)
@@ -76,7 +84,7 @@ async def check_limits(session: AsyncSession, user: User, settings: Settings) ->
         .select_from(LlmUsage)
         .where(
             LlmUsage.user_id == user.id,
-            LlmUsage.kind == CHAT_KIND,
+            LlmUsage.kind.in_(SENT_KINDS),
             LlmUsage.created_at > utcnow() - timedelta(minutes=1),
         )
     )
@@ -162,6 +170,96 @@ async def send_message(
     await session.commit()
     await _alert_on_budget(session, bot, settings, spent_before, reply.cost_usd)
     return answer
+
+
+PHOTO_LABELS = {
+    "menu": {Language.RU: "📷 Фото меню", Language.EN: "📷 Menu photo"},
+    "fridge": {Language.RU: "📷 Фото холодильника", Language.EN: "📷 Fridge photo"},
+}
+
+
+async def send_photo(
+    session: AsyncSession,
+    bot: Bot | None,
+    settings: Settings,
+    assistant: Assistant,
+    user: User,
+    chat: AiChat,
+    mode: PhotoMode,
+    image: bytes,
+    media_type: str,
+    note: str | None,
+) -> AiMessage:
+    """Ask what to order from a menu or cook from a fridge photo; the photo is not kept."""
+    await check_limits(session, user, settings)
+    if await _used_today(session, user, (MENU_KIND, FRIDGE_KIND)) >= PHOTOS_PER_DAY:
+        raise AssistantLimit("photo_limit")
+    lang = user.language or Language.RU
+    data = await snapshot(session, user, local_today(user.timezone))
+    spent_before = await spent_today(session)
+    kind = PHOTO_KINDS[mode]
+    await session.commit()
+    try:
+        reply = await assistant.photo(mode, image, media_type, data, note, lang)
+    except AssistantError as exc:
+        session.add(usage_row(user, kind, exc.model, None, exc.latency_ms))
+        await session.commit()
+        raise
+    session.add(usage_row(user, kind, reply.model, reply, reply.latency_ms))
+    now = utcnow()
+    label = PHOTO_LABELS[mode][lang]
+    text = f"{label}: {note}" if note else label
+    chat.messages.append(AiMessage(role="user", text=text, data={"photo": mode}, created_at=now))
+    dishes = [d.model_dump() for d in reply.dishes or []]
+    answer = AiMessage(
+        role="assistant",
+        text=reply.text,
+        data={"mode": mode, "dishes": dishes, "logged": []} if dishes else None,
+        created_at=now,
+    )
+    chat.messages.append(answer)
+    chat.updated_at = now
+    if chat.id is None:
+        session.add(chat)
+    await session.commit()
+    await _alert_on_budget(session, bot, settings, spent_before, reply.cost_usd)
+    return answer
+
+
+async def log_dish(session: AsyncSession, user: User, message: AiMessage, index: int) -> Meal:
+    """Add a suggested dish to today's diary and remember it was logged."""
+    dishes = (message.data or {}).get("dishes", [])
+    if not 0 <= index < len(dishes):
+        raise IndexError(index)
+    dish = dishes[index]
+    item = MealItem(
+        name=dish["name"],
+        grams=dish["grams"],
+        kcal=dish["kcal"],
+        protein=dish["protein"],
+        fat=dish["fat"],
+        carbs=dish["carbs"],
+    )
+    meal = Meal(
+        user_id=user.id,
+        day=local_today(user.timezone),
+        source="ai",
+        title=dish["name"],
+        scale=1.0,
+        items=[item],
+    )
+    session.add(meal)
+    logged = sorted({*message.data.get("logged", []), index})
+    message.data = {**message.data, "logged": logged}
+    return meal
+
+
+async def get_message(session: AsyncSession, user_id: int, message_id: int) -> AiMessage | None:
+    message = await session.get(AiMessage, message_id)
+    if message is None or message.role != "assistant":
+        return None
+    chat = await session.get(AiChat, message.chat_id)
+    return message if chat is not None and chat.user_id == user_id else None
 
 
 async def _alert_on_budget(

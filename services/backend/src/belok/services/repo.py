@@ -32,8 +32,11 @@ MAX_WATER_ML = 10_000
 CLARIFY_KIND = "clarify"
 CHAT_KIND = "chat"
 REVIEW_KIND = "review"
+MENU_KIND = "menu"
+FRIDGE_KIND = "fridge"
+ASSISTANT_KINDS = (CHAT_KIND, REVIEW_KIND, MENU_KIND, FRIDGE_KIND)
 # LLM calls that don't count toward the daily food analysis limit.
-FREE_KINDS = (CLARIFY_KIND, CHAT_KIND, REVIEW_KIND)
+FREE_KINDS = (CLARIFY_KIND, *ASSISTANT_KINDS)
 
 
 async def add_water(session: AsyncSession, user_id: int, day: date, delta_ml: int) -> int:
