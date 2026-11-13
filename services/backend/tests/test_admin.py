@@ -128,9 +128,28 @@ async def test_user_detail(client):
     assert detail["weight_kg"] == 80
     assert len(detail["activity"]) == 30
     assert detail["activity"][-1]["meals"] == 1
-    assert detail["meals"][0]["title"] == "Обед"
-    assert detail["llm"][0]["ok"] is True
     assert (await client.get("/api/admin/users/999", headers=admin)).status_code == 404
+
+
+async def test_user_meals_and_llm_are_paged(client):
+    admin, user = await admin_and_user(client)
+    for _ in range(3):
+        await client.post("/api/meals/text", json={"text": "гречка"}, headers=user)
+    base = f"/api/admin/users/{USER}"
+
+    first = (await client.get(f"{base}/meals?limit=2", headers=admin)).json()
+    last = (await client.get(f"{base}/meals?limit=2&offset=2", headers=admin)).json()
+    assert (first["total"], len(first["items"]), len(last["items"])) == (3, 2, 1)
+    assert first["items"][0]["title"] == "Обед"
+    ids = [m["id"] for m in first["items"] + last["items"]]
+    assert ids == sorted(ids, reverse=True)
+
+    llm = (await client.get(f"{base}/llm?limit=2", headers=admin)).json()
+    assert (llm["total"], len(llm["items"]), llm["items"][0]["ok"]) == (3, 2, True)
+
+    assert (await client.get(f"{base}/llm?limit=500", headers=admin)).status_code == 422
+    assert (await client.get(f"{base}/meals", headers=user)).status_code == 403
+    assert (await client.get("/api/admin/users/999/meals", headers=admin)).status_code == 404
 
 
 async def test_grant_revoke_and_lifetime(client):

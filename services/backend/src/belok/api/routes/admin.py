@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Annotated
 
 from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 from fastapi import APIRouter, HTTPException, Query, Response, status
@@ -84,6 +85,36 @@ async def get_user(
     user_id: int, admin: AdminUser, session: SessionDep, settings: SettingsDep
 ) -> s.UserDetailOut:
     return await _detail(session, settings, await _get_user(session, user_id))
+
+
+PageOffset = Annotated[int, Query(ge=0)]
+PageLimit = Annotated[int, Query(ge=1, le=50)]
+
+
+@router.get("/users/{user_id}/meals")
+async def user_meals(
+    user_id: int,
+    admin: AdminUser,
+    session: SessionDep,
+    offset: PageOffset = 0,
+    limit: PageLimit = 10,
+) -> s.MealPageOut:
+    user = await _get_user(session, user_id)
+    items, total = await admin_users.meals_page(session, user.id, offset, limit)
+    return s.MealPageOut(items=[MealOut.of(m) for m in items], total=total)
+
+
+@router.get("/users/{user_id}/llm")
+async def user_llm(
+    user_id: int,
+    admin: AdminUser,
+    session: SessionDep,
+    offset: PageOffset = 0,
+    limit: PageLimit = 10,
+) -> s.LlmPageOut:
+    user = await _get_user(session, user_id)
+    items, total = await admin_users.llm_page(session, user.id, offset, limit)
+    return s.LlmPageOut(items=[s.LlmCallOut.model_validate(c) for c in items], total=total)
 
 
 @router.patch("/users/{user_id}")
@@ -524,11 +555,6 @@ async def _detail(session: SessionDep, settings: Settings, user: User) -> s.User
             for a in await admin_users.activity(
                 session, user.id, today - timedelta(days=ACTIVITY_DAYS - 1), today
             )
-        ],
-        meals=[MealOut.of(m) for m in await admin_users.recent_meals(session, user.id, 20)],
-        llm=[
-            s.LlmCallOut.model_validate(c)
-            for c in await admin_users.recent_llm(session, user.id, 30)
         ],
         redemptions=[
             s.RedemptionOut(code=c, days=d, created_at=t)

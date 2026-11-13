@@ -181,21 +181,36 @@ async def activity(
     return list(days.values())
 
 
-async def recent_meals(session: AsyncSession, user_id: int, limit: int) -> list[Meal]:
-    result = await session.scalars(
-        select(Meal).where(Meal.user_id == user_id).order_by(Meal.created_at.desc()).limit(limit)
+async def meals_page(
+    session: AsyncSession, user_id: int, offset: int, limit: int
+) -> tuple[list[Meal], int]:
+    total = await session.scalar(
+        select(func.count()).select_from(Meal).where(Meal.user_id == user_id)
     )
-    return list(result)
+    result = await session.scalars(
+        select(Meal)
+        .where(Meal.user_id == user_id)
+        .order_by(Meal.created_at.desc(), Meal.id.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    return list(result), total
 
 
-async def recent_llm(session: AsyncSession, user_id: int, limit: int) -> list[LlmUsage]:
+async def llm_page(
+    session: AsyncSession, user_id: int, offset: int, limit: int
+) -> tuple[list[LlmUsage], int]:
+    total = await session.scalar(
+        select(func.count()).select_from(LlmUsage).where(LlmUsage.user_id == user_id)
+    )
     result = await session.scalars(
         select(LlmUsage)
         .where(LlmUsage.user_id == user_id)
-        .order_by(LlmUsage.created_at.desc())
+        .order_by(LlmUsage.created_at.desc(), LlmUsage.id.desc())
+        .offset(offset)
         .limit(limit)
     )
-    return list(result)
+    return list(result), total
 
 
 async def llm_totals(session: AsyncSession, user_id: int) -> tuple[int, int, float]:

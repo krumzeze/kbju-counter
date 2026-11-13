@@ -15,6 +15,22 @@ export const useUsers = (query: UserQuery) =>
 export const useUser = (id: number) =>
   useQuery({ queryKey: ["admin", "user", id], queryFn: () => adminApi.user(id) });
 
+export const USER_PAGE = 10;
+
+export const useUserMeals = (id: number, offset: number) =>
+  useQuery({
+    queryKey: ["admin", "user", id, "meals", offset],
+    queryFn: () => adminApi.userMeals(id, offset, USER_PAGE),
+    placeholderData: keepPreviousData,
+  });
+
+export const useUserLlm = (id: number, offset: number) =>
+  useQuery({
+    queryKey: ["admin", "user", id, "llm", offset],
+    queryFn: () => adminApi.userLlm(id, offset, USER_PAGE),
+    placeholderData: keepPreviousData,
+  });
+
 export function useUserAction<T>(id: number, action: (arg: T) => Promise<UserDetail>) {
   const client = useQueryClient();
   return useMutation({

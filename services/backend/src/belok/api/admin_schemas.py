@@ -137,10 +137,18 @@ class UserDetailOut(UserRowOut):
     invited_paid: int
     referral_days: int
     activity: list[ActivityDayOut]
-    meals: list[MealOut]
-    llm: list[LlmCallOut]
     redemptions: list[RedemptionOut]
     actions: list[ActionOut]
+
+
+class MealPageOut(BaseModel):
+    items: list[MealOut]
+    total: int
+
+
+class LlmPageOut(BaseModel):
+    items: list[LlmCallOut]
+    total: int
 
 
 class UserPatchIn(BaseModel):
