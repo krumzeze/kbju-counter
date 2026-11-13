@@ -281,17 +281,25 @@ async def send_recipe(
 
 async def send_meal(
     bot: Bot, session: AsyncSession, user: User, meal: Meal, caption: str, webapp_url: str | None
-) -> bool:
-    """Send a recognized meal as an editable widget; False when the caller should send text."""
+) -> Message | None:
+    """Send a recognized meal as an editable widget; None when the caller should send text."""
     if len(meal.items) > MAX_ITEMS or not await enabled(session):
-        return False
+        return None
     try:
         state = await meal_state(session, user, meal)
-        await send(bot, user, "meal", state, caption, app_markup(user, webapp_url))
+        return await send(bot, user, "meal", state, caption, app_markup(user, webapp_url))
     except (TelegramBadRequest, ValueError):
         log.warning("meal widget for %s failed", user.id, exc_info=True)
-        return False
-    return True
+        return None
+
+
+async def update_meal_widget(
+    bot: Bot, session: AsyncSession, user: User, meal: Meal, message_id: int
+) -> None:
+    if len(meal.items) > MAX_ITEMS:
+        return
+    with suppress(TelegramAPIError, ValueError):
+        await _edit(bot, user.id, message_id, await meal_state(session, user, meal))
 
 
 async def send_day_card(

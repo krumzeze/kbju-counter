@@ -28,6 +28,12 @@ export interface Meal {
   items: MealItem[];
   totals: Macros;
   photo_url: string | null;
+  question: MealQuestion | null;
+}
+
+export interface MealQuestion {
+  text: string;
+  options: string[];
 }
 
 export interface ManualMealInput {

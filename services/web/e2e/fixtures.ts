@@ -121,6 +121,7 @@ const meal: Meal = {
   ],
   totals: { kcal: 229, protein: 20, fat: 15, carbs: 4 },
   photo_url: null,
+  question: { text: "Сколько масла было на сковороде?", options: ["Без масла", "1 ложка", "2 ложки"] },
 };
 
 const set = (id: number, workout_id: number, weight_kg: number, reps: number) => ({

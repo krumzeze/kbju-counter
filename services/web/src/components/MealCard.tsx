@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, errorMessage } from "../api/client";
-import type { Meal, MealItem } from "../api/types";
+import type { Meal, MealItem, MealQuestion } from "../api/types";
 import { round } from "../lib/format";
 import { locale, tr } from "../lib/i18n";
 import { useInvalidate } from "../lib/queries";
@@ -64,6 +64,9 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
             </span>
           </span>
         </span>
+        {meal.question && (
+          <span className="meal-question-dot" aria-label={tr("Есть вопрос", "Has a question")} />
+        )}
         <span className="meal-chevron">
           <Icon name="chevron" />
         </span>
@@ -72,6 +75,7 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
       {photoOk && meal.photo_url && (
         <img className="meal-photo" src={meal.photo_url} alt={meal.title} loading="lazy" />
       )}
+      {meal.question && <QuestionCard meal={meal} question={meal.question} onChange={updated} />}
       <ul className="meal-items">
         {meal.items.map((item) => (
           <ItemRow
@@ -117,6 +121,66 @@ export function MealCard({ meal, defaultOpen = false, onChange, onDelete }: Prop
         </button>
       </div>
     </details>
+  );
+}
+
+function QuestionCard({
+  meal,
+  question,
+  onChange,
+}: {
+  meal: Meal;
+  question: MealQuestion;
+  onChange: (meal: Meal) => Promise<void>;
+}) {
+  const [text, setText] = useState("");
+  const answer = useMutation({
+    mutationFn: (value: string) => api.answerMeal(meal.id, value),
+    onSuccess: onChange,
+  });
+  const dismiss = useMutation({
+    mutationFn: () => api.dismissQuestion(meal.id),
+    onSuccess: onChange,
+  });
+  const busy = answer.isPending || dismiss.isPending;
+  const error = answer.error ?? dismiss.error;
+  return (
+    <div className="meal-question" role="group" aria-label={tr("Уточняющий вопрос", "Clarifying question")}>
+      <p className="meal-question-text">
+        <Icon name="sparkle" size={18} />
+        {question.text}
+      </p>
+      <div className="chips">
+        {question.options.map((option) => (
+          <button key={option} className="chip" disabled={busy} onClick={() => answer.mutate(option)}>
+            {option}
+          </button>
+        ))}
+      </div>
+      <form
+        className="meal-refine"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (text.trim()) answer.mutate(text.trim());
+        }}
+      >
+        <input
+          className="input"
+          maxLength={200}
+          placeholder={tr("Или ответь своими словами", "Or answer in your own words")}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          aria-label={tr("Свой ответ", "Your answer")}
+        />
+        <button className="btn btn-primary small" disabled={busy || !text.trim()}>
+          {answer.isPending ? tr("Пересчитываю…", "Updating…") : tr("Ответить", "Answer")}
+        </button>
+      </form>
+      <button className="btn-ghost small" disabled={busy} onClick={() => dismiss.mutate()}>
+        {tr("Всё верно, не уточнять", "Looks right, skip")}
+      </button>
+      {error && <p className="error small">{errorMessage(error)}</p>}
+    </div>
   );
 }
 

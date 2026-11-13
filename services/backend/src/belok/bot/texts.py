@@ -134,6 +134,24 @@ STRINGS: dict[str, dict[Language, str]] = {
         RU: "Поправить порцию можно в приложении.",
         EN: "You can adjust the portion in the app.",
     },
+    "clarify_ask": {
+        RU: "🤔 {question}\n\n<i>Выбери вариант или ответь на это сообщение своими словами.</i>",
+        EN: "🤔 {question}\n\n<i>Pick an option or reply to this message in your own words.</i>",
+    },
+    "clarify_skip": {RU: "Всё верно, не уточнять", EN: "Looks right, skip"},
+    "clarify_done": {
+        RU: "✅ {answer}\n<b>{title}</b>: {kcal:.0f} ккал · Б {p:.0f} · Ж {f:.0f} · У {c:.0f}",
+        EN: "✅ {answer}\n<b>{title}</b>: {kcal:.0f} kcal · P {p:.0f} · F {f:.0f} · C {c:.0f}",
+    },
+    "clarify_skipped": {
+        RU: "Оставил оценку как есть.",
+        EN: "Kept the estimate as it is.",
+    },
+    "clarify_gone": {
+        RU: "Этот вопрос уже закрыт.",
+        EN: "This question is already closed.",
+    },
+    "clarify_thinking": {RU: "Пересчитываю…", EN: "Updating…"},
     "voice_widget_caption": {
         RU: "🎙 <i>«{heard}»</i>\n<b>{title}</b>: {kcal:.0f} ккал. "
         "Граммы можно поправить прямо здесь.",

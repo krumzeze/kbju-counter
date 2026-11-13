@@ -107,6 +107,8 @@ class Meal(Base):
     recipe_id: Mapped[int | None] = mapped_column(
         ForeignKey("recipes.id", ondelete="SET NULL"), index=True
     )
+    # Open clarifying question from the analyzer: {"text": str, "options": [str]}.
+    question: Mapped[dict | None] = mapped_column(JSON)
 
     items: Mapped[list["MealItem"]] = relationship(
         back_populates="meal", cascade="all, delete-orphan", lazy="selectin"

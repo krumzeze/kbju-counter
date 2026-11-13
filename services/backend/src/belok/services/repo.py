@@ -29,6 +29,9 @@ async def upsert_steps(session: AsyncSession, user_id: int, day: date, steps: in
 
 
 MAX_WATER_ML = 10_000
+CLARIFY_KIND = "clarify"
+# LLM calls that don't count toward the daily analysis limit.
+FREE_KINDS = (CLARIFY_KIND,)
 
 
 async def add_water(session: AsyncSession, user_id: int, day: date, delta_ml: int) -> int:
@@ -77,7 +80,12 @@ async def analyses_on(session: AsyncSession, user_id: int, day: date) -> int:
     return await session.scalar(
         select(func.count())
         .select_from(LlmUsage)
-        .where(LlmUsage.user_id == user_id, LlmUsage.day == day, LlmUsage.ok.is_(True))
+        .where(
+            LlmUsage.user_id == user_id,
+            LlmUsage.day == day,
+            LlmUsage.ok.is_(True),
+            LlmUsage.kind.not_in(FREE_KINDS),
+        )
     )
 
 

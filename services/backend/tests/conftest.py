@@ -13,7 +13,7 @@ from belok.api.app import create_app
 from belok.config import Settings
 from belok.db.models import Base
 from belok.i18n import Language
-from belok.llm.analyzer import AnalysisResult, FoodAnalysis, FoodItem
+from belok.llm.analyzer import AnalysisResult, Clarification, FoodAnalysis, FoodItem
 from belok.services import features
 from belok.services.photos import PhotoStore
 from belok.services.products import ProductInfo
@@ -92,6 +92,7 @@ class FakeAnalyzer:
 
     def __init__(self) -> None:
         self.items = [FoodItem(name="Гречка", grams=200, kcal=220, protein=8, fat=2, carbs=42)]
+        self.question: Clarification | None = None
 
     async def from_photo(
         self, image: bytes, media_type: str, caption: str | None, language: Language
@@ -111,9 +112,16 @@ class FakeAnalyzer:
         self.refined = (previous, correction)
         return self._result()
 
+    async def clarify(
+        self, previous: FoodAnalysis, question: str, answer: str, language: Language
+    ) -> AnalysisResult:
+        self.clarified = (previous, question, answer)
+        self.question = None
+        return self._result()
+
     def _result(self) -> AnalysisResult:
         return AnalysisResult(
-            analysis=FoodAnalysis(title="Обед", items=self.items),
+            analysis=FoodAnalysis(title="Обед", items=self.items, question=self.question),
             model=self.model,
             prompt_tokens=1000,
             completion_tokens=200,

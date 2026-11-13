@@ -146,6 +146,8 @@ export const api = {
   },
   scaleMeal: (id: number, scale: number) => request<Meal>("PATCH", `/meals/${id}`, { scale }),
   refineMeal: (id: number, text: string) => request<Meal>("POST", `/meals/${id}/refine`, { text }),
+  answerMeal: (id: number, text: string) => request<Meal>("POST", `/meals/${id}/answer`, { text }),
+  dismissQuestion: (id: number) => request<Meal>("DELETE", `/meals/${id}/question`),
   deleteMeal: (id: number) => request<void>("DELETE", `/meals/${id}`),
   mealManual: (body: ManualMealInput) => request<Meal>("POST", "/meals/manual", body),
   barcode: (code: string) => request<Barcode>("GET", `/barcode/${code}`),

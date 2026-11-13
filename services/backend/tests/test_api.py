@@ -6,7 +6,7 @@ from PIL import Image
 from sqlalchemy import update
 
 from belok.db.models import User
-from belok.llm.analyzer import FoodItem
+from belok.llm.analyzer import Clarification, FoodItem
 from belok.timeutil import utcnow
 from tests.conftest import PROFILE, login, onboarded
 from tests.telegram_signing import sign_widget
@@ -135,6 +135,44 @@ async def test_refine_meal_replaces_items(client, analyzer):
     other = await onboarded(client, 1002)
     r = await client.post(f"/api/meals/{meal['id']}/refine", json={"text": "рис"}, headers=other)
     assert r.status_code == 404
+
+
+async def test_clarifying_question_answered_for_free(client, settings, analyzer):
+    settings.free_daily_analyses = settings.daily_analysis_limit = 1
+    headers = await onboarded(client)
+    analyzer.question = Clarification(
+        text="Курица или индейка?", options=["Курица", "Индейка", " "]
+    )
+    meal = (await client.post("/api/meals/text", json={"text": "обед"}, headers=headers)).json()
+    assert meal["question"] == {"text": "Курица или индейка?", "options": ["Курица", "Индейка"]}
+
+    analyzer.items = [FoodItem(name="Индейка", grams=150, kcal=200, protein=30, fat=8, carbs=0)]
+    url = f"/api/meals/{meal['id']}/answer"
+    r = await client.post(url, json={"text": "Индейка"}, headers=headers)
+    assert r.status_code == 200
+    assert r.json()["question"] is None
+    assert [i["name"] for i in r.json()["items"]] == ["Индейка"]
+    _, question, answer = analyzer.clarified
+    assert (question, answer) == ("Курица или индейка?", "Индейка")
+
+    again = await client.post(url, json={"text": "Курица"}, headers=headers)
+    assert again.status_code == 409
+    me = (await client.get("/api/me", headers=headers)).json()
+    assert me["analyses_left"] == 0
+
+
+async def test_question_needs_two_options_and_can_be_dismissed(client, analyzer):
+    headers = await onboarded(client)
+    analyzer.question = Clarification(text="Сколько масла?", options=["Немного"])
+    meal = (await client.post("/api/meals/text", json={"text": "обед"}, headers=headers)).json()
+    assert meal["question"] is None
+
+    analyzer.question = Clarification(text="Сколько масла?", options=["Без масла", "1 ложка"])
+    meal = (await client.post("/api/meals/text", json={"text": "обед"}, headers=headers)).json()
+    r = await client.delete(f"/api/meals/{meal['id']}/question", headers=headers)
+    assert r.json()["question"] is None
+    day = (await client.get("/api/day", headers=headers)).json()
+    assert all(m["question"] is None for m in day["meals"])
 
 
 async def test_manual_meal_history_and_repeat(client):

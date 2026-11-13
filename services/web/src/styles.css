@@ -1151,6 +1151,50 @@ button:disabled {
   color: rgb(var(--ink-rgb) / 55%);
 }
 
+.meal-question {
+  display: grid;
+  gap: 10px;
+  margin: 10px 16px 0;
+  padding: 12px;
+  border-radius: var(--radius-s);
+  background: var(--surface-2);
+}
+
+.meal-question-text {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  font-weight: 600;
+}
+
+.meal-question-text svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent-ink);
+}
+
+.meal-question .chip {
+  cursor: pointer;
+  color: var(--text);
+}
+
+.meal-question .meal-refine {
+  margin: 0;
+}
+
+.meal-question .btn-ghost {
+  justify-self: start;
+}
+
+.meal-question-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+}
+
 .meal-refine {
   display: grid;
   grid-template-columns: 1fr auto;
