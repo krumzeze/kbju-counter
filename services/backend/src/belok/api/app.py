@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from belok.api.deps import token_user_id
 from belok.api.routes import (
     admin,
+    assistant,
     auth,
     client_errors,
     me,
@@ -24,6 +25,7 @@ from belok.api.routes import (
 )
 from belok.config import Settings
 from belok.llm.analyzer import FoodAnalyzer
+from belok.llm.assistant import Assistant
 from belok.llm.speech import SpeechToText
 from belok.services import errors
 from belok.services.photos import PhotoStore
@@ -38,6 +40,9 @@ async def lifespan(app: FastAPI):
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     app.state.analyzer = FoodAnalyzer(settings.llm_api_key.get_secret_value(), settings.llm_model)
+    app.state.assistant = Assistant(
+        settings.llm_api_key.get_secret_value(), settings.assistant_model, settings.review_model
+    )
     app.state.food_db = FoodDatabase()
     app.state.stt = SpeechToText.from_settings(settings)
     app.state.bot = Bot(
@@ -66,6 +71,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.photos = PhotoStore.from_settings(settings)
     modules = (
         admin,
+        assistant,
         auth,
         client_errors,
         me,

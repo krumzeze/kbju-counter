@@ -14,6 +14,8 @@ const SCREENS = [
   "/templates/new",
   "/templates/1",
   "/stats",
+  "/assistant",
+  "/assistant/1",
   "/recipes",
   "/recipes/1",
   "/recipes/1?add=1",

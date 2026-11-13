@@ -512,7 +512,15 @@ export interface Plan {
   currency: string | null;
 }
 
-export type FeatureKey = "photo" | "text" | "voice" | "barcode" | "reminders" | "payments" | "widgets";
+export type FeatureKey =
+  | "photo"
+  | "text"
+  | "voice"
+  | "barcode"
+  | "reminders"
+  | "payments"
+  | "widgets"
+  | "assistant";
 
 export interface FeatureFlag {
   key: FeatureKey;
@@ -623,4 +631,35 @@ export interface RecipeDiaryInput {
   grams?: number;
   cooked_grams?: number;
   items: number[];
+}
+
+export interface AiMessage {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  data: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AiChat {
+  id: number;
+  kind: "chat" | "review";
+  title: string;
+  updated_at: string;
+}
+
+export interface AiChatDetail extends AiChat {
+  messages: AiMessage[];
+}
+
+export interface AiChatList {
+  chats: AiChat[];
+  messages_left: number;
+  daily_messages: number;
+  has_access: boolean;
+}
+
+export interface AiReply {
+  chat: AiChatDetail;
+  messages_left: number;
 }

@@ -1,4 +1,7 @@
 import type {
+  AiChatDetail,
+  AiChatList,
+  AiReply,
   AdminRecipe,
   Recipe,
   RecipeCard,
@@ -135,6 +138,12 @@ export const api = {
   setLanguage: (language: Lang) => request<Me>("PUT", "/me/language", { language }),
   updateSettings: (body: Settings) => request<Me>("PATCH", "/me/settings", body),
   sendDayCard: () => request<void>("POST", "/me/day-card"),
+
+  aiChats: () => request<AiChatList>("GET", "/assistant/chats"),
+  aiChat: (id: number) => request<AiChatDetail>("GET", `/assistant/chats/${id}`),
+  aiStart: (text: string) => request<AiReply>("POST", "/assistant/chats", { text }),
+  aiSend: (id: number, text: string) => request<AiReply>("POST", `/assistant/chats/${id}/messages`, { text }),
+  aiDelete: (id: number) => request<void>("DELETE", `/assistant/chats/${id}`),
 
   day: (day?: string) => request<Day>("GET", day ? `/day?day=${day}` : "/day"),
   mealFromText: (text: string) => request<Meal>("POST", "/meals/text", { text }),
@@ -338,6 +347,17 @@ const messages = (): Record<string, string> => ({
   invoice_failed: tr("Не удалось создать счёт, попробуй ещё раз", "Couldn't create the invoice, please try again"),
   too_many_messages: tr("Слишком много сообщений за сутки, подожди немного", "Too many messages today, please wait a little"),
   empty_message: tr("Напиши сообщение", "Write a message"),
+  no_question: tr("Этот вопрос уже закрыт", "This question is already closed"),
+  too_fast: tr("Слишком быстро, подожди минутку", "Too fast, wait a minute"),
+  assistant_busy: tr(
+    "Ассистент сейчас перегружен, попробуй позже",
+    "The assistant is overloaded right now, try later",
+  ),
+  assistant_failed: tr(
+    "Ассистент не ответил, попробуй ещё раз",
+    "The assistant didn't answer, please try again",
+  ),
+  chat_not_found: tr("Чат не найден", "Chat not found"),
   plan_not_found: tr("Такого тарифа больше нет", "This plan is no longer available"),
   payments_disabled: tr("Оплата временно недоступна", "Payments are temporarily unavailable"),
   analysis_failed: tr(

@@ -6,6 +6,7 @@ from anthropic import AnthropicError, AsyncAnthropic
 from pydantic import BaseModel, Field, ValidationError
 
 from belok.i18n import Language
+from belok.llm import pricing
 
 SYSTEM_PROMPT = """You estimate the nutritional content of meals.
 Identify each distinct food item. Estimate its portion weight in grams from visual cues \
@@ -23,9 +24,6 @@ REFINE_NOTE = "Return the full corrected meal, keeping items the correction does
 Do not ask a question."
 
 LANGUAGE_NAMES = {Language.RU: "Russian", Language.EN: "English"}
-
-# USD per million input and output tokens.
-PRICES = {"claude-haiku-5-5": (0.10, 0.50)}
 
 
 class FoodItem(BaseModel):
@@ -142,16 +140,9 @@ class FoodAnalyzer:
             model=response.model,
             prompt_tokens=usage.input_tokens,
             completion_tokens=usage.output_tokens,
-            cost_usd=_cost(response.model, usage.input_tokens, usage.output_tokens),
+            cost_usd=pricing.cost(response.model, usage),
             latency_ms=_elapsed_ms(started),
         )
-
-
-def _cost(model: str, input_tokens: int, output_tokens: int) -> float | None:
-    prices = PRICES.get(model)
-    if prices is None:
-        return None
-    return (input_tokens * prices[0] + output_tokens * prices[1]) / 1_000_000
 
 
 def _elapsed_ms(started: float) -> int:

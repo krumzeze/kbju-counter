@@ -387,6 +387,41 @@ class WorkoutTemplate(Base):
     items: Mapped[list] = mapped_column(JSON, default=list)
 
 
+class AiChat(Base):
+    __tablename__ = "ai_chats"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    # "chat" for the user's own conversations, "review" for the weekly review.
+    kind: Mapped[str] = mapped_column(String(8), default="chat")
+    title: Mapped[str] = mapped_column(String(120))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    messages: Mapped[list["AiMessage"]] = relationship(
+        back_populates="chat",
+        cascade="all, delete-orphan",
+        order_by="AiMessage.id",
+        lazy="selectin",
+    )
+
+    __table_args__ = (Index("ix_ai_chats_user_id_updated_at", "user_id", "updated_at"),)
+
+
+class AiMessage(Base):
+    __tablename__ = "ai_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[int] = mapped_column(ForeignKey("ai_chats.id", ondelete="CASCADE"), index=True)
+    role: Mapped[str] = mapped_column(String(9))
+    text: Mapped[str] = mapped_column(Text)
+    # Structured extras, e.g. dishes with macros that can be added to the diary.
+    data: Mapped[dict | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    chat: Mapped[AiChat] = relationship(back_populates="messages")
+
+
 class LlmUsage(Base):
     __tablename__ = "llm_usage"
 

@@ -15,6 +15,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   reminders: "Напоминания",
   payments: "Оплата",
   widgets: "Виджеты в чате",
+  assistant: "AI-ассистент",
 };
 
 const FEATURE_HINTS: Record<FeatureKey, string> = {
@@ -25,6 +26,7 @@ const FEATURE_HINTS: Record<FeatureKey, string> = {
   reminders: "рассылка напоминаний ботом",
   payments: "тарифы в профиле; оплаты, которые уже прошли, всё равно зачислятся",
   widgets: "карточка дня, правка граммов и напоминания виджетами; без них бот шлёт текст",
+  assistant: "чат с AI и разбор недели в Premium, запросы к Claude",
 };
 
 const DEPENDS_ON: Record<FeatureKey, string[]> = {
@@ -35,6 +37,7 @@ const DEPENDS_ON: Record<FeatureKey, string[]> = {
   reminders: ["worker:reminders", "telegram"],
   payments: ["tribute"],
   widgets: ["telegram"],
+  assistant: ["anthropic"],
 };
 
 const CHECK_LABELS: Record<string, string> = {

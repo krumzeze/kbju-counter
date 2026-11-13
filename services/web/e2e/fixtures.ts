@@ -1,4 +1,6 @@
 import type {
+  AiChatDetail,
+  AiChatList,
   AdminAction,
   AdminRecipe,
   Recipe,
@@ -80,7 +82,7 @@ export const me: Me = {
     formula_tdee: 2400,
   },
   base_target: target,
-  features: { photo: true, text: true, voice: true, barcode: true, reminders: true, payments: true, widgets: true },
+  features: { photo: true, text: true, voice: true, barcode: true, reminders: true, payments: true, widgets: true, assistant: true },
   analyses_left: 3,
   free_history_days: 7,
 };
@@ -508,3 +510,28 @@ export const appErrors: AppError[] = [
     last_seen: at(),
   },
 ];
+
+export const aiChats: AiChatList = {
+  chats: [
+    { id: 1, kind: "chat", title: "Что съесть на ужин, чтобы добрать белок?", updated_at: at() },
+    { id: 2, kind: "review", title: "Разбор недели", updated_at: at() },
+  ],
+  messages_left: 27,
+  daily_messages: 30,
+  has_access: true,
+};
+
+export const aiChat: AiChatDetail = {
+  ...aiChats.chats[0],
+  messages: [
+    { id: 1, role: "user", text: "Что съесть на ужин, чтобы добрать белок?", data: null, created_at: at() },
+    {
+      id: 2,
+      role: "assistant",
+      text:
+        "До цели осталось **62 г белка** и 780 ккал. Варианты:\n- куриная грудка 200 г с булгуром 60 г: 48 г белка, 540 ккал\n- творог 5% 250 г с ягодами: 40 г белка, 330 ккал\nВторой вариант оставит место на перекус.",
+      data: null,
+      created_at: at(),
+    },
+  ],
+};

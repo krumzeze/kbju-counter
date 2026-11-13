@@ -14,6 +14,7 @@ from belok.config import Settings
 from belok.db.models import Base
 from belok.i18n import Language
 from belok.llm.analyzer import AnalysisResult, Clarification, FoodAnalysis, FoodItem
+from belok.llm.assistant import AssistantError, Reply
 from belok.services import features
 from belok.services.photos import PhotoStore
 from belok.services.products import ProductInfo
@@ -130,6 +131,26 @@ class FakeAnalyzer:
         )
 
 
+class FakeAssistant:
+    chat_model = "claude-haiku-5-5"
+    review_model = "claude-sonnet-5-5"
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, list[dict]]] = []
+        self.fail = False
+        self.cost = 0.001
+
+    async def chat(self, snapshot: str, history: list[dict], language: Language, max_tokens: int):
+        if self.fail:
+            raise AssistantError(self.chat_model, 5)
+        self.calls.append((snapshot, history))
+        return Reply(f"ответ {len(self.calls)}", self.chat_model, 1500, 100, self.cost, 5)
+
+    async def review(self, snapshot: str, language: Language):
+        self.calls.append((snapshot, []))
+        return Reply("Разбор недели", self.review_model, 1500, 150, self.cost, 5)
+
+
 class FakeFoodDb:
     def __init__(self) -> None:
         self.products: dict[str, ProductInfo] = {}
@@ -203,13 +224,23 @@ def analyzer() -> FakeAnalyzer:
 
 
 @pytest.fixture
+def assistant() -> FakeAssistant:
+    return FakeAssistant()
+
+
+@pytest.fixture
 def bot() -> FakeBot:
     return FakeBot()
 
 
 @pytest.fixture
 async def client(
-    settings: Settings, analyzer: FakeAnalyzer, bot: FakeBot, food_db: FakeFoodDb, s3: FakeS3
+    settings: Settings,
+    analyzer: FakeAnalyzer,
+    assistant: FakeAssistant,
+    bot: FakeBot,
+    food_db: FakeFoodDb,
+    s3: FakeS3,
 ) -> AsyncIterator[httpx.AsyncClient]:
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
@@ -221,6 +252,7 @@ async def client(
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
     app.state.analyzer = analyzer
+    app.state.assistant = assistant
     app.state.food_db = food_db
     app.state.stt = None
     app.state.bot = bot

@@ -422,7 +422,7 @@ async def comparable_workout(
             best_id, best_overlap = workout_id, overlap
     if best_id is None:
         return None
-    return (await _summaries(session, [await session.get(Workout, best_id)]))[0]
+    return (await summarize(session, [await session.get(Workout, best_id)]))[0]
 
 
 @dataclass(slots=True)
@@ -440,12 +440,12 @@ async def recent_workouts(
     query = select(Workout).where(Workout.user_id == user_id)
     if before_id:
         query = query.where(Workout.id < before_id)
-    return await _summaries(
+    return await summarize(
         session, list(await session.scalars(query.order_by(Workout.id.desc()).limit(limit)))
     )
 
 
-async def _summaries(session: AsyncSession, workouts: list[Workout]) -> list[WorkoutSummary]:
+async def summarize(session: AsyncSession, workouts: list[Workout]) -> list[WorkoutSummary]:
     if not workouts:
         return []
     stats = await session.execute(
