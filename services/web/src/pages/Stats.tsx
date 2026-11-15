@@ -42,7 +42,7 @@ export function Stats() {
     <div className="page stats-page">
       <header className="stats-head">
         <h1>{tr("Статистика", "Stats")}</h1>
-        <div className="chips period-chips" role="group" aria-label={tr("Период", "Period")}>
+        <div className="chips period-chips" data-tour="stats-period" role="group" aria-label={tr("Период", "Period")}>
           {PERIODS.map((p) => (
             <button key={p} className="chip" aria-pressed={period === p} onClick={() => setPeriod(p)}>
               {p} {tr("дн", "d")}
@@ -88,7 +88,7 @@ function WeightSection({
   return (
     <section className="stats-section order-weight">
       <h2>{tr("Вес", "Weight")}</h2>
-      <div className="kpis">
+      <div className="kpis" data-tour="stats-weight">
         <WeightNowCard last={last?.weight_kg ?? null} />
         <Kpi
           label={tr("За период", "This period")}

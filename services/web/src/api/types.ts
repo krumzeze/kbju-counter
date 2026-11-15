@@ -118,6 +118,7 @@ export interface Me {
   adaptive: Adaptive | null;
   base_target: Macros | null;
   features: Record<FeatureKey, boolean>;
+  tour_seen: string[];
   analyses_left: number;
   free_history_days: number;
 }

@@ -105,7 +105,7 @@ export function Assistant() {
   return (
     <div className="page assistant">
       <header className="assistant-head">
-        <button className="icon-btn" onClick={() => setPanel(true)} aria-label={tr("Все чаты", "All chats")}>
+        <button className="icon-btn" data-tour="assistant-chats" onClick={() => setPanel(true)} aria-label={tr("Все чаты", "All chats")}>
           <Icon name="list" size={20} />
         </button>
         <div className="assistant-title">
@@ -181,7 +181,7 @@ export function Assistant() {
             submit(text);
           }}
         >
-          <div className="assistant-attach">
+          <div className="assistant-attach" data-tour="assistant-photo">
             <button
               type="button"
               className="icon-btn"
@@ -218,6 +218,7 @@ export function Assistant() {
           </div>
           <textarea
             className="input"
+            data-tour="assistant-input"
             rows={1}
             maxLength={MAX_CHARS}
             value={text}

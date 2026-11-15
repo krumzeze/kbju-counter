@@ -44,6 +44,7 @@ export function Workouts() {
       ) : (
         <button
           className="btn btn-primary btn-block"
+          data-tour="workout-start"
           disabled={start.isPending}
           onClick={() => start.mutate({})}
         >
@@ -53,7 +54,7 @@ export function Workouts() {
       )}
       {start.isError && <p className="error">{errorMessage(start.error)}</p>}
 
-      <div className="nav-cards">
+      <div className="nav-cards" data-tour="workout-links">
         <Link to="/catalog" className="card nav-card">
           <span className="nav-card-icon" aria-hidden>
             <Icon name="list" />
@@ -93,7 +94,7 @@ export function Workouts() {
 
 function ActiveCard({ workout }: { workout: Workout }) {
   return (
-    <Link to={`/workouts/${workout.id}`} className="card active-workout">
+    <Link to={`/workouts/${workout.id}`} className="card active-workout" data-tour="workout-start">
       <span className="pulse" aria-hidden />
       <div>
         <strong>{workout.title || tr("Тренировка идёт", "Workout in progress")}</strong>
@@ -124,7 +125,7 @@ function WeekSummary() {
 function Templates({ disabled, onStart }: { disabled: boolean; onStart: (id: number) => void }) {
   const { data } = useTemplates();
   return (
-    <section>
+    <section data-tour="templates">
       <div className="card-head">
         <h2>{tr("Мои программы", "My routines")}</h2>
         <Link to="/templates/new" className="btn-ghost">

@@ -87,6 +87,7 @@ class User(Base):
         Boolean, default=False, server_default=text("false")
     )
     day_card_message_id: Mapped[int | None] = mapped_column(BigInteger)
+    tour_seen: Mapped[list] = mapped_column(JSON, default=list, server_default=text("'[]'"))
 
     @property
     def profile_complete(self) -> bool:

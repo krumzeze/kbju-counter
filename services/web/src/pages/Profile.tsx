@@ -175,6 +175,7 @@ export function Profile({ me, onboarding = false }: { me: Me; onboarding?: boole
           <ThemePicker />
           <HomeScreenLink />
           <DayCardLink />
+          <ReplayTour />
           <h2 className="profile-section">{tr("Подписка и бонусы", "Subscription and rewards")}</h2>
           <Link to="/premium" className="card premium-note">
             <span>{tr("Пригласить друзей или ввести промокод", "Invite friends or redeem a promo code")}</span>
@@ -285,3 +286,21 @@ function LanguageCard({ me }: { me: Me }) {
   );
 }
 
+
+function ReplayTour() {
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const reset = useMutation({
+    mutationFn: api.resetTour,
+    onSuccess: (me) => {
+      client.setQueryData(["me"], me);
+      navigate("/");
+    },
+  });
+  return (
+    <button type="button" className="card premium-note home-screen-link" disabled={reset.isPending} onClick={() => reset.mutate()}>
+      <span>{tr("Пройти обучение заново", "Replay the tutorial")}</span>
+      <Icon name="chevron" />
+    </button>
+  );
+}

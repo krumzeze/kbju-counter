@@ -142,6 +142,8 @@ export const api = {
   saveProfile: (body: ProfileInput) => request<Me>("PUT", "/me/profile", body),
   setLanguage: (language: Lang) => request<Me>("PUT", "/me/language", { language }),
   updateSettings: (body: Settings) => request<Me>("PATCH", "/me/settings", body),
+  markTourSeen: (ids: string[]) => request<Me>("POST", "/me/tour", { ids }),
+  resetTour: () => request<Me>("DELETE", "/me/tour"),
   sendDayCard: () => request<void>("POST", "/me/day-card"),
 
   aiChats: () => request<AiChatList>("GET", "/assistant/chats"),

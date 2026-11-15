@@ -99,7 +99,7 @@ export function AddMeal({ me }: { me: Me }) {
   return (
     <div className="page">
       <h1>{tr("Что съел?", "What did you eat?")}</h1>
-      <div className={available.length > 4 ? "segmented compact" : "segmented"} role="tablist">
+      <div className={available.length > 4 ? "segmented compact" : "segmented"} role="tablist" data-tour="add-modes">
         {available.map((m) => (
           <button key={m.value} role="tab" aria-selected={mode === m.value} onClick={() => setMode(m.value)}>
             {m.label}
@@ -115,7 +115,7 @@ export function AddMeal({ me }: { me: Me }) {
         <RecipeQuickList />
       ) : mode === "photo" ? (
         <>
-          <button className="dropzone" onClick={() => fileInput.current?.click()}>
+          <button className="dropzone" data-tour="add-photo" onClick={() => fileInput.current?.click()}>
             {preview ? (
               <img src={preview} alt={tr("Фото блюда", "Meal photo")} />
             ) : (
