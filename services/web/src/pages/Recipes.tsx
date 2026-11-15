@@ -55,7 +55,7 @@ export function Recipes() {
           <p className="eyebrow">{tr("КБЖУ на порцию уже посчитаны", "Macros per serving included")}</p>
           <h1>{tr("Рецепты", "Recipes")}</h1>
         </div>
-        <Link to="/recipes/new" className="icon-btn dark" aria-label={tr("Новый рецепт", "New recipe")}>
+        <Link to="/recipes/new" className="icon-btn dark" data-tour="recipe-new" aria-label={tr("Новый рецепт", "New recipe")}>
           <Icon name="plus" />
         </Link>
       </header>
@@ -83,7 +83,7 @@ export function Recipes() {
         />
       </label>
 
-      <div className="chips" role="group" aria-label={tr("Фильтры", "Filters")}>
+      <div className="chips" role="group" aria-label={tr("Фильтры", "Filters")} data-tour="recipe-filters">
         {filterChips().map((f) => (
           <button
             key={f.value}

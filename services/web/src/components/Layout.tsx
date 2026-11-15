@@ -3,6 +3,7 @@ import { tr } from "../lib/i18n";
 import { isMiniApp, useTelegramBackButton } from "../lib/telegram";
 import { Icon, type IconName } from "./Icon";
 import { Logo } from "./Logo";
+import { TourHost } from "./Tour";
 
 const tabs = (): { to: string; label: string; icon: IconName }[] => [
   { to: "/", label: tr("Главная", "Home"), icon: "home" },
@@ -37,13 +38,14 @@ export function Layout() {
         {inWorkout ? (
           <span />
         ) : (
-          <NavLink to="/add" className="tab-add" aria-label={tr("Добавить еду", "Add food")}>
+          <NavLink to="/add" className="tab-add" data-tour="add" aria-label={tr("Добавить еду", "Add food")}>
             <Icon name="plus" size={26} />
           </NavLink>
         )}
         <Tab {...recipes} />
         <Tab {...stats} />
       </nav>
+      {!inAdmin && <TourHost />}
     </div>
   );
 }

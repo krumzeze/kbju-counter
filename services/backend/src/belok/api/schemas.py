@@ -1,8 +1,8 @@
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 from zoneinfo import ZoneInfo, available_timezones
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 from belok.api.workout_schemas import SetOut
 from belok.db.models import Meal
@@ -125,6 +125,7 @@ class MeOut(BaseModel):
     features: dict[str, bool]
     analyses_left: int
     free_history_days: int
+    tour_seen: list[str]
 
 
 class LanguageIn(BaseModel):
@@ -137,6 +138,13 @@ class SettingsIn(BaseModel):
     remind_meals: bool | None = None
     remind_weight: bool | None = None
     photo_eval_consent: bool | None = None
+
+
+TourId = Annotated[str, StringConstraints(pattern=r"^[a-z0-9-]{1,32}$")]
+
+
+class TourSeenIn(BaseModel):
+    ids: list[TourId] = Field(min_length=1, max_length=20)
 
 
 class PlanOut(BaseModel):

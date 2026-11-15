@@ -328,3 +328,16 @@ async def test_expired_trial_keeps_free_features(client):
         assert r.status_code == 201
     r = await client.post("/api/meals/text", json={"text": "еда"}, headers=headers)
     assert (r.status_code, r.json()["detail"]) == (402, "premium_required")
+
+
+async def test_tour_seen_is_stored_and_reset(client):
+    headers = await onboarded(client)
+    assert (await client.get("/api/me", headers=headers)).json()["tour_seen"] == []
+    for ids in (["home", "home-ai"], ["home", "recipes"]):
+        response = await client.post("/api/me/tour", json={"ids": ids}, headers=headers)
+        assert response.status_code == 200
+    assert response.json()["tour_seen"] == ["home", "home-ai", "recipes"]
+    bad = await client.post("/api/me/tour", json={"ids": ["Bad id!"]}, headers=headers)
+    assert bad.status_code == 422
+    reset = await client.delete("/api/me/tour", headers=headers)
+    assert reset.json()["tour_seen"] == []

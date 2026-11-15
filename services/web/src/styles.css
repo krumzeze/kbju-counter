@@ -5135,3 +5135,78 @@ span.set-check {
 .list.loading {
   opacity: 0.5;
 }
+
+/* Tutorial spotlight */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.tour-hole {
+  position: fixed;
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 100vmax rgb(0 0 0 / 0.62);
+  pointer-events: none;
+  transition:
+    top 0.25s ease,
+    left 0.25s ease,
+    width 0.25s ease,
+    height 0.25s ease;
+}
+
+.tour-card {
+  position: fixed;
+  padding: 18px 18px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.25);
+  animation: tour-in 0.2s ease;
+}
+
+.tour-card h3 {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+.tour-card p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tour-count {
+  margin-bottom: 8px !important;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-hole {
+    transition: none;
+  }
+
+  .tour-card {
+    animation: none;
+  }
+}

@@ -19,6 +19,7 @@ from belok.api.schemas import (
     PromoRedeemOut,
     ReferralOut,
     SettingsIn,
+    TourSeenIn,
     macros_out,
 )
 from belok.config import Settings
@@ -37,6 +38,8 @@ from belok.services.workouts import activity_kcal
 from belok.timeutil import local_today, utcnow
 
 router = APIRouter(tags=["me"])
+
+MAX_TOUR_IDS = 200
 
 
 @router.get("/me")
@@ -93,6 +96,24 @@ async def patch_settings(
         await drop_eval_photos(session, photos, user)
     for field, value in body.model_dump(exclude_none=True).items():
         setattr(user, field, value)
+    await session.commit()
+    return await _me(session, user, settings)
+
+
+@router.post("/me/tour")
+async def post_tour_seen(
+    body: TourSeenIn, user: CurrentUser, session: SessionDep, settings: SettingsDep
+) -> MeOut:
+    seen = list(user.tour_seen or [])
+    seen += [i for i in dict.fromkeys(body.ids) if i not in seen]
+    user.tour_seen = seen[-MAX_TOUR_IDS:]
+    await session.commit()
+    return await _me(session, user, settings)
+
+
+@router.delete("/me/tour")
+async def reset_tour(user: CurrentUser, session: SessionDep, settings: SettingsDep) -> MeOut:
+    user.tour_seen = []
     await session.commit()
     return await _me(session, user, settings)
 
@@ -162,6 +183,7 @@ async def _me(session: AsyncSession, user: User, settings: Settings) -> MeOut:
         features={key.value: on for key, on in (await features.flags(session)).items()},
         analyses_left=await analyses_left(session, user, settings),
         free_history_days=settings.free_history_days,
+        tour_seen=user.tour_seen or [],
     )
 
 

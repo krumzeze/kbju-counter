@@ -35,7 +35,7 @@ export function Today() {
         </div>
         <div className="hello-actions">
           {me?.features.assistant && (
-            <Link to="/assistant" className="icon-btn ai-btn" aria-label={tr("AI-помощник", "AI assistant")}>
+            <Link to="/assistant" className="icon-btn ai-btn" data-tour="assistant" aria-label={tr("AI-помощник", "AI assistant")}>
               <Icon name="sparkle" size={20} />
             </Link>
           )}
@@ -56,7 +56,7 @@ export function Today() {
         <div className="dash">
           <div className="dash-main">
             <Summary data={data} />
-            <Link to="/add" className="btn btn-accent btn-cta today-cta">
+            <Link to="/add" className="btn btn-accent btn-cta today-cta" data-tour="snap">
               <Icon name="camera" size={22} />
               {tr("Сфотографировать еду", "Snap your food")}
             </Link>
@@ -87,7 +87,7 @@ export function Today() {
             </section>
           </div>
 
-          <section className="tiles-section">
+          <section className="tiles-section" data-tour="activity">
             <h2>{tr("Активность", "Activity")}</h2>
             <div className="tiles">
               <WeightTile />
@@ -129,7 +129,7 @@ function DateStrip({ value, onChange }: { value: string; onChange: (day: string)
   const today = todayIso();
   const days = Array.from({ length: 7 }, (_, i) => shiftDay(today, i - 6));
   return (
-    <div className="date-strip" role="group" aria-label={tr("Выбор дня", "Pick a day")}>
+    <div className="date-strip" data-tour="days" role="group" aria-label={tr("Выбор дня", "Pick a day")}>
       {days.map((d) => {
         const date = new Date(`${d}T12:00:00Z`);
         return (
@@ -153,7 +153,7 @@ function Summary({ data }: { data: Day }) {
   const share = target ? eaten / target.kcal : 0;
   const filled = Math.min(SEGMENTS, Math.round(share * SEGMENTS));
   return (
-    <section className={over ? "card hero summary over" : "card hero summary"}>
+    <section className={over ? "card hero summary over" : "card hero summary"} data-tour="summary">
       <div className="summary-head">
         <span className="eyebrow">
           {left === null ? tr("Съедено", "Eaten") : over ? tr("Сверх нормы", "Over target") : tr("Осталось", "Left")}

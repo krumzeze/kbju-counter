@@ -11,7 +11,7 @@ export function RecipeSuggestions({ day }: { day: Day }) {
   const kcal = day.target.kcal - day.eaten.kcal;
   const missing = (key: "protein" | "fat" | "carbs") => Math.max(0, Math.round(day.target![key] - day.eaten[key]));
   return (
-    <section className="recipe-suggestions">
+    <section className="recipe-suggestions" data-tour="suggestions">
       <div className="section-head">
         <h2>{tr("Что приготовить", "What to cook")}</h2>
         <Link to="/recipes" className="link-strong">
