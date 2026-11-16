@@ -37,7 +37,7 @@ async def test_weekly_review_written_once_for_active_users(client, settings, ass
     now = next_monday_morning()
     bot = FakeBot()
     async with client.app.state.sessionmaker() as session:
-        await session.execute(update(User).values(last_seen_at=now))
+        await session.execute(update(User).values(last_seen_at=now, lifetime_access=True))
         await log_days(session, 1001, now.date(), 3)
         await log_days(session, 1002, now.date(), 2)
         await session.commit()
