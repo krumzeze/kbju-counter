@@ -50,24 +50,38 @@ async def weights_between(
     return [(d, w) for d, w in rows.all()]
 
 
+@dataclass(frozen=True, slots=True)
+class Measured:
+    estimate: adaptive.Estimate
+    # Formula maintenance over the same window, used to sanity-check the estimate.
+    formula_kcal: float
+    activity_kcal: float
+
+
 async def adaptive_estimate(
-    session: AsyncSession, user_id: int, day: date, formula_kcal: float
-) -> adaptive.Estimate:
+    session: AsyncSession, user: User, day: date, weight_kg: float
+) -> Measured:
+    """Measured from past days only, so today's steps and workouts never move it."""
     start, end = adaptive.window(day)
-    intake = await daily_intake(session, user_id, start, end)
-    weights = await weights_between(session, user_id, start, end)
-    return adaptive.estimate(intake, weights, formula_kcal)
+    activity = await activity_kcal(session, user.id, end, weight_kg, start=start)
+    formula = maintenance_kcal(
+        user.sex, weight_kg, user.height_cm, day.year - user.birth_year, activity
+    )
+    intake = await daily_intake(session, user.id, start, end)
+    weights = await weights_between(session, user.id, start, end)
+    return Measured(adaptive.estimate(intake, weights, formula), formula, activity)
 
 
 async def target_on(session: AsyncSession, user: User, day: date, weight_kg: float) -> Target:
     age = day.year - user.birth_year
     activity = await activity_kcal(session, user.id, day, weight_kg)
     formula = maintenance_kcal(user.sex, weight_kg, user.height_cm, age, activity)
-    estimate = await adaptive_estimate(session, user.id, day, formula)
+    measured = await adaptive_estimate(session, user, day, weight_kg)
+    estimate = measured.estimate
 
     if user.adaptive_target and has_access(user, utcnow()) and estimate.tdee is not None:
         # The measured expenditure already contains the user's usual activity.
-        tdee = estimate.tdee if user.activity_adjust else estimate.tdee - activity
+        tdee = estimate.tdee if user.activity_adjust else estimate.tdee - measured.activity_kcal
         source, shown_activity = TargetSource.ADAPTIVE, 0.0
     else:
         shown_activity = activity if user.activity_adjust else 0.0

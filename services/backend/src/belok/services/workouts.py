@@ -512,9 +512,11 @@ async def exercise_history(
     )
 
 
-async def activity_kcal(session: AsyncSession, user_id: int, day: date, weight_kg: float) -> float:
-    """Average daily kcal burned by steps and training over the window ending on `day`."""
-    start = day - timedelta(days=ACTIVITY_WINDOW_DAYS - 1)
+async def activity_kcal(
+    session: AsyncSession, user_id: int, day: date, weight_kg: float, start: date | None = None
+) -> float:
+    """Average daily kcal burned by steps and training from `start` (default: the week) to `day`."""
+    start = start or day - timedelta(days=ACTIVITY_WINDOW_DAYS - 1)
     steps = await session.scalars(
         select(DailyActivity.steps).where(
             DailyActivity.user_id == user_id, DailyActivity.day.between(start, day)
@@ -530,7 +532,7 @@ async def activity_kcal(session: AsyncSession, user_id: int, day: date, weight_k
         )
     ).one()
     total += strength_kcal(strength_sets, weight_kg) + cardio_kcal(cardio_seconds / 60, weight_kg)
-    return total / ACTIVITY_WINDOW_DAYS
+    return total / ((day - start).days + 1)
 
 
 @dataclass(slots=True)
