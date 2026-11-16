@@ -65,6 +65,23 @@ async def test_adaptive_target_uses_measured_expenditure(client):
     assert day["target"]["kcal"] == pytest.approx(tdee)
 
 
+@pytest.mark.parametrize("activity_adjust", [True, False])
+async def test_adaptive_target_ignores_todays_steps(client, activity_adjust):
+    headers = await onboarded(client)
+    # Intake well above the formula so the estimate sits on the clamp bound.
+    await seed_history(client, kcal=3500, loss_kg=0)
+    await client.patch(
+        "/api/me/settings",
+        json={"adaptive_target": True, "activity_adjust": activity_adjust},
+        headers=headers,
+    )
+    before = (await client.get("/api/day", headers=headers)).json()
+    await client.put("/api/steps/today", json={"steps": 25000}, headers=headers)
+    after = (await client.get("/api/day", headers=headers)).json()
+    assert after["target_source"] == "adaptive"
+    assert after["target"]["kcal"] == pytest.approx(before["target"]["kcal"])
+
+
 async def test_adaptive_target_falls_back_when_data_runs_out(client):
     headers = await onboarded(client)
     await seed_history(client)

@@ -24,7 +24,7 @@ from belok.api.schemas import (
 )
 from belok.config import Settings
 from belok.db.models import User
-from belok.domain.nutrition import daily_target, maintenance_kcal
+from belok.domain.nutrition import daily_target
 from belok.services import features
 from belok.services.access import access_status, access_until, has_access
 from belok.services.meals import analyses_left, drop_eval_photos
@@ -34,7 +34,6 @@ from belok.services.repo import latest_weight
 from belok.services.targets import adaptive_estimate
 from belok.services.users import REFERRAL_PREFIX, update_profile
 from belok.services.widgets import send_day_card
-from belok.services.workouts import activity_kcal
 from belok.timeutil import local_today, utcnow
 
 router = APIRouter(tags=["me"])
@@ -193,17 +192,13 @@ async def _adaptive(
     weight = weight or await latest_weight(session, user.id)
     if not user.profile_complete or weight is None:
         return None
-    today = local_today(user.timezone)
-    activity = await activity_kcal(session, user.id, today, weight)
-    formula = maintenance_kcal(
-        user.sex, weight, user.height_cm, today.year - user.birth_year, activity
-    )
-    estimate = await adaptive_estimate(session, user.id, today, formula)
+    measured = await adaptive_estimate(session, user, local_today(user.timezone), weight)
+    estimate = measured.estimate
     return AdaptiveOut(
         ready=estimate.ready,
         logged_days=estimate.logged_days,
         weigh_ins=estimate.weigh_ins,
         span_days=estimate.span_days,
         tdee=estimate.tdee,
-        formula_tdee=formula,
+        formula_tdee=measured.formula_kcal,
     )
